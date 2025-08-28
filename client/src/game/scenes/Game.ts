@@ -106,41 +106,45 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    // Use the first animated frame as the sprite
-    this.player = this.physics.add.sprite(40, 85, 'zombie_0');
+    // Use the first animated frame as the sprite - position higher up  
+    this.player = this.physics.add.sprite(40, 50, 'zombie_0');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
     // Adjust size for the new 96x96 HD sprite  
-    this.player.body!.setSize(64, 80); // Larger hitbox for 96x96 sprite
+    this.player.body!.setSize(32, 40); // Smaller hitbox to avoid getting stuck
     this.player.setScale(0.6); // Scale down for mobile-friendly size
     
     // Configure physics for smooth movement - cast to correct type
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setDrag(0); // No air resistance
-    body.setMaxVelocity(200, 600); // Allow high horizontal speeds
+    body.setMaxVelocity(300, 600); // Higher max velocity
     body.immovable = false;
     
     // Start skating animation
     this.player.play('skate');
     
-    // Auto-run with immediate velocity
+    // FORCE position update as well as velocity
     this.player.setVelocityX(this.gameSpeed);
-    this.player.setCollideWorldBounds(false);
+    this.player.x += 1; // Force initial position change
     
-    console.log('Player created with velocity:', this.gameSpeed);
+    console.log('Player created at position:', this.player.x, 'Y:', this.player.y, 'with velocity:', this.gameSpeed);
   }
 
   setupCollisions() {
-    // DISABLE GROUND COLLISION TEMPORARILY TO TEST MOVEMENT
-    // this.physics.add.collider(this.player, this.ground, () => {
-    //   if (this.didTrickThisJump && this.comboTimer > 0) {
-    //     // Successful trick landing
-    //     this.score.addTrick(50 * this.comboMultiplier);
-    //     this.showTrickScore();
-    //     this.didTrickThisJump = false;
-    //   }
-    // });
+    // Ground collision with process callback to allow horizontal movement
+    this.physics.add.collider(this.player, this.ground, (player: any, ground: any) => {
+      if (this.didTrickThisJump && this.comboTimer > 0) {
+        // Successful trick landing
+        this.score.addTrick(50 * this.comboMultiplier);
+        this.showTrickScore();
+        this.didTrickThisJump = false;
+      }
+    }, (player: any, ground: any) => {
+      // Process callback - return true to allow collision, but maintain horizontal velocity
+      this.player.setVelocityX(this.gameSpeed);
+      return true;
+    });
 
     // Rail overlap for grinding
     this.physics.add.overlap(this.player, this.rails, () => {
@@ -287,18 +291,13 @@ export default class Game extends Phaser.Scene {
 
     // Force player to maintain horizontal velocity every frame
     if (this.player && this.player.body) {
+      // FORCE BOTH VELOCITY AND POSITION UPDATE
       this.player.setVelocityX(this.gameSpeed);
+      this.player.x += this.gameSpeed * delta / 1000; // Manual position update
       
-      // Reduce debug spam - only log occasionally
-      if (Math.floor(time) % 1000 === 0) {
-        console.log('Player velocity X:', this.player.body!.velocity.x, 'Position X:', this.player.x, 'GameSpeed:', this.gameSpeed, 'Camera X:', this.cameras.main.scrollX);
-      }
-      
-      // Debug velocity if player stops moving
-      if (Math.abs(this.player.body!.velocity.x) < 10) {
-        console.log('Player stopped! Position:', this.player.x, 'Velocity:', this.player.body!.velocity.x, 'GameSpeed:', this.gameSpeed);
-        // Force restart movement
-        this.player.setVelocityX(this.gameSpeed * 1.5);
+      // Debug player movement every few seconds
+      if (Math.floor(time) % 2000 === 0) {
+        console.log('Position:', this.player.x, 'Velocity X:', this.player.body!.velocity.x, 'Manual move delta:', this.gameSpeed * delta / 1000);
       }
     }
 
@@ -318,8 +317,9 @@ export default class Game extends Phaser.Scene {
     // Increase difficulty over time
     this.gameSpeed += delta * 0.001;
 
-    // Fail condition
-    if (this.player.y > 180) {
+    // Fail condition - moved down to give more room
+    if (this.player.y > 200) {
+      console.log('Game over - player fell too far. Y position:', this.player.y);
       this.gameOver();
     }
 
