@@ -70,14 +70,8 @@ export default class Game extends Phaser.Scene {
   }
 
   setupProperGround() {
-    // Put the physics floor to match what the camera sees at x=0
-    const floorY = (this.world as any).visualGroundYFor(0) - 6; // tweak -6 so board wheels touch
-    const groundRect = this.add.rectangle(0, floorY, 5000, 10, 0x00ff00, 0); // transparent
-    this.physics.add.existing(groundRect, true);
-    (this.world as any).ground.clear(true, true); // remove old one if you used createWorld()
-    (this.world as any).ground.add(groundRect as any);
-    
-    console.log('Physics ground positioned at Y:', floorY, 'for visual ground at x=0');
+    // Ground is already properly set up in createWorld() - flat road at y=160
+    console.log('Using flat ground at Y: 160');
   }
 
   setupGBAPhysics() {

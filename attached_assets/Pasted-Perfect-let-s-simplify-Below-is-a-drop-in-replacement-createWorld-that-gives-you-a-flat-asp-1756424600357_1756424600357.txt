@@ -1,3 +1,16 @@
+Perfect — let’s simplify. Below is a drop-in replacement createWorld() that gives you:
+	•	a flat asphalt road (rectangle fill, always at the bottom),
+	•	a few lane paint strips and cracks so it doesn’t look flat,
+	•	your existing parallax (stars, skyline, fence),
+	•	physics ground aligned at y=160,
+	•	empty rails and obstacles groups ready for your spawner.
+
+Delete angledStreet.ts and just use this.
+
+⸻
+
+src/world/index.ts
+
 import { buildParallax } from './parallax';
 
 export function createWorld(scene: Phaser.Scene) {
@@ -44,3 +57,29 @@ export function createWorld(scene: Phaser.Scene) {
 
   return { ground, rails, obstacles, update, visualGroundYFor };
 }
+
+
+⸻
+
+How to use
+
+In Game.ts you don’t need any tilt or masking anymore:
+
+this.world = createWorld(this);
+
+// collisions
+this.physics.add.collider(this.player, this.world.ground);
+this.physics.add.overlap(this.player, this.world.rails, /* grind */);
+this.physics.add.collider(this.player, this.world.obstacles, () => this.scene.restart());
+
+
+⸻
+
+✅ What this fixes
+	•	No more floating street → the road is literally just a rectangle at the bottom.
+	•	Always visible → can’t “turn into a wall” because nothing is rotated.
+	•	Simpler mental model → baseline is y=160. All obstacles, cones, potholes use that.
+
+⸻
+
+👉 Do you want me to also update your spawner so that potholes/wood/cones/barricades automatically line up with this flat road (instead of using visualGroundYFor math)?

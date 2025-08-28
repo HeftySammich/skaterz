@@ -41,35 +41,33 @@ export class LevelDirector {
     return this.spawnBarricade(x);
   }
 
-  private groundY(x: number){ return this.world.visualGroundYFor(x); }
-
   private spawnRail(x: number){
-    const y = this.groundY(x) - 18;
+    const y = 160 - 18; // flat ground baseline - rail height
     const img = this.scene.add.image(x, y, 'rail32').setOrigin(0.5,1).setDepth(6);
     this.scene.physics.add.existing(img, true);
     this.world.rails.add(img as any);
   }
   private spawnPothole(x: number){
-    const y = this.groundY(x) - 1;
+    const y = 160 - 1; // flat ground baseline
     this.scene.add.image(x, y, 'pothole32x12').setOrigin(0.5,1).setDepth(7);
     const hit = this.scene.add.rectangle(x, y-4, 22, 6, 0x000000, 0);
     this.scene.physics.add.existing(hit, true);
     this.world.obstacles.add(hit as any);
   }
   private spawnWood(x: number){
-    const y = this.groundY(x);
+    const y = 160; // flat ground baseline
     const img = this.scene.add.image(x, y, 'woodblock32x14').setOrigin(0.5,1).setDepth(7);
     this.scene.physics.add.existing(img, true);
     this.world.obstacles.add(img as any);
   }
   private spawnCone(x: number){
-    const y = this.groundY(x);
+    const y = 160; // flat ground baseline
     const img = this.scene.add.image(x, y, 'cone_knock24x12').setOrigin(0.5,1).setDepth(7);
     this.scene.physics.add.existing(img, true);
     this.world.obstacles.add(img as any);
   }
   private spawnBarricade(x: number){
-    const y = this.groundY(x)-2;
+    const y = 160 - 2; // flat ground baseline - small offset
     const img = this.scene.add.image(x, y, 'barricade32').setOrigin(0.5,1).setDepth(7);
     this.scene.physics.add.existing(img, true);
     this.world.obstacles.add(img as any);
