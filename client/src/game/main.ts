@@ -16,6 +16,11 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     pixelArt: true,
     roundPixels: true,
     antialias: false,
+    render: {
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true
+    },
     physics: {
       default: 'arcade',
       arcade: {
@@ -32,5 +37,19 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     backgroundColor: '#2c5f2d' // GBA green background
   };
 
-  return new Phaser.Game(config);
+  const game = new Phaser.Game(config);
+  
+  // Force disable text smoothing on the canvas context
+  game.events.once('ready', () => {
+    const canvas = game.canvas as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      (ctx as any).imageSmoothingEnabled = false;
+      (ctx as any).webkitImageSmoothingEnabled = false;
+      (ctx as any).mozImageSmoothingEnabled = false;
+      (ctx as any).msImageSmoothingEnabled = false;
+    }
+  });
+
+  return game;
 }

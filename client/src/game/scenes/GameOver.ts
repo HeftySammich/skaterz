@@ -17,58 +17,54 @@ export default class GameOver extends Phaser.Scene {
     overlay.fillStyle(0x000000, 0.7);
     overlay.fillRect(0, 0, 240, 160);
 
-    // HD 2D Game Over text - pixel perfect
+    // Crisp pixel-perfect Game Over text
     const gameOverText = this.add.text(120, 50, 'GAME OVER', {
-      fontFamily: 'monospace',
+      fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '18px',
       color: '#ff0000',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     }).setOrigin(0.5);
-    gameOverText.setResolution(2);
 
-    // HD 2D Final score
+    // Crisp Final score
     const finalScoreText = this.add.text(120, 75, `FINAL SCORE: ${Math.floor(this.finalScore)}`, {
-      fontFamily: 'monospace',
+      fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '12px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     }).setOrigin(0.5);
-    finalScoreText.setResolution(2);
 
-    // HD 2D High score (using localStorage)
+    // Crisp High score (using localStorage)
     const highScore = this.getHighScore();
     let highScoreText;
     if (this.finalScore > highScore) {
       this.setHighScore(this.finalScore);
       highScoreText = this.add.text(120, 90, 'NEW HIGH SCORE!', {
-        fontFamily: 'monospace',
+        fontFamily: 'Courier, "Courier New", monospace',
         fontSize: '10px',
         color: '#ffff00',
         stroke: '#000000',
-        strokeThickness: 1
+        strokeThickness: 0
       }).setOrigin(0.5);
     } else {
       highScoreText = this.add.text(120, 90, `HIGH SCORE: ${Math.floor(highScore)}`, {
-        fontFamily: 'monospace',
+        fontFamily: 'Courier, "Courier New", monospace',
         fontSize: '10px',
         color: '#ffffff',
         stroke: '#000000',
-        strokeThickness: 1
+        strokeThickness: 0
       }).setOrigin(0.5);
     }
-    highScoreText.setResolution(2);
 
-    // HD 2D Restart instructions
+    // Crisp Restart instructions
     const restartText = this.add.text(120, 120, 'PRESS SPACE TO RESTART', {
-      fontFamily: 'monospace',
+      fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '10px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     }).setOrigin(0.5);
-    restartText.setResolution(2);
 
     // Input handling
     this.input.keyboard?.addKey('SPACE').on('down', () => {

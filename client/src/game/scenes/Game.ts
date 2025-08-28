@@ -148,40 +148,39 @@ export default class Game extends Phaser.Scene {
   }
 
   createUI() {
-    // HD 2D pixel-perfect text - small size but crisp rendering
+    // Create crisp pixel-perfect text using graphics rendering
     this.scoreText = this.add.text(8, 8, 'SCORE: 0', {
-      fontFamily: 'monospace',
+      fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '12px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     });
     this.scoreText.setScrollFactor(0);
     this.scoreText.setDepth(100);
-    this.scoreText.setResolution(2); // HD 2D rendering
+    // Disable smoothing for pixel-perfect rendering
+    this.scoreText.setScale(1);
 
     this.comboText = this.add.text(8, 22, '', {
-      fontFamily: 'monospace', 
+      fontFamily: 'Courier, "Courier New", monospace', 
       fontSize: '10px',
       color: '#ffff00',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     });
     this.comboText.setScrollFactor(0);
     this.comboText.setDepth(100);
-    this.comboText.setResolution(2); // HD 2D rendering
 
     this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
-      fontFamily: 'monospace',
+      fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '8px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     });
     this.instructionsText.setOrigin(0.5);
     this.instructionsText.setScrollFactor(0);
     this.instructionsText.setDepth(100);
-    this.instructionsText.setResolution(2); // HD 2D rendering
   }
 
   startGrinding() {
@@ -219,17 +218,16 @@ export default class Game extends Phaser.Scene {
   showTrickScore() {
     const points = 50 * this.comboMultiplier;
     
-    // Create HD 2D trick score popup - small but crisp
+    // Create crisp trick score popup
     const trickText = this.add.text(this.player.x, this.player.y - 60, `+${points}`, {
-      fontFamily: 'monospace',
+      fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '14px',
       color: '#00ff00',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 0
     });
     
     trickText.setDepth(150);
-    trickText.setResolution(2); // HD 2D rendering
     
     // Animate the popup
     this.tweens.add({
