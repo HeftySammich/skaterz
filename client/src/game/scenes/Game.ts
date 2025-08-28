@@ -13,6 +13,7 @@ export default class Game extends Phaser.Scene {
   private obstacleManager!: ObstacleManager;
   
   private isOnRail = false;
+  private currentRail: any = null;
   private didTrickThisJump = false;
   private gameSpeed = 120;
   private lastRailX = 0;
@@ -155,10 +156,11 @@ export default class Game extends Phaser.Scene {
 
     // Rail overlap for automatic grinding - only start once per rail
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      // Auto-grind when player first touches a rail
+      // Auto-grind when player first touches a rail (only log once)
       if (!this.isOnRail) {
         console.log('Player touched rail - starting auto-grind! Rail Y:', rail.y, 'Player Y:', player.y);
         this.startGrinding(rail);
+        this.currentRail = rail; // Track which rail we're on
       }
     });
   }
@@ -180,26 +182,20 @@ export default class Game extends Phaser.Scene {
     if (!this.isOnRail) {
       console.log('Starting grind! Locking to rail');
       this.isOnRail = true;
+      this.currentRail = railGameObject;
       
-      // Use provided rail or find one
-      const rail = railGameObject || this.physics.world.bodies.entries.find(body => 
-        this.rails.contains(body.gameObject) && 
-        Phaser.Geom.Rectangle.Overlaps(this.player.getBounds(), (body.gameObject as any).getBounds())
-      );
-      
-      if (rail) {
-        const railY = railGameObject ? railGameObject.y : (rail.gameObject as any).y;
-        // Position player visibly on top of the rail
-        this.player.y = railY - 25; // Position clearly above rail
+      if (railGameObject) {
+        // Position player visibly on top of the rail and lock in place
+        this.player.y = railGameObject.y - 25; // Position clearly above rail
         this.player.setVelocityY(0);
         this.player.setGravityY(0);
-        console.log('Player positioned on top of rail. Rail Y:', railY, 'Player Y:', this.player.y);
+        console.log('Player locked on rail. Rail Y:', railGameObject.y, 'Player Y:', this.player.y);
       }
 
       // Play grind sound
       this.playSound('grind');
       
-      // Start/continue combo
+      // Start/continue combo (only increase once per rail)
       if (this.comboTimer <= 0) {
         this.comboMultiplier = 1;
       } else {
@@ -214,7 +210,8 @@ export default class Game extends Phaser.Scene {
     if (this.isOnRail) {
       console.log('Stopping grind - restoring gravity');
       this.isOnRail = false;
-      this.player.setGravityY(800);
+      this.currentRail = null;
+      this.player.setGravityY(600);
     }
   }
 
@@ -270,31 +267,34 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Auto-stop grinding when no longer touching rails (with some tolerance)
-    if (this.isOnRail) {
-      // Check if still overlapping with any rail with a small buffer
-      const stillOnRail = this.physics.world.bodies.entries.some(body => {
-        if (!this.rails.contains(body.gameObject)) return false;
-        
-        const playerBounds = this.player.getBounds();
-        const railBounds = (body.gameObject as any).getBounds();
-        
-        // Add some tolerance to prevent rapid on/off grinding
-        const tolerance = 15;
-        return Phaser.Geom.Rectangle.Overlaps(
-          new Phaser.Geom.Rectangle(
-            playerBounds.x - tolerance, 
-            playerBounds.y - tolerance, 
-            playerBounds.width + tolerance * 2, 
-            playerBounds.height + tolerance * 2
-          ), 
-          railBounds
-        );
-      });
+    // Keep player locked to rail while grinding
+    if (this.isOnRail && this.currentRail) {
+      // Keep player locked to current rail position
+      this.player.y = this.currentRail.y - 25;
+      this.player.setVelocityY(0);
       
-      if (!stillOnRail) {
-        console.log('Player left all rails - stopping grind');
-        this.stopGrinding();
+      // Check if player has moved past the current rail (simple X check)
+      const playerX = this.player.x;
+      const railX = this.currentRail.x;
+      const railWidth = 32; // Each rail segment is 32px wide
+      
+      // If player moved significantly past this rail segment, check for next rail or stop grinding
+      if (playerX > railX + railWidth + 50) { // Give some buffer
+        // Check if there's another rail nearby
+        const nextRail = this.physics.world.bodies.entries.find(body => {
+          if (!this.rails.contains(body.gameObject)) return false;
+          const rail = body.gameObject as any;
+          return Math.abs(rail.x - playerX) < 100 && Math.abs(rail.y - this.currentRail.y) < 20;
+        });
+        
+        if (nextRail) {
+          // Switch to the next rail seamlessly
+          this.currentRail = nextRail.gameObject;
+        } else {
+          // No more rails, stop grinding
+          console.log('Player reached end of rail - stopping grind');
+          this.stopGrinding();
+        }
       }
     }
 
