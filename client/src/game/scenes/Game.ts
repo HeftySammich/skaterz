@@ -153,12 +153,12 @@ export default class Game extends Phaser.Scene {
       return true;
     });
 
-    // Rail overlap for automatic grinding
+    // Rail overlap for automatic grinding - only start once per rail
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      // Auto-grind when player touches any rail
+      // Auto-grind when player first touches a rail
       if (!this.isOnRail) {
-        console.log('Player touched rail - auto-grinding! Rail Y:', rail.y, 'Player Y:', player.y);
-        this.startGrinding();
+        console.log('Player touched rail - starting auto-grind! Rail Y:', rail.y, 'Player Y:', player.y);
+        this.startGrinding(rail);
       }
     });
   }
@@ -176,36 +176,37 @@ export default class Game extends Phaser.Scene {
     this.instructionsText.setScrollFactor(0);
   }
 
-  startGrinding() {
+  startGrinding(railGameObject?: any) {
     if (!this.isOnRail) {
-      console.log('Starting grind! Setting on rail state');
+      console.log('Starting grind! Locking to rail');
       this.isOnRail = true;
       
-      // Find the rail the player is overlapping with
-      const rail = this.physics.world.bodies.entries.find(body => 
+      // Use provided rail or find one
+      const rail = railGameObject || this.physics.world.bodies.entries.find(body => 
         this.rails.contains(body.gameObject) && 
         Phaser.Geom.Rectangle.Overlaps(this.player.getBounds(), (body.gameObject as any).getBounds())
       );
       
       if (rail) {
+        const railY = railGameObject ? railGameObject.y : (rail.gameObject as any).y;
         // Lock player to rail position and remove gravity
-        this.player.y = (rail.gameObject as any).y - 15; // Position above rail
+        this.player.y = railY - 15; // Position above rail
         this.player.setVelocityY(0);
         this.player.setGravityY(0);
-        console.log('Positioned player on rail at Y:', this.player.y);
+        console.log('Player locked on rail at Y:', this.player.y);
       }
 
       // Play grind sound
       this.playSound('grind');
       
-      // Only increase combo if we're not already grinding
+      // Start/continue combo
       if (this.comboTimer <= 0) {
         this.comboMultiplier = 1;
       } else {
         this.comboMultiplier += 1;
       }
       this.comboTimer = 3000; // 3 seconds
-      console.log('Grind started! Combo multiplier:', this.comboMultiplier);
+      console.log('Grinding started! Combo:', this.comboMultiplier);
     }
   }
 
@@ -269,16 +270,30 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Auto-stop grinding when no longer touching rails
+    // Auto-stop grinding when no longer touching rails (with some tolerance)
     if (this.isOnRail) {
-      // Check if still overlapping with any rail
-      const stillOnRail = this.physics.world.bodies.entries.some(body => 
-        this.rails.contains(body.gameObject) && 
-        Phaser.Geom.Rectangle.Overlaps(this.player.getBounds(), (body.gameObject as any).getBounds())
-      );
+      // Check if still overlapping with any rail with a small buffer
+      const stillOnRail = this.physics.world.bodies.entries.some(body => {
+        if (!this.rails.contains(body.gameObject)) return false;
+        
+        const playerBounds = this.player.getBounds();
+        const railBounds = (body.gameObject as any).getBounds();
+        
+        // Add some tolerance to prevent rapid on/off grinding
+        const tolerance = 10;
+        return Phaser.Geom.Rectangle.Overlaps(
+          new Phaser.Geom.Rectangle(
+            playerBounds.x - tolerance, 
+            playerBounds.y - tolerance, 
+            playerBounds.width + tolerance * 2, 
+            playerBounds.height + tolerance * 2
+          ), 
+          railBounds
+        );
+      });
       
       if (!stillOnRail) {
-        console.log('Player left rail - stopping grind');
+        console.log('Player left all rails - stopping grind');
         this.stopGrinding();
       }
     }
