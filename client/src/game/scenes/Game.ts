@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { setupControls } from '../systems/controls';
 import { Score } from '../systems/score';
 import { ObstacleManager } from '../systems/obstacles';
+import { BitmapText } from '../utils/BitmapText';
 
 export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -18,8 +19,8 @@ export default class Game extends Phaser.Scene {
   private comboMultiplier = 1;
   private comboTimer = 0;
   
-  private scoreText!: Phaser.GameObjects.Text;
-  private comboText!: Phaser.GameObjects.Text;
+  private scoreText!: BitmapText;
+  private comboText!: BitmapText;
   private instructionsText!: Phaser.GameObjects.Text;
 
   constructor() {
@@ -111,11 +112,16 @@ export default class Game extends Phaser.Scene {
     this.player.body!.setSize(64, 80); // Larger hitbox for 96x96 sprite
     this.player.setScale(0.6); // Scale down for mobile-friendly size
     
+    // Configure physics for smooth movement
+    this.player.body!.setDrag(0); // No air resistance
+    this.player.body!.setMaxVelocity(200, 600); // Allow high horizontal speeds
+    
     // Start skating animation
     this.player.play('skate');
     
-    // Auto-run
+    // Auto-run with immediate velocity
     this.player.setVelocityX(this.gameSpeed);
+    console.log('Player created with velocity:', this.gameSpeed);
   }
 
   setupCollisions() {
@@ -148,29 +154,14 @@ export default class Game extends Phaser.Scene {
   }
 
   createUI() {
-    // Create crisp pixel-perfect text using graphics rendering
-    this.scoreText = this.add.text(8, 8, 'SCORE: 0', {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '12px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 0
-    });
+    // Create pixel-perfect bitmap text for HD 2D crisp rendering
+    this.scoreText = new BitmapText(this, 8, 8, 'SCORE: 0', 0xffffff);
     this.scoreText.setScrollFactor(0);
-    this.scoreText.setDepth(100);
-    // Disable smoothing for pixel-perfect rendering
-    this.scoreText.setScale(1);
 
-    this.comboText = this.add.text(8, 22, '', {
-      fontFamily: 'Courier, "Courier New", monospace', 
-      fontSize: '10px',
-      color: '#ffff00',
-      stroke: '#000000',
-      strokeThickness: 0
-    });
+    this.comboText = new BitmapText(this, 8, 18, '', 0xffff00);
     this.comboText.setScrollFactor(0);
-    this.comboText.setDepth(100);
 
+    // Keep regular text for complex instructions
     this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
       fontFamily: 'Courier, "Courier New", monospace',
       fontSize: '8px',
@@ -305,12 +296,16 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Maintain player auto-run speed - force it every frame
-    this.player.setVelocityX(this.gameSpeed);
-    
-    // Debug: log player position and velocity if stopped
-    if (Math.abs(this.player.body!.velocity.x) < 10) {
-      console.log('Player stopped! Position:', this.player.x, 'Velocity:', this.player.body!.velocity.x);
+    // Force player to maintain horizontal velocity every frame
+    if (this.player && this.player.body) {
+      this.player.setVelocityX(this.gameSpeed);
+      
+      // Debug velocity if player stops moving
+      if (Math.abs(this.player.body!.velocity.x) < 10) {
+        console.log('Player stopped! Position:', this.player.x, 'Velocity:', this.player.body!.velocity.x, 'GameSpeed:', this.gameSpeed);
+        // Force restart movement
+        this.player.setVelocityX(this.gameSpeed * 1.5);
+      }
     }
 
     // Continuous scoring
@@ -384,7 +379,7 @@ export default class Game extends Phaser.Scene {
     this.scoreText.setText(`SCORE: ${Math.floor(this.score.value)}`);
     
     if (this.comboMultiplier > 1) {
-      this.comboText.setText(`COMBO x${this.comboMultiplier}`);
+      this.comboText.setText(`COMBO ${this.comboMultiplier}`);
     } else {
       this.comboText.setText('');
     }
