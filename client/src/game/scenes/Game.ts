@@ -153,19 +153,11 @@ export default class Game extends Phaser.Scene {
       return true;
     });
 
-    // Rail overlap for grinding with better detection - now much easier to trigger
+    // Rail overlap for grinding with better detection
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      console.log('Player near rail at Y:', rail.y, 'Player Y:', player.y);
-      if (this.cursors.holding()) {
-        console.log('Hold detected - starting grind on rail!');
+      if (this.cursors.holding() && !this.isOnRail) {
+        console.log('Hold detected - starting grind on rail at Y:', rail.y);
         this.startGrinding();
-      } else {
-        // Auto-grind if player is close enough to rail level
-        const railDistance = Math.abs(player.y - rail.y);
-        if (railDistance < 25) {
-          console.log('Auto-grind triggered - player close to rail (distance:', railDistance + ')');
-          this.startGrinding();
-        }
       }
     });
   }
@@ -187,33 +179,41 @@ export default class Game extends Phaser.Scene {
     if (!this.isOnRail) {
       console.log('Starting grind! Combo multiplier will be:', this.comboMultiplier + 1);
       this.isOnRail = true;
-      this.player.setVelocityY(0);
-      this.player.setGravityY(0);
       
-      // Position player on rail
+      // Find the rail the player is overlapping with
       const rail = this.physics.world.bodies.entries.find(body => 
         this.rails.contains(body.gameObject) && 
         Phaser.Geom.Rectangle.Overlaps(this.player.getBounds(), (body.gameObject as any).getBounds())
       );
       
       if (rail) {
-        this.player.y = (rail.gameObject as any).y - 8; // Closer positioning for easier grinding
+        // Lock player to rail position and remove gravity
+        this.player.y = (rail.gameObject as any).y - 15; // Position above rail
+        this.player.setVelocityY(0);
+        this.player.setGravityY(0);
         console.log('Positioned player on rail at Y:', this.player.y);
       }
 
       // Play grind sound
       this.playSound('grind');
       
-      // Increase combo multiplier
-      this.comboMultiplier += 1;
+      // Start combo timer
+      if (this.comboTimer <= 0) {
+        this.comboMultiplier = 1;
+      } else {
+        this.comboMultiplier += 1;
+      }
       this.comboTimer = 3000; // 3 seconds
-      console.log('Grind started! New combo multiplier:', this.comboMultiplier);
+      console.log('Grind started! Combo multiplier:', this.comboMultiplier);
     }
   }
 
   stopGrinding() {
-    this.isOnRail = false;
-    this.player.setGravityY(800);
+    if (this.isOnRail) {
+      console.log('Stopping grind - restoring gravity');
+      this.isOnRail = false;
+      this.player.setGravityY(800);
+    }
   }
 
   showTrickScore() {
@@ -276,12 +276,12 @@ export default class Game extends Phaser.Scene {
     // Handle jump/trick input
     if (this.cursors.justTapped()) {
       if (this.player.body!.blocked.down || this.isOnRail) {
-        // Jump from ground or rail - higher jump to reach rails at Y=80
+        // Jump from ground or rail - moderate jump to reach rails
         this.stopGrinding();
-        this.player.setVelocityY(-400);
+        this.player.setVelocityY(-300); // Reduced jump height
         this.playSound('jump');
         this.didTrickThisJump = false;
-        console.log('Player jumped from ground/rail with velocity -400 from Y:', this.player.y);
+        console.log('Player jumped from ground/rail with velocity -300 from Y:', this.player.y);
         
         // Keep skating animation for ground jumps
         this.player.play('skate');
