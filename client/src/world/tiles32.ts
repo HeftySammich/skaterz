@@ -11,6 +11,11 @@ function dither(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number
 }
 
 export function buildNYCAtlas32(scene: Phaser.Scene){
+  // Check if textures already exist to avoid duplication errors
+  if (scene.textures.exists('nyc32')) {
+    return;
+  }
+  
   const tw=32, th=32, cols=8, rows=3;
   const atlas=document.createElement('canvas'); atlas.width=cols*tw; atlas.height=rows*th;
   const g=atlas.getContext('2d')!; g.imageSmoothingEnabled=false;
@@ -54,45 +59,57 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
   scene.textures.addCanvas('nyc32', atlas);
 
   // Rails 32×8
-  const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
-  const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
-  r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
-  [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
-  scene.textures.addCanvas('rail32', rail);
+  if (!scene.textures.exists('rail32')) {
+    const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
+    const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
+    r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
+    [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
+    scene.textures.addCanvas('rail32', rail);
+  }
 
   // Barricade 32×24
-  const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
-  const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
-  dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
-  bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
-  scene.textures.addCanvas('barricade32', bar);
+  if (!scene.textures.exists('barricade32')) {
+    const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
+    const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
+    dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
+    bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
+    scene.textures.addCanvas('barricade32', bar);
+  }
 
   // Cone upright 16×24
-  const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
-  const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
-  cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8);
-  cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
-  scene.textures.addCanvas('cone16x24', cone);
+  if (!scene.textures.exists('cone16x24')) {
+    const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
+    const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
+    cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8);
+    cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
+    scene.textures.addCanvas('cone16x24', cone);
+  }
 
   // Knocked-over cone 24×12
-  const coneK=document.createElement('canvas'); coneK.width=24; coneK.height=12;
-  const ck=coneK.getContext('2d')!; ck.imageSmoothingEnabled=false;
-  ck.fillStyle=PAL.cone; ck.fillRect(2,6,16,5); ck.fillRect(16,3,6,3);
-  ck.fillStyle=PAL.hazard; ck.fillRect(4,7,12,2);
-  scene.textures.addCanvas('cone_knock24x12', coneK);
+  if (!scene.textures.exists('cone_knock24x12')) {
+    const coneK=document.createElement('canvas'); coneK.width=24; coneK.height=12;
+    const ck=coneK.getContext('2d')!; ck.imageSmoothingEnabled=false;
+    ck.fillStyle=PAL.cone; ck.fillRect(2,6,16,5); ck.fillRect(16,3,6,3);
+    ck.fillStyle=PAL.hazard; ck.fillRect(4,7,12,2);
+    scene.textures.addCanvas('cone_knock24x12', coneK);
+  }
 
   // Pothole 32×12
-  const hole=document.createElement('canvas'); hole.width=32; hole.height=12;
-  const hc=hole.getContext('2d')!; hc.imageSmoothingEnabled=false;
-  hc.fillStyle='#15171c'; hc.beginPath(); hc.ellipse(16,6,14,5,0,0,Math.PI*2); hc.fill();
-  hc.strokeStyle='#262a32'; hc.stroke();
-  scene.textures.addCanvas('pothole32x12', hole);
+  if (!scene.textures.exists('pothole32x12')) {
+    const hole=document.createElement('canvas'); hole.width=32; hole.height=12;
+    const hc=hole.getContext('2d')!; hc.imageSmoothingEnabled=false;
+    hc.fillStyle='#15171c'; hc.beginPath(); hc.ellipse(16,6,14,5,0,0,Math.PI*2); hc.fill();
+    hc.strokeStyle='#262a32'; hc.stroke();
+    scene.textures.addCanvas('pothole32x12', hole);
+  }
 
   // Broken wood block 32×14
-  const wood=document.createElement('canvas'); wood.width=32; wood.height=14;
-  const wc=wood.getContext('2d')!; wc.imageSmoothingEnabled=false;
-  wc.fillStyle='#6b3f28'; wc.fillRect(0,6,32,8);
-  wc.fillStyle='#402a1f'; wc.fillRect(0,10,32,2);
-  wc.fillStyle='#814d34'; wc.fillRect(4,4,8,2); wc.fillRect(18,5,7,2);
-  scene.textures.addCanvas('woodblock32x14', wood);
+  if (!scene.textures.exists('woodblock32x14')) {
+    const wood=document.createElement('canvas'); wood.width=32; wood.height=14;
+    const wc=wood.getContext('2d')!; wc.imageSmoothingEnabled=false;
+    wc.fillStyle='#6b3f28'; wc.fillRect(0,6,32,8);
+    wc.fillStyle='#402a1f'; wc.fillRect(0,10,32,2);
+    wc.fillStyle='#814d34'; wc.fillRect(4,4,8,2); wc.fillRect(18,5,7,2);
+    scene.textures.addCanvas('woodblock32x14', wood);
+  }
 }

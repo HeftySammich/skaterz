@@ -302,7 +302,7 @@ export default class Game extends Phaser.Scene {
 
     // Handle jump input - any touch makes zombie jump
     if (this.cursors.justTapped()) {
-      this.handleJump();
+      this.jumpBuffer = this.BUFFER_MS;
     }
     
     // Process jump buffer and coyote time
