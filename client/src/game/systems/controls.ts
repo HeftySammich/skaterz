@@ -37,10 +37,15 @@ export function setupControls(scene: Phaser.Scene) {
       const downKey = scene.input.keyboard?.addKey('DOWN');
       const keyHeld = spaceKey?.isDown || downKey?.isDown;
       
-      // Touch/click held
-      const pointerHeld = pointer.isDown;
+      // Touch/click held for grinding - detect long press
+      const pointerHeld = pointer.isDown && (scene.time.now - pointer.downTime > 150);
       
-      return keyHeld || pointerHeld;
+      const isCurrentlyHolding = keyHeld || pointerHeld;
+      if (isCurrentlyHolding) {
+        console.log('Grinding hold detected - key:', keyHeld, 'touch:', pointerHeld, 'downTime:', pointer.downTime);
+      }
+      
+      return isCurrentlyHolding;
     }
   };
 }

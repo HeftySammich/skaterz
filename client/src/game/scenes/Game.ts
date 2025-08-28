@@ -146,10 +146,14 @@ export default class Game extends Phaser.Scene {
       return true;
     });
 
-    // Rail overlap for grinding
-    this.physics.add.overlap(this.player, this.rails, () => {
+    // Rail overlap for grinding with better detection
+    this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
+      console.log('Player overlapping with rail');
       if (this.cursors.holding()) {
+        console.log('Hold detected - starting grind!');
         this.startGrinding();
+      } else {
+        console.log('No hold detected - not grinding');
       }
     });
   }
@@ -169,6 +173,7 @@ export default class Game extends Phaser.Scene {
 
   startGrinding() {
     if (!this.isOnRail) {
+      console.log('Starting grind! Combo multiplier will be:', this.comboMultiplier + 1);
       this.isOnRail = true;
       this.player.setVelocityY(0);
       this.player.setGravityY(0);
@@ -181,16 +186,16 @@ export default class Game extends Phaser.Scene {
       
       if (rail) {
         this.player.y = (rail.gameObject as any).y - 12;
+        console.log('Positioned player on rail at Y:', this.player.y);
       }
 
       // Play grind sound
       this.playSound('grind');
       
-      // Start combo if not already active
-      if (this.comboTimer <= 0) {
-        this.comboMultiplier = 1;
-      }
+      // Increase combo multiplier
+      this.comboMultiplier += 1;
       this.comboTimer = 3000; // 3 seconds
+      console.log('Grind started! New combo multiplier:', this.comboMultiplier);
     }
   }
 
