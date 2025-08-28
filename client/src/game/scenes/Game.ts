@@ -178,7 +178,7 @@ export default class Game extends Phaser.Scene {
 
   startGrinding() {
     if (!this.isOnRail) {
-      console.log('Starting grind! Combo multiplier will be:', this.comboMultiplier + 1);
+      console.log('Starting grind! Setting on rail state');
       this.isOnRail = true;
       
       // Find the rail the player is overlapping with
@@ -198,7 +198,7 @@ export default class Game extends Phaser.Scene {
       // Play grind sound
       this.playSound('grind');
       
-      // Start combo timer
+      // Only increase combo if we're not already grinding
       if (this.comboTimer <= 0) {
         this.comboMultiplier = 1;
       } else {

@@ -1,37 +1,39 @@
 import Phaser from 'phaser';
 
 export function setupControls(scene: Phaser.Scene) {
-  const pointer = scene.input.activePointer;
   let lastInput = 0;
+  let justTapped = false;
 
   // Disable context menu
   scene.input.mouse?.disableContextMenu();
 
+  // Setup touch/click events
+  scene.input.on('pointerdown', () => {
+    const now = scene.time.now;
+    if (now - lastInput > 200) { // Debounce
+      justTapped = true;
+      lastInput = now;
+      console.log('Touch/click input detected');
+    }
+  });
+
   return {
     justTapped: () => {
-      const now = scene.time.now;
-      
       // Keyboard input
       const spaceKey = scene.input.keyboard?.addKey('SPACE');
       const upKey = scene.input.keyboard?.addKey('UP');
       const keyPressed = Phaser.Input.Keyboard.JustDown(spaceKey!) || Phaser.Input.Keyboard.JustDown(upKey!);
       
-      // Any touch input (tap or start of hold) triggers jump
-      const touchPressed = pointer.justDown;
-      
-      const inputDetected = keyPressed || touchPressed;
-      const validTiming = now - lastInput > 200; // Debounce
-      
-      if (inputDetected && validTiming) {
-        lastInput = now;
-        console.log('Jump input detected - key:', keyPressed, 'touch:', touchPressed);
+      // Check for touch input or keyboard
+      if (keyPressed || justTapped) {
+        justTapped = false; // Reset tap flag
+        console.log('Jump triggered - key:', keyPressed, 'touch:', !keyPressed);
         return true;
       }
       
       return false;
     },
     
-    // Not needed anymore since we auto-grind
     holding: () => false
   };
 }
