@@ -1,0 +1,443 @@
+Absolutely—let’s replace the blocky placeholder art with your zombie as the actual sprite and a GBA-style apocalypse NYC street. Below is a drop-in art pack (pure code + one image) that you can paste into your existing Option-A project. It:
+	•	auto-crops & scales your PNG into a 48×48 base sprite
+	•	synthesizes a 6-frame “push/skate” animation from that single image (subtle lean/tilt like GBA games)
+	•	draws a detailed NYC apocalypse tileset (asphalt dithering, curb/sidewalk, crosswalk, manholes, debris), a parallax skyline, and rails/obstacles that look like pixel art
+	•	shows a small crown if your NFT gate says the player owns the skin
+
+Save your image as assets/zombie_skater.png (the one you posted). No other art files needed—everything else is generated at runtime and stays pixel-perfect.
+
+⸻
+
+1) Palette (tight, GBA-ish)
+
+src/art/palette.ts
+
+export const PAL = {
+  // sky
+  bgSky0: '#61c3b3',
+  bgSky1: '#4aa89a',
+  bgSky2: '#397f74',
+  // skyline
+  bldgDark: '#0d1b26',
+  bldgMid:  '#132634',
+  // street
+  asphalt0: '#2b2c33',
+  asphalt1: '#3a3c45',
+  asphaltCrack: '#1f2026',
+  lanePaint: '#cfcf7a',
+  // sidewalk / curb
+  sidewalk0: '#6f6f7a',
+  sidewalk1: '#8a8a95',
+  curbTop:   '#a7a7b4',
+  curbFace:  '#5a5a65',
+  // metal / hazard
+  steel:  '#5d707b',
+  hazard: '#f2a130',
+  // accents
+  crown:  '#f7b51b'
+};
+
+
+⸻
+
+2) Turn your PNG into an in-game sprite (+ six animation frames)
+
+src/art/spriteFromImage.ts
+
+// Auto-crop a subject out of the image (uses corner color as "bg") then scale to 'target'
+export async function cropAndMakeTexture(
+  scene: Phaser.Scene, inKey: string, outKey: string, target = 48
+) {
+  const tex = scene.textures.get(inKey);
+  const img = tex.getSourceImage() as HTMLImageElement;
+  const w = img.width, h = img.height;
+
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d')!; ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0);
+
+  const bg = ctx.getImageData(0, 0, 1, 1).data;
+  const isBg = (r:number,g:number,b:number,a:number) => {
+    if (a < 5) return true;
+    const dr=r-bg[0], dg=g-bg[1], db=b-bg[2];
+    return (dr*dr + dg*dg + db*db) < 18*18;
+  };
+
+  const data = ctx.getImageData(0,0,w,h).data;
+  let minX=w, minY=h, maxX=0, maxY=0, found=false;
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++){
+    const i=(y*w+x)*4; if (!isBg(data[i],data[i+1],data[i+2],data[i+3])) {
+      found=true; if(x<minX)minX=x; if(y<minY)minY=y; if(x>maxX)maxX=x; if(y>maxY)maxY=y;
+    }
+  }
+  if (!found) throw new Error('No foreground found for sprite.');
+
+  const sw=maxX-minX+1, sh=maxY-minY+1, side=Math.max(sw,sh);
+  const c2 = document.createElement('canvas'); c2.width=side; c2.height=side;
+  const ctx2=c2.getContext('2d')!; ctx2.imageSmoothingEnabled=false;
+  const ox=Math.floor((side-sw)/2), oy=Math.floor((side-sh)/2);
+  ctx2.drawImage(c, minX, minY, sw, sh, ox, oy, sw, sh);
+
+  const c3=document.createElement('canvas'); c3.width=target; c3.height=target;
+  const ctx3=c3.getContext('2d')!; ctx3.imageSmoothingEnabled=false;
+  ctx3.drawImage(c2, 0, 0, side, side, 0, 0, target, target);
+
+  scene.textures.addCanvas(outKey, c3);
+}
+
+// Build small lean/tilt frames from a base texture to simulate a skate loop.
+export function synthesizeLeanFrames(
+  scene: Phaser.Scene, baseKey: string, framePrefix: string, angles = [-6,-3,0,3,6,3]
+) {
+  const base = scene.textures.get(baseKey).getSourceImage() as HTMLCanvasElement|HTMLImageElement;
+  angles.forEach((deg,idx)=>{
+    const s = 48, pad = 2;
+    const c = document.createElement('canvas'); c.width=s+pad*2; c.height=s+pad*2;
+    const ctx=c.getContext('2d')!; ctx.imageSmoothingEnabled=false;
+    ctx.translate((s+pad*2)/2, (s+pad*2)/2);
+    ctx.rotate(deg*Math.PI/180);
+    ctx.drawImage(base, -s/2, -s/2);
+    scene.textures.addCanvas(`${framePrefix}_${idx}`, c);
+  });
+}
+
+
+⸻
+
+3) NYC apocalypse tiles + parallax skyline (pixel-drawn, dithered)
+
+src/art/generateNYC.ts
+
+import { PAL } from './palette';
+
+function hex(s:string){ const v=parseInt(s.slice(1),16); return [(v>>16)&255,(v>>8)&255,(v)&255]; }
+function dither(ctx: CanvasRenderingContext2D, x:number,y:number,w:number,h:number, c0:string,c1:string){
+  const p=ctx.createImageData(w,h); const A=hex(c0), B=hex(c1);
+  for(let j=0;j<h;j++) for(let i=0;i<w;i++){
+    const idx=(j*w+i)*4, b=((i&1)^(j&1))?1:0, C=b?A:B;
+    p.data[idx]=C[0]; p.data[idx+1]=C[1]; p.data[idx+2]=C[2]; p.data[idx+3]=255;
+  }
+  ctx.putImageData(p,x,y);
+}
+
+export function makeNYCTiles(scene: Phaser.Scene) {
+  const tw=16, th=16, cols=8, rows=4;
+  const sheet=document.createElement('canvas'); sheet.width=cols*tw; sheet.height=rows*th;
+  const g=sheet.getContext('2d')!; g.imageSmoothingEnabled=false;
+
+  // 0: asphalt base (dither + cracks)
+  dither(g, 0,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.strokeStyle = PAL.asphaltCrack; g.lineWidth=1;
+  g.beginPath(); g.moveTo(3,12); g.lineTo(10,8); g.lineTo(14,10); g.stroke();
+
+  // 1: asphalt with lane paint line
+  dither(g, 16,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = PAL.lanePaint; g.fillRect(16+7,0,2,16);
+
+  // 2: crosswalk (diagonal)
+  dither(g, 32,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = PAL.lanePaint; for(let x=-6;x<16;x+=5) g.fillRect(32+x,0,3,16);
+
+  // 3: manhole
+  dither(g, 48,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = '#404650'; g.fillRect(48+4,4,8,8);
+  g.fillStyle = '#2d323a'; for (let i=48+5;i<48+11;i+=2) g.fillRect(i,6,1,4);
+
+  // 4: sidewalk slab
+  dither(g, 0,16,tw,th, PAL.sidewalk0, PAL.sidewalk1);
+  g.strokeStyle = '#4c4c56'; g.strokeRect(0.5,16.5,tw-1,th-1);
+  g.beginPath(); g.moveTo(0,16+8); g.lineTo(16,16+8); g.stroke();
+
+  // 5: curb (top + face)
+  dither(g, 16,16,tw,th, PAL.curbTop, PAL.sidewalk1);
+  g.fillStyle = PAL.curbFace; g.fillRect(16,16+10,16,6);
+
+  // 6: debris (papers)
+  dither(g, 32,16,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = '#cfcfd4'; g.fillRect(32+3,16+11,3,2); g.fillRect(32+11,16+6,2,2);
+
+  // 7: hazard edge
+  dither(g, 48,16,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = PAL.hazard; for(let i=0;i<16;i+=4) g.fillRect(48+i,16+12,2,4);
+
+  scene.textures.addCanvas('nyc_tiles', sheet);
+
+  // Rail 48x6 + posts
+  const rail=document.createElement('canvas'); rail.width=48; rail.height=6;
+  const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
+  r.fillStyle = PAL.steel; r.fillRect(0,2,48,2);
+  r.fillStyle = '#2c3942'; r.fillRect(0,1,48,1);
+  [6,24,42].forEach(x=>r.fillRect(x,3,2,3));
+  scene.textures.addCanvas('rail', rail);
+
+  // Barricade 16x24
+  const ob=document.createElement('canvas'); ob.width=16; ob.height=24;
+  const o=ob.getContext('2d')!; o.imageSmoothingEnabled=false;
+  dither(o, 0,0,16,24, '#402a1f', '#6b3f28');
+  o.fillStyle = PAL.hazard; o.fillRect(2,6,12,3); o.fillRect(2,14,12,3);
+  scene.textures.addCanvas('barricade', ob);
+}
+
+export function makeSkyline(scene: Phaser.Scene) {
+  const w=240, h=80; const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d')!; ctx.imageSmoothingEnabled=false;
+
+  // banded sky
+  for(let y=0;y<h;y++){
+    const t=y/h; ctx.fillStyle = t<0.33?PAL.bgSky0 : t<0.66?PAL.bgSky1 : PAL.bgSky2;
+    ctx.fillRect(0,y,w,1);
+  }
+  // jagged skyline + broken windows
+  const rnd=(a:number,b:number)=>Math.floor(a+Math.random()*(b-a));
+  for (let i=0;i<12;i++){
+    const bw=rnd(12,30), bh=rnd(18,50), bx=rnd(-10,w-10), by=h-bh;
+    ctx.fillStyle = PAL.bldgDark; ctx.fillRect(bx,by,bw,bh);
+    // missing roof chunks
+    ctx.clearRect(bx+rnd(1,bw-4), by-2, rnd(2,4), 3);
+    // sparse window glow
+    ctx.fillStyle = '#d7872f';
+    for (let y2=by+4; y2<by+bh-4; y2+=6)
+      for (let x2=bx+3; x2<bx+bw-3; x2+=6)
+        if (Math.random()<0.12) ctx.fillRect(x2,y2,1,2);
+  }
+  scene.textures.addCanvas('skyline', c);
+}
+
+
+⸻
+
+4) Preload: load image, synthesize frames, build city textures
+
+src/scenes/Preload.ts
+
+import Phaser from 'phaser';
+import { cropAndMakeTexture, synthesizeLeanFrames } from '../art/spriteFromImage';
+import { makeNYCTiles, makeSkyline } from '../art/generateNYC';
+
+export default class Preload extends Phaser.Scene {
+  constructor(){ super('Preload'); }
+  preload(){
+    this.load.image('zombie_full', 'assets/zombie_skater.png');
+  }
+  async create(){
+    makeSkyline(this);
+    makeNYCTiles(this);
+
+    // 1) crop & scale to 48x48
+    await cropAndMakeTexture(this, 'zombie_full', 'zombie_base', 48);
+    // 2) synthesize 6 frames: zombie_0..zombie_5
+    synthesizeLeanFrames(this, 'zombie_base', 'zombie');
+
+    // tiny crown if NFT
+    const c = document.createElement('canvas'); c.width=8; c.height=6;
+    const ctx = c.getContext('2d')!; ctx.imageSmoothingEnabled=false;
+    ctx.fillStyle = '#f7b51b'; [[1,5],[2,2],[3,4],[4,1],[5,3],[6,5]].forEach(([x,y])=>ctx.fillRect(x,y,1,1));
+    this.textures.addCanvas('crown8', c);
+
+    // define animations
+    this.anims.create({
+      key: 'skate',
+      frames: [...Array(6).keys()].map(i => ({ key: `zombie_${i}` })),
+      frameRate: 10, repeat: -1
+    });
+    this.anims.create({
+      key: 'trickspin',
+      frames: [...Array(6).keys()].map(i => ({ key: `zombie_${i}` })),
+      frameRate: 20, repeat: 1
+    });
+
+    this.scene.start('Game');
+  }
+}
+
+
+⸻
+
+5) Game scene: parallax, rails, obstacles, jump/trick, NFT crown
+
+src/scenes/Game.ts
+
+import Phaser from 'phaser';
+import { setupControls } from '../systems/controls';
+import { Score } from '../systems/score';
+
+export default class Game extends Phaser.Scene {
+  player!: Phaser.Physics.Arcade.Sprite;
+  ground!: Phaser.Physics.Arcade.StaticGroup;
+  rails!: Phaser.Physics.Arcade.StaticGroup;
+  obstacles!: Phaser.Physics.Arcade.StaticGroup;
+  cursors!: ReturnType<typeof setupControls>;
+  score = new Score();
+
+  private isOnRail = false;
+  private didTrickThisJump = false;
+  private nftSkin = false;
+  private crown?: Phaser.GameObjects.Image;
+
+  constructor(){ super('Game'); }
+
+  create(){
+    // NFT ownership event (from your HashPack/GraphQL pipeline)
+    window.addEventListener('NFT_OWNERSHIP', (e:any)=>{
+      this.nftSkin = !!e.detail?.owns;
+      if (this.crown) this.crown.setVisible(this.nftSkin);
+    });
+
+    // --- Parallax background
+    const sky = this.add.tileSprite(0, 20, 480, 80, 'skyline').setOrigin(0,0).setScrollFactor(0.2);
+    this.children.bringToTop(sky);
+
+    // --- Street tilemap (wide strip)
+    const map = this.make.tilemap({ tileWidth: 16, tileHeight: 16, width: 240, height: 12 });
+    const tiles = map.addTilesetImage('nyc_tiles', undefined, 16,16,0,0);
+    const layer = map.createBlankLayer('street', tiles);
+    for (let x=0;x<map.width;x++){
+      layer.putTileAt(4, x, 8);                   // sidewalk
+      layer.putTileAt(5, x, 9);                   // curb
+      layer.putTileAt((x%16===6)?1:0, x, 10);     // asphalt + lane
+      layer.putTileAt(0, x, 11);                  // asphalt
+      if (x%23===10) layer.putTileAt(3, x, 10);   // manhole
+      if (x%14===4)  layer.putTileAt(6, x, 11);   // debris
+      if ((x%40)>=20 && (x%40)<=27) layer.putTileAt(2, x, 10); // crosswalk
+    }
+
+    // --- Physics ground
+    const groundY = 11*16 - 6;
+    this.ground = this.physics.add.staticGroup();
+    const gRect = this.add.rectangle(0, groundY, 240*4, 8, 0x000000, 0);
+    this.physics.add.existing(gRect, true);
+    this.ground.add(gRect as any);
+
+    // --- Player (animated from generated frames)
+    this.player = this.physics.add.sprite(24, groundY-18, 'zombie_0');
+    this.player.play('skate');
+    this.player.setCollideWorldBounds(true);
+    this.player.setDepth(10);
+    this.player.setVelocityX(92);
+    this.player.setCircle(14, 10, 10);
+    this.physics.add.collider(this.player, this.ground);
+
+    // Crown overlay
+    this.crown = this.add.image(this.player.x, this.player.y-28, 'crown8').setOrigin(0.5,1).setVisible(false).setDepth(12);
+
+    // --- Rails & obstacles (look like GBA props)
+    this.rails = this.physics.add.staticGroup();
+    this.obstacles = this.physics.add.staticGroup();
+
+    for (let x=140; x<1200; x+=220) {
+      const rail = this.add.image(x, groundY-18, 'rail').setOrigin(0,0.5);
+      this.physics.add.existing(rail, true);
+      this.rails.add(rail as any);
+    }
+    for (let x=100; x<1200; x+=180) {
+      const ob = this.add.image(x, groundY-8, 'barricade').setOrigin(0.5,1);
+      this.physics.add.existing(ob, true);
+      this.obstacles.add(ob as any);
+    }
+
+    this.physics.add.overlap(this.player, this.rails, () => {
+      if (this.input.activePointer.isDown) {
+        this.isOnRail = true;
+        (this.player.body as Phaser.Physics.Arcade.Body).allowGravity = false;
+        this.player.setVelocityY(0);
+        this.score.addGrindTick();
+      }
+    });
+    this.physics.add.collider(this.player, this.obstacles, () => this.scene.restart());
+
+    // Controls + camera
+    this.cursors = setupControls(this);
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08, -90, 0);
+    this.cameras.main.setDeadzone(120, 80);
+
+    // HUD
+    this.add.text(2,2,'ZOMBIE SKATER – NYC APOCALYPSE',{fontFamily:'monospace',fontSize:'8px',color:'#fff'}).setDepth(20);
+  }
+
+  update(){
+    // Parallax scroll
+    const cam = this.cameras.main;
+    const bg = this.children.getByName('skyline') as Phaser.GameObjects.TileSprite;
+    if (bg) bg.tilePositionX = cam.scrollX * 0.3;
+
+    // Crown tracking
+    if (this.crown) this.crown.setPosition(this.player.x, this.player.y-28).setVisible(this.nftSkin);
+
+    // Rail release
+    if (this.isOnRail && !this.input.activePointer.isDown){
+      this.isOnRail = false;
+      (this.player.body as Phaser.Physics.Arcade.Body).allowGravity = true;
+    }
+
+    // Jump / Trick (with coyote time feel)
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    const onGround = body.blocked.down || this.isOnRail;
+
+    if (this.cursors.justTapped()){
+      if (onGround){
+        this.isOnRail = false;
+        body.allowGravity = true;
+        this.player.setVelocityY(-270);
+        this.didTrickThisJump = false;
+      } else if (!this.didTrickThisJump){
+        this.didTrickThisJump = true;
+        this.player.play('trickspin');           // quick lean loop as a fake spin
+        this.score.addTrick(120);
+      }
+    }
+
+    // Distance scoring + slow speed ramp
+    this.score.addDistance(body.velocity.x);
+    const speed = 92 + Math.min(60, Math.floor(this.time.now/10000)); // ramps over time
+    this.player.setVelocityX(speed);
+
+    // Fail if off-screen
+    if (this.player.y > 200) this.scene.restart();
+  }
+}
+
+
+⸻
+
+6) Keep your existing bits
+	•	src/systems/controls.ts and src/systems/score.ts from before are fine.
+	•	Your Option-A wallet/NFT code still fires NFT_OWNERSHIP; the crown toggles automatically.
+
+⸻
+
+7) File layout checklist
+
+assets/
+  zombie_skater.png       // your posted PNG
+src/
+  art/
+    palette.ts
+    spriteFromImage.ts
+    generateNYC.ts
+  scenes/
+    Preload.ts
+    Game.ts
+  systems/
+    controls.ts
+    score.ts
+hedera/
+  hashpack.ts
+  nftGate.ts
+
+
+⸻
+
+8) Why this reads like a GBA game (not “simple blocky”)
+	•	Tight palette and 2×2 dithering for asphalt/sidewalk → smoother ramps inside 16×16 tiles.
+	•	Parallax skyline with jagged roofs, occasional window glow, and banded sky.
+	•	Props (rail, barricade) are pixel-drawn canvases, not rectangles.
+	•	Character is your art, auto-cropped & scaled, with a lean/tilt 6-frame loop to emulate movement you’d see on GBA without needing a full hand-drawn sheet.
+
+⸻
+
+Run it
+
+npm install
+npm run dev
+
+If you want, I can also generate a small Aseprite-style spritesheet layout (idle/push/jump/land) and wire real anims.create sequences, or add NYC props (burnt car, subway entrance, lamp posts) as extra pixel canvases.
