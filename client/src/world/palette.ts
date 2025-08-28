@@ -1,17 +1,17 @@
 export const PAL = {
   // night sky
-  sky0: '#0a0f1a', sky1: '#111827', sky2: '#1a2436',
-  star: '#cbd5e1',
+  sky0: '#274b8c', sky1: '#1f3d6e', sky2: '#162b4d',     // bluer night
+  star: '#ffecb3',
 
   // skyline / ruins
-  bldg0: '#0c1b27', bldg1: '#132535', window: '#d7872f',
+  bldg0: '#0b1a2a', bldg1: '#12304a', window: '#f1a340', // warmer windows
 
   // road / sidewalk
-  asphalt0: '#2b2c33', asphalt1: '#3a3c45', crack: '#1f2026', lane: '#cfcf7a',
-  sidewalk0: '#6f6f7a', sidewalk1: '#8a8a95',
-  curbTop: '#a7a7b4', curbFace: '#5a5a65',
+  asphalt0: '#2d303b', asphalt1: '#454a57', crack: '#1c1e25', lane: '#e2e28e',
+  sidewalk0: '#757c8b', sidewalk1: '#9aa2b2',
+  curbTop: '#b9c0cf', curbFace: '#646c7a',
 
   // props
-  steel: '#5d707b', grime: '#39424b', hazard: '#f2a130', cone: '#e36b3b',
-  fence: '#2b3944'
+  steel: '#6f8391', grime: '#3f4955', hazard: '#ffb648', cone: '#ff784f',
+  fence: '#345061'
 };

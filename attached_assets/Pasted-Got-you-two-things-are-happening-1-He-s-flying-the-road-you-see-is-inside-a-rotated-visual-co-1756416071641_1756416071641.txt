@@ -1,0 +1,170 @@
+Got you—two things are happening:
+	1.	“He’s flying” → the road you see is inside a rotated visual container (for the angled look), but the physics ground is flat at y=160. Without a contact shadow that follows the tilted road, your brain reads the skater as floating even when he’s colliding.
+	2.	The art reads more NES because the palette is too dark/flat and the lighting lacks mid-tones. GBA titles use a wider, saturated palette and subtle dither/shadows.
+
+Below are surgical fixes you can paste in. They make feet feel glued to the road, add a proper GBA vibe, and keep the angled perspective you want.
+
+⸻
+
+A) Make him “stick” to the angled road (shadow + proper ground contact)
+
+1) Expose a function that tells us the visual ground Y at any world X
+
+Add this to src/world/angledStreet.ts (bottom, just before the return):
+
+// Compute the visual asphalt baseline Y for a given world X:
+// We use the lower asphalt strip's local Y inside the rotated container.
+// y(x) = group.y + (localY * cosθ) + ( (x - group.x) * sinθ )
+function visualGroundYFor(worldX: number){
+  const theta = Phaser.Math.DegToRad(group.angle);
+  const localAsphaltY = 128; // lower asphalt strip's y in the container (from code above)
+  const base = group.y + localAsphaltY * Math.cos(theta);
+  const delta = (worldX - group.x) * Math.sin(theta);
+  return base + delta;
+}
+
+Now change the existing return to include it:
+
+return { group, update, visualGroundYFor };
+
+2) Create a soft contact shadow that hugs that Y
+
+In Game.ts, add a shadow sprite and keep it under the skater each frame:
+
+// after creating this.player ...
+const shadow = this.add.ellipse(this.player.x, this.player.y + 18, 22, 6, 0x000000, 0.45)
+  .setDepth(2);
+shadow.setScrollFactor(1);
+
+// in update():
+const vx = this.player.x;
+const yVis = (this.world as any).visualGroundYFor(vx);
+shadow.setPosition(vx, yVis - 2); // tiny lift to avoid z-fighting
+shadow.scaleX = Phaser.Math.Clamp(1 - (this.player.y - (yVis - 14)) / 80, 0.6, 1.1);
+shadow.scaleY = Phaser.Math.Clamp(1 - (this.player.y - (yVis - 14)) / 80, 0.4, 1.0);
+
+3) Ensure physics ground is actually catching him
+
+Some builds end up too low/high. Replace your ground creation (where you make the static rectangle) with this, which places it exactly where the feet meet the visual baseline at the start position:
+
+// put the physics floor to match what the camera sees at x=0
+const floorY = (this.world as any).visualGroundYFor(0) - 6; // tweak -6 so board wheels touch
+const groundRect = this.add.rectangle(0, floorY, 5000, 10, 0x00ff00, 0); // transparent
+this.physics.add.existing(groundRect, true);
+(this.world as any).ground.clear(true, true); // remove old one if you used createWorld()
+(this.world as any).ground.add(groundRect as any);
+
+Tip: if you still hover or sink, nudge the - 6 value by ±2.
+
+4) Tighten the player collider to feet
+
+this.player.setSize(20, 28).setOffset(14, 18); // hitbox smaller than 48x48 canvas
+this.player.setBounce(0); // no floaty landing
+
+
+⸻
+
+B) Make it GBA (not NES): palette, light, and animation polish
+
+5) Palette lift
+
+Swap your sky and street colors to more saturated tones (GBA feel). In src/world/palette.ts:
+
+export const PAL = {
+  sky0: '#274b8c', sky1: '#1f3d6e', sky2: '#162b4d',     // bluer night
+  star: '#ffecb3',
+  bldg0: '#0b1a2a', bldg1: '#12304a', window: '#f1a340', // warmer windows
+  asphalt0: '#2d303b', asphalt1: '#454a57', crack: '#1c1e25', lane: '#e2e28e',
+  sidewalk0: '#757c8b', sidewalk1: '#9aa2b2',
+  curbTop: '#b9c0cf', curbFace: '#646c7a',
+  steel: '#6f8391', grime: '#3f4955', hazard: '#ffb648', cone: '#ff784f',
+  fence: '#345061'
+};
+
+This alone pushes it out of the NES look.
+
+6) Add a rim-light tint to the skater in air (classic handheld trick)
+
+In Game.ts, inside update():
+
+const onGround = (this.player.body as Phaser.Physics.Arcade.Body).blocked.down || this.isOnRail;
+if (onGround) {
+  this.player.clearTint();
+} else {
+  this.player.setTintFill(0x99ffcc); // faint mint rim when airborne
+}
+
+7) Proper push vs. air frames (even with synthesized frames)
+
+Switch anims depending on state:
+
+if (onGround && this.player.anims.currentAnim?.key !== 'skate') {
+  this.player.play('skate');
+}
+if (!onGround && this.player.anims.currentAnim?.key !== 'trickspin' && this.didTrickThisJump) {
+  // keep spin only while trick active; otherwise hold a neutral frame
+  this.player.setTexture('zombie_2');
+}
+
+8) Gravity/feel tweaks (GBA runner vibe)
+	•	Slightly higher gravity, slightly faster horizontal, short hop:
+
+(this.physics.world as any).gravity.y = 950;
+this.player.setVelocityX(100);
+
+	•	Add coyote time and jump buffer (quick drop-in):
+
+let coyote = 0, buffer = 0;
+const COYOTE_MS = 90, BUFFER_MS = 120;
+
+this.time.addEvent({ loop:true, delay: 16, callback: () => {
+  const body = this.player.body as Phaser.Physics.Arcade.Body;
+  if (body.blocked.down) coyote = COYOTE_MS; else coyote = Math.max(0, coyote-16);
+  buffer = Math.max(0, buffer-16);
+}});
+
+// in your input handler (when tap detected):
+buffer = BUFFER_MS;
+
+// in update(), before applying jump:
+if (buffer>0 && coyote>0){
+  buffer = 0; coyote = 0;
+  this.isOnRail = false;
+  body.allowGravity = true;
+  this.player.setVelocityY(-280);
+  this.didTrickThisJump = false;
+}
+
+
+⸻
+
+C) Parallax polish (subtle motion, not distracting)
+
+In src/world/index.ts (or where you update parallax):
+
+const t = this.time.now * 0.001;
+par.stars.tilePositionX = cameraScrollX * 0.06;
+par.skyline.tilePositionX = cameraScrollX * 0.22 + Math.sin(t*0.5)*2; // micro drift
+par.fence.tilePositionX   = cameraScrollX * 0.55;
+
+
+⸻
+
+D) Quick checklist (what to paste where)
+	•	angledStreet.ts → add visualGroundYFor() and export it.
+	•	Game.ts
+	•	Create the shadow and update its position each frame.
+	•	Recompute physics ground Y once using visualGroundYFor(0).
+	•	Tighter collider (setSize/offset), gravity 950, horizontal 100.
+	•	Rim-light tint when airborne + state-based animation.
+	•	Coyote time / jump buffer snippet.
+	•	palette.ts → replace with the brighter GBA set.
+
+⸻
+
+Why this fixes both issues
+	•	The shadow placed on the visual asphalt line is the cue your eye needs; the skater no longer “floats” even though the physics plane is flat.
+	•	The ground y calibration ensures actual collisions match what you see at the start, and the tighter collider prevents feet-through-floor illusions.
+	•	The palette and lighting add that hallmark GBA richness (saturated mids, warm lights), not NES gray/flatness.
+
+If you want, I can also ship a “baked” 240×160 PNG background set (sky, skyline, fence) plus a 32×32 tile atlas so you can turn off runtime generation and make it extra crisp on mobile.

@@ -17,5 +17,16 @@ export function buildAngledStreet(scene: Phaser.Scene){
     [asphalt1, asphalt2].forEach(s => s.tilePositionX = sp);
   };
 
-  return { group, update };
+  // Compute the visual asphalt baseline Y for a given world X:
+  // We use the lower asphalt strip's local Y inside the rotated container.
+  // y(x) = group.y + (localY * cosθ) + ( (x - group.x) * sinθ )
+  function visualGroundYFor(worldX: number){
+    const theta = Phaser.Math.DegToRad(group.angle);
+    const localAsphaltY = 128; // lower asphalt strip's y in the container (from code above)
+    const base = group.y + localAsphaltY * Math.cos(theta);
+    const delta = (worldX - group.x) * Math.sin(theta);
+    return base + delta;
+  }
+
+  return { group, update, visualGroundYFor };
 }

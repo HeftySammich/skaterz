@@ -7,6 +7,7 @@ import { createWorld } from '../../world';
 
 export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
+  private shadow!: Phaser.GameObjects.Ellipse;
   private world!: ReturnType<typeof createWorld>;
   private cursors!: ReturnType<typeof setupControls>;
   private score!: Score;
@@ -15,9 +16,15 @@ export default class Game extends Phaser.Scene {
   private isOnRail = false;
   private currentRail: any = null;
   private didTrickThisJump = false;
-  private gameSpeed = 120;
+  private gameSpeed = 100;
   private comboMultiplier = 1;
   private comboTimer = 0;
+  
+  // Jump buffer and coyote time
+  private coyoteTime = 0;
+  private jumpBuffer = 0;
+  private readonly COYOTE_MS = 90;
+  private readonly BUFFER_MS = 120;
   
   private scoreText!: BitmapText;
   private comboText!: BitmapText;
@@ -38,6 +45,9 @@ export default class Game extends Phaser.Scene {
     // Create player
     this.createPlayer();
 
+    // Setup proper physics ground that matches visual road
+    this.setupProperGround();
+
     // Setup physics collisions
     this.setupCollisions();
     
@@ -50,7 +60,39 @@ export default class Game extends Phaser.Scene {
     // Create UI
     this.createUI();
 
+    // Setup physics tweaks for GBA feel
+    this.setupGBAPhysics();
+
     console.log('Game scene created successfully with new world system');
+  }
+
+  setupProperGround() {
+    // Put the physics floor to match what the camera sees at x=0
+    const floorY = (this.world as any).visualGroundYFor(0) - 6; // tweak -6 so board wheels touch
+    const groundRect = this.add.rectangle(0, floorY, 5000, 10, 0x00ff00, 0); // transparent
+    this.physics.add.existing(groundRect, true);
+    (this.world as any).ground.clear(true, true); // remove old one if you used createWorld()
+    (this.world as any).ground.add(groundRect as any);
+  }
+
+  setupGBAPhysics() {
+    // Higher gravity for GBA runner feel
+    this.physics.world.gravity.y = 950;
+    
+    // Setup coyote time and jump buffer
+    this.time.addEvent({
+      loop: true,
+      delay: 16,
+      callback: () => {
+        const body = this.player.body as Phaser.Physics.Arcade.Body;
+        if (body.blocked.down) {
+          this.coyoteTime = this.COYOTE_MS;
+        } else {
+          this.coyoteTime = Math.max(0, this.coyoteTime - 16);
+        }
+        this.jumpBuffer = Math.max(0, this.jumpBuffer - 16);
+      }
+    });
   }
 
 
@@ -71,12 +113,21 @@ export default class Game extends Phaser.Scene {
     body.setMaxVelocity(300, 600); // Higher max velocity
     body.immovable = false;
     
+    // Tighter collider for better ground contact
+    this.player.setSize(20, 28).setOffset(14, 18); // hitbox smaller than 48x48 canvas
+    this.player.setBounce(0); // no floaty landing
+    
     // Start skating animation
     this.player.play('skate');
     
     // FORCE position update as well as velocity
     this.player.setVelocityX(this.gameSpeed);
     this.player.x += 1; // Force initial position change
+    
+    // Create contact shadow that follows the visual ground
+    this.shadow = this.add.ellipse(this.player.x, this.player.y + 18, 22, 6, 0x000000, 0.45)
+      .setDepth(2);
+    this.shadow.setScrollFactor(1);
     
     console.log('Player created at position:', this.player.x, 'Y:', this.player.y, 'with velocity:', this.gameSpeed);
   }
@@ -248,51 +299,48 @@ export default class Game extends Phaser.Scene {
 
     // Handle jump input - any touch makes zombie jump
     if (this.cursors.justTapped()) {
-      if (this.player.body!.blocked.down || this.isOnRail) {
-        // Jump from ground or rail
-        this.stopGrinding();
-        this.player.setVelocityY(-350); // Good jump height to reach rails
-        this.playSound('jump');
-        this.didTrickThisJump = false;
-        console.log('Player jumped with velocity -350 from Y:', this.player.y);
-        
-        // Keep skating animation
-        this.player.play('skate');
-      } else if (!this.didTrickThisJump) {
-        // Air trick
-        this.didTrickThisJump = true;
-        this.comboMultiplier = Math.min(this.comboMultiplier + 1, 5);
-        this.comboTimer = 3000;
-        
-        console.log('Air trick performed! Combo:', this.comboMultiplier);
-        
-        // Visual trick effect
-        this.player.play('trickspin');
-        
-        this.tweens.add({
-          targets: this.player,
-          angle: '+=360',
-          duration: 400,
-          ease: 'Power2',
-          onComplete: () => {
-            this.player.play('skate');
-          }
-        });
-        
-        this.playSound('trick');
-      }
+      this.handleJump();
+    }
+    
+    // Process jump buffer and coyote time
+    if (this.jumpBuffer > 0 && this.coyoteTime > 0) {
+      this.jumpBuffer = 0;
+      this.coyoteTime = 0;
+      this.isOnRail = false;
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      body.allowGravity = true;
+      this.player.setVelocityY(-280);
+      this.didTrickThisJump = false;
+      this.playSound('jump');
+      console.log('Player jumped with velocity -280 from Y:', this.player.y);
+    } else if (!this.didTrickThisJump) {
+      // Air trick
+      this.didTrickThisJump = true;
+      this.comboMultiplier = Math.min(this.comboMultiplier + 1, 5);
+      this.comboTimer = 3000;
+      
+      console.log('Air trick performed! Combo:', this.comboMultiplier);
+      
+      // Visual trick effect
+      this.player.play('trickspin');
+      
+      this.tweens.add({
+        targets: this.player,
+        angle: '+=360',
+        duration: 400,
+        ease: 'Power2',
+        onComplete: () => {
+          this.player.play('skate');
+        }
+      });
+      
+      this.playSound('trick');
     }
 
     // Force player to maintain horizontal velocity every frame
     if (this.player && this.player.body) {
-      // FORCE BOTH VELOCITY AND POSITION UPDATE
       this.player.setVelocityX(this.gameSpeed);
-      this.player.x += this.gameSpeed * delta / 1000; // Manual position update
-      
-      // Debug player movement every few seconds
-      if (Math.floor(time) % 2000 === 0) {
-        console.log('Position:', this.player.x, 'Velocity X:', this.player.body!.velocity.x, 'Manual move delta:', this.gameSpeed * delta / 1000);
-      }
+      this.player.x += this.gameSpeed * delta / 1000;
     }
 
     // Continuous scoring
@@ -302,8 +350,29 @@ export default class Game extends Phaser.Scene {
       this.score.addGrindTick();
     }
 
+    // Shadow tracking and rim light tinting
+    const vx = this.player.x;
+    const yVis = (this.world as any).visualGroundYFor(vx);
+    this.shadow.setPosition(vx, yVis - 2); // tiny lift to avoid z-fighting
+    this.shadow.scaleX = Phaser.Math.Clamp(1 - (this.player.y - (yVis - 14)) / 80, 0.6, 1.1);
+    this.shadow.scaleY = Phaser.Math.Clamp(1 - (this.player.y - (yVis - 14)) / 80, 0.4, 1.0);
+
+    // Rim light tint when airborne
+    const onGround = (this.player.body as Phaser.Physics.Arcade.Body).blocked.down || this.isOnRail;
+    if (onGround) {
+      this.player.clearTint();
+      if (this.player.anims.currentAnim?.key !== 'skate') {
+        this.player.play('skate');
+      }
+    } else {
+      this.player.setTintFill(0x99ffcc); // faint mint rim when airborne
+      if (!this.didTrickThisJump && this.player.anims.currentAnim?.key !== 'trickspin') {
+        this.player.setTexture('zombie_2');
+      }
+    }
+
     // Update the world (parallax, street scroll, dynamic content)
-    this.world.update(this.cameras.main.scrollX);
+    this.world.update(this.cameras.main.scrollX, time);
 
     // Increase difficulty over time
     this.gameSpeed += delta * 0.001;

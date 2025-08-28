@@ -22,21 +22,19 @@ export function createWorld(scene: Phaser.Scene){
     scene.physics.add.existing(img, true); obstacles.add(img as any);
   }
 
-  // invisible physics ground
+  // invisible physics ground - positioned to match visual street
   const ground = scene.physics.add.staticGroup();
-  const slab = scene.add.rectangle(0, 160, 3000, 10, 0x000000, 0);
-  scene.physics.add.existing(slab, true);
-  ground.add(slab as any);
 
   // expose an update hook
-  const update = (cameraScrollX:number)=>{
-    // parallax drift
-    par.stars.tilePositionX = cameraScrollX * 0.08;
-    par.skyline.tilePositionX = cameraScrollX * 0.25;
-    par.fence.tilePositionX = cameraScrollX * 0.6;
+  const update = (cameraScrollX:number, time?:number)=>{
+    // parallax drift with subtle motion
+    const t = (time || 0) * 0.001;
+    par.stars.tilePositionX = cameraScrollX * 0.06;
+    par.skyline.tilePositionX = cameraScrollX * 0.22 + Math.sin(t*0.5)*2; // micro drift
+    par.fence.tilePositionX = cameraScrollX * 0.55;
     // angled street scroll
     street.update(cameraScrollX);
   };
 
-  return { ground, rails, obstacles, update };
+  return { ground, rails, obstacles, update, visualGroundYFor: street.visualGroundYFor };
 }
