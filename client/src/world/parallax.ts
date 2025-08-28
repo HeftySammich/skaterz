@@ -3,15 +3,15 @@ import { PAL } from './palette';
 export function buildParallax(scene: Phaser.Scene){
   // Stars (tileSprite) — slow drift
   const stars = scene.add.tileSprite(0, 0, 480, 160, createStars(scene)).setOrigin(0,0);
-  stars.setScrollFactor(0.05);
+  stars.setScrollFactor(0.05).setDepth(0);
 
   // Skyline silhouettes (tileSprite)
   const skyline = scene.add.tileSprite(0, 40, 480, 80, createSkyline(scene)).setOrigin(0,0);
-  skyline.setScrollFactor(0.2);
+  skyline.setScrollFactor(0.2).setDepth(1);
 
   // Foreground chain-link fence strip for depth
   const fence = scene.add.tileSprite(0, 110, 480, 50, createFence(scene)).setOrigin(0,0);
-  fence.setScrollFactor(0.6).setAlpha(0.5);
+  fence.setScrollFactor(0.6).setAlpha(0.5).setDepth(2);
 
   return { stars, skyline, fence };
 }

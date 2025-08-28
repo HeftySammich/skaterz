@@ -12,11 +12,11 @@ function dither(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number
 
 export function buildNYCAtlas32(scene: Phaser.Scene){
   // Check if textures already exist to avoid duplication errors
-  if (scene.textures.exists('nyc32_atlas')) {
+  if (scene.textures.exists('nyc32')) {
     return;
   }
   
-  const tw=32, th=32, cols=8, rows=1;
+  const tw=32, th=32, cols=8, rows=3;
   const atlas=document.createElement('canvas'); atlas.width=cols*tw; atlas.height=rows*th;
   const g=atlas.getContext('2d')!; g.imageSmoothingEnabled=false;
 
@@ -25,7 +25,7 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
   g.strokeStyle=PAL.crack; g.lineWidth=1;
   g.beginPath(); g.moveTo(5,26); g.lineTo(16,20); g.lineTo(28,23); g.stroke();
 
-  // 1: asphalt + lane
+  // 1: asphalt w/ lane
   dither(g, 32,0,tw,th, PAL.asphalt0, PAL.asphalt1);
   g.fillStyle=PAL.lane; g.fillRect(32+15,0,2,32);
 
@@ -56,20 +56,9 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
   dither(g, 224,0,tw,th, PAL.asphalt0, PAL.asphalt1);
   g.fillStyle=PAL.hazard; for(let i=0;i<32;i+=6) g.fillRect(224+i,24,3,8);
 
-  // Register the atlas
-  scene.textures.addCanvas('nyc32_atlas', atlas);
+  scene.textures.addCanvas('nyc32', atlas);
 
-  // Slice frames into individual textures for tile use
-  const names = ['tile_asphalt','tile_lane','tile_cross','tile_manhole','tile_debris','tile_sidewalk','tile_curb','tile_hazard'];
-  const src = scene.textures.get('nyc32_atlas').getSourceImage() as HTMLCanvasElement;
-  names.forEach((name, i) => {
-    const c = document.createElement('canvas'); c.width=tw; c.height=th;
-    const ctx = c.getContext('2d')!; ctx.imageSmoothingEnabled=false;
-    ctx.drawImage(src, i*tw, 0, tw, th, 0, 0, tw, th);
-    scene.textures.addCanvas(name, c);
-  });
-
-  // --- Props (unchanged)
+  // Rails 32×8
   if (!scene.textures.exists('rail32')) {
     const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
     const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
@@ -78,6 +67,7 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
     scene.textures.addCanvas('rail32', rail);
   }
 
+  // Barricade 32×24
   if (!scene.textures.exists('barricade32')) {
     const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
     const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
@@ -86,6 +76,7 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
     scene.textures.addCanvas('barricade32', bar);
   }
 
+  // Cone upright 16×24
   if (!scene.textures.exists('cone16x24')) {
     const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
     const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
@@ -94,6 +85,7 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
     scene.textures.addCanvas('cone16x24', cone);
   }
 
+  // Knocked-over cone 24×12
   if (!scene.textures.exists('cone_knock24x12')) {
     const coneK=document.createElement('canvas'); coneK.width=24; coneK.height=12;
     const ck=coneK.getContext('2d')!; ck.imageSmoothingEnabled=false;
@@ -102,6 +94,7 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
     scene.textures.addCanvas('cone_knock24x12', coneK);
   }
 
+  // Pothole 32×12
   if (!scene.textures.exists('pothole32x12')) {
     const hole=document.createElement('canvas'); hole.width=32; hole.height=12;
     const hc=hole.getContext('2d')!; hc.imageSmoothingEnabled=false;
@@ -110,6 +103,7 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
     scene.textures.addCanvas('pothole32x12', hole);
   }
 
+  // Broken wood block 32×14
   if (!scene.textures.exists('woodblock32x14')) {
     const wood=document.createElement('canvas'); wood.width=32; wood.height=14;
     const wc=wood.getContext('2d')!; wc.imageSmoothingEnabled=false;

@@ -2,27 +2,28 @@
 // Physics ground remains an invisible static rectangle at Y=160.
 export function buildAngledStreet(scene: Phaser.Scene){
   const group = scene.add.container(0, 80);
-  group.angle = -7;                 // angled like the reference
+  group.angle = -7;
   group.setScrollFactor(1);
+  group.setDepth(5); // street above parallax (which sits at depth 0–2)
 
-  // Tile layers - use simple asphalt for now since frame indexing isn't working
-  const addStrip = (y: number, alpha=1) => {
-    const s = scene.add.tileSprite(-40, y, 800, 32, 'nyc32').setOrigin(0,0).setAlpha(alpha);
+  const addStrip = (texKey: string, y: number, alpha=1) => {
+    const s = scene.add.tileSprite(-40, y, 800, 32, texKey).setOrigin(0,0).setAlpha(alpha);
     s.setScrollFactor(1); group.add(s); return s;
   };
 
-  const sidewalk = addStrip(32);
-  const curb     = addStrip(64);
-  const asphalt1 = addStrip(96);
-  const asphalt2 = addStrip(128);
+  // swapped to the per-tile textures:
+  const sidewalk = addStrip('tile_sidewalk', 32);
+  const curb     = addStrip('tile_curb',     64);
+  const asphalt1 = addStrip('tile_asphalt',  96);
+  const asphalt2 = addStrip('tile_asphalt', 128);
 
-  const lanes  = addStrip(96, 0.7);
-  const cross  = addStrip(96, 0.25);
-  const debris = addStrip(128, 0.7);
-  const holes  = addStrip(96, 0.9);
+  const lanes    = addStrip('tile_lane',     96, 0.7);
+  const cross    = addStrip('tile_cross',    96, 0.25);
+  const debris   = addStrip('tile_debris',  128, 0.7);
+  const manhole  = addStrip('tile_manhole',  96, 0.9);
 
   const update = (scrollX:number)=>{
-    [sidewalk, curb, asphalt1, asphalt2, lanes, cross, debris, holes]
+    [sidewalk, curb, asphalt1, asphalt2, lanes, cross, debris, manhole]
       .forEach(s => s.tilePositionX = scrollX);
   };
 

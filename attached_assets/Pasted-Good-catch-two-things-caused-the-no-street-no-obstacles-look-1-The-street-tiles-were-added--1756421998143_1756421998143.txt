@@ -1,0 +1,213 @@
+Good catch — two things caused the “no street / no obstacles” look:
+	1.	The street tiles were added as one canvas texture (nyc32) but never sliced into frames.
+A TileSprite can only repeat a single frame, so without frames it was drawing the full sheet (which looked like empty space), and every strip using 'nyc32' ended up blank.
+	2.	Depth ordering: even when something did render, the background could sit on top.
+
+Here’s a clean patch that fixes both. It also keeps your angled road + parallax exactly as before.
+
+⸻
+
+Patch 1 — Slice the atlas into real tile textures
+
+Replace your src/world/tiles32.ts with this version. It still draws the atlas, and it slices eight 32×32 sub-textures you can use directly in TileSprites:
+
+// src/world/tiles32.ts
+import { PAL } from './palette';
+
+function hex(s:string){ const v=parseInt(s.slice(1),16); return [(v>>16)&255,(v>>8)&255,(v)&255]; }
+function dither(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,a:string,b:string){
+  const A=hex(a),B=hex(b), img=ctx.createImageData(w,h);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){
+    const idx=(j*w+i)*4, bit=((i&1)^(j&1))?1:0, C=bit?A:B;
+    img.data[idx]=C[0]; img.data[idx+1]=C[1]; img.data[idx+2]=C[2]; img.data[idx+3]=255;
+  }
+  ctx.putImageData(img,x,y);
+}
+
+export function buildNYCAtlas32(scene: Phaser.Scene){
+  const tw=32, th=32, cols=8, rows=1;
+  const atlas=document.createElement('canvas'); atlas.width=cols*tw; atlas.height=rows*th;
+  const g=atlas.getContext('2d')!; g.imageSmoothingEnabled=false;
+
+  // 0: asphalt A
+  dither(g, 0,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.strokeStyle=PAL.crack; g.lineWidth=1;
+  g.beginPath(); g.moveTo(5,26); g.lineTo(16,20); g.lineTo(28,23); g.stroke();
+
+  // 1: asphalt + lane
+  dither(g, 32,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.lane; g.fillRect(32+15,0,2,32);
+
+  // 2: crosswalk
+  dither(g, 64,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.lane; for(let x=-10;x<32;x+=7) g.fillRect(64+x,0,4,32);
+
+  // 3: manhole
+  dither(g, 96,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle='#404650'; g.fillRect(96+8,8,16,16);
+  g.fillStyle='#2d323a'; for(let x=96+10;x<96+22;x+=3) g.fillRect(x,12,1,8);
+
+  // 4: debris / grime
+  dither(g, 128,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle='#cfcfd4'; g.fillRect(128+6,23,5,3); g.fillRect(128+23,14,3,2);
+  g.fillStyle=PAL.grime; g.fillRect(128+18,28,8,2);
+
+  // 5: sidewalk
+  dither(g, 160,0,tw,th, PAL.sidewalk0, PAL.sidewalk1);
+  g.strokeStyle = '#4c4c56'; g.strokeRect(160.5,0.5,tw-1,th-1);
+  g.beginPath(); g.moveTo(160,16); g.lineTo(192,16); g.stroke();
+
+  // 6: curb
+  dither(g, 192,0,tw,th, PAL.curbTop, PAL.sidewalk1);
+  g.fillStyle=PAL.curbFace; g.fillRect(192, 22, 32, 10);
+
+  // 7: hazard edge
+  dither(g, 224,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.hazard; for(let i=0;i<32;i+=6) g.fillRect(224+i,24,3,8);
+
+  // Register the atlas
+  scene.textures.addCanvas('nyc32_atlas', atlas);
+
+  // Slice frames into individual textures for tile use
+  const names = ['tile_asphalt','tile_lane','tile_cross','tile_manhole','tile_debris','tile_sidewalk','tile_curb','tile_hazard'];
+  const src = scene.textures.get('nyc32_atlas').getSourceImage() as HTMLCanvasElement;
+  names.forEach((name, i) => {
+    const c = document.createElement('canvas'); c.width=tw; c.height=th;
+    const ctx = c.getContext('2d')!; ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(src, i*tw, 0, tw, th, 0, 0, tw, th);
+    scene.textures.addCanvas(name, c);
+  });
+
+  // --- Props (unchanged)
+  const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
+  const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
+  r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
+  [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
+  scene.textures.addCanvas('rail32', rail);
+
+  const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
+  const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
+  dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
+  bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
+  scene.textures.addCanvas('barricade32', bar);
+
+  const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
+  const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
+  cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8);
+  cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
+  scene.textures.addCanvas('cone16x24', cone);
+
+  const coneK=document.createElement('canvas'); coneK.width=24; coneK.height=12;
+  const ck=coneK.getContext('2d')!; ck.imageSmoothingEnabled=false;
+  ck.fillStyle=PAL.cone; ck.fillRect(2,6,16,5); ck.fillRect(16,3,6,3);
+  ck.fillStyle=PAL.hazard; ck.fillRect(4,7,12,2);
+  scene.textures.addCanvas('cone_knock24x12', coneK);
+
+  const hole=document.createElement('canvas'); hole.width=32; hole.height=12;
+  const hc=hole.getContext('2d')!; hc.imageSmoothingEnabled=false;
+  hc.fillStyle='#15171c'; hc.beginPath(); hc.ellipse(16,6,14,5,0,0,Math.PI*2); hc.fill();
+  hc.strokeStyle='#262a32'; hc.stroke();
+  scene.textures.addCanvas('pothole32x12', hole);
+
+  const wood=document.createElement('canvas'); wood.width=32; wood.height=14;
+  const wc=wood.getContext('2d')!; wc.imageSmoothingEnabled=false;
+  wc.fillStyle='#6b3f28'; wc.fillRect(0,6,32,8);
+  wc.fillStyle='#402a1f'; wc.fillRect(0,10,32,2);
+  wc.fillStyle='#814d34'; wc.fillRect(4,4,8,2); wc.fillRect(18,5,7,2);
+  scene.textures.addCanvas('woodblock32x14', wood);
+}
+
+
+⸻
+
+Patch 2 — Use the sliced textures in the angled street & set depths
+
+Update src/world/angledStreet.ts so each strip uses a real 32×32 texture, and so the street renders in front of the parallax:
+
+// src/world/angledStreet.ts
+export function buildAngledStreet(scene: Phaser.Scene){
+  const group = scene.add.container(0, 80);
+  group.angle = -7;
+  group.setScrollFactor(1);
+  group.setDepth(5); // <-- street above parallax (which sits at depth 0–2)
+
+  const addStrip = (texKey: string, y: number, alpha=1) => {
+    const s = scene.add.tileSprite(-40, y, 800, 32, texKey).setOrigin(0,0).setAlpha(alpha);
+    s.setScrollFactor(1); group.add(s); return s;
+  };
+
+  // swapped to the per-tile textures:
+  const sidewalk = addStrip('tile_sidewalk', 32);
+  const curb     = addStrip('tile_curb',     64);
+  const asphalt1 = addStrip('tile_asphalt',  96);
+  const asphalt2 = addStrip('tile_asphalt', 128);
+
+  const lanes    = addStrip('tile_lane',     96, 0.7);
+  const cross    = addStrip('tile_cross',    96, 0.25);
+  const debris   = addStrip('tile_debris',  128, 0.7);
+  const manhole  = addStrip('tile_manhole',  96, 0.9);
+
+  const update = (scrollX:number)=>{
+    [sidewalk, curb, asphalt1, asphalt2, lanes, cross, debris, manhole]
+      .forEach(s => s.tilePositionX = scrollX);
+  };
+
+  function visualGroundYFor(worldX: number){
+    const theta = Phaser.Math.DegToRad(group.angle);
+    const localY = 128; // lower asphalt strip Y in container
+    const base = group.y + localY * Math.cos(theta);
+    const delta = (worldX - group.x) * Math.sin(theta);
+    return base + delta;
+  }
+
+  return { group, update, visualGroundYFor };
+}
+
+
+⸻
+
+Patch 3 — Background depths (so it stays behind)
+
+In src/world/parallax.ts set explicit low depths:
+
+export function buildParallax(scene: Phaser.Scene){
+  const stars   = scene.add.tileSprite(0, 0, 480, 160, createStars(scene)).setOrigin(0,0).setScrollFactor(0.05).setDepth(0);
+  const skyline = scene.add.tileSprite(0,40, 480, 80,  createSkyline(scene)).setOrigin(0,0).setScrollFactor(0.2 ).setDepth(1);
+  const fence   = scene.add.tileSprite(0,110,480, 50,  createFence(scene)).setOrigin(0,0).setScrollFactor(0.6 ).setDepth(2).setAlpha(0.5);
+  return { stars, skyline, fence };
+}
+
+
+⸻
+
+Patch 4 — Obstacles & rails depth
+
+You already add obstacles/rails in the spawner and world index. For visibility, give them higher depth than the road:
+
+// wherever you create them
+img.setDepth(7); // obstacles
+// rails:
+img.setDepth(6);
+
+(Your earlier spawner code already does that; keep it.)
+
+⸻
+
+Quick sanity checklist
+	•	Make sure you’re calling buildNYCAtlas32(this) before buildAngledStreet(this) (you are, via createWorld()).
+	•	Re-run dev server after edits: npm run dev.
+	•	If you still see stars cutting through the street, add this once after you create the player:
+
+this.player.setDepth(10);
+
+
+	•	If nothing renders, double-check file paths/exports and that createWorld(this) is invoked in your Game.create().
+
+⸻
+
+Once these changes are in, you should see:
+	•	a solid angled road (sidewalk/curb/asphalt),
+	•	the NYC skyline and stars behind it, and
+	•	rails & hazards spawning in front.
+
+Want me to add a half-pipe ramp piece next (with a small vertical impulse) and a grind multiplier that ramps while you hold?
