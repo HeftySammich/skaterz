@@ -99,16 +99,16 @@ export default class Game extends Phaser.Scene {
     // Create much longer rails - 4 times longer for easier grinding
     const railLength = 128; // 4 times longer than original 32px
     
-    // Create multiple rail segments to make a long rail - much lower for easy access
+    // Create multiple rail segments to make a long rail - positioned for visible grinding
     for (let i = 0; i < 4; i++) {
-      const rail = this.add.image(x + (i * 32), 105, 'rail'); // Lowered from 80 to 105
+      const rail = this.add.image(x + (i * 32), 110, 'rail'); // Lowered to 110 for better visual grinding
       rail.setOrigin(0.5, 0.5);
       rail.setTint(0xff00ff); // Keep magenta tint for debugging
       this.physics.add.existing(rail, true);
       this.rails.add(rail as any);
     }
     
-    console.log('Created long rail at position:', x, 'to', x + railLength, 'at Y: 105');
+    console.log('Created long rail at position:', x, 'to', x + railLength, 'at Y: 110');
     this.lastRailX = x + railLength;
   }
 
@@ -189,11 +189,11 @@ export default class Game extends Phaser.Scene {
       
       if (rail) {
         const railY = railGameObject ? railGameObject.y : (rail.gameObject as any).y;
-        // Lock player to rail position and remove gravity
-        this.player.y = railY - 15; // Position above rail
+        // Position player visibly on top of the rail
+        this.player.y = railY - 25; // Position clearly above rail
         this.player.setVelocityY(0);
         this.player.setGravityY(0);
-        console.log('Player locked on rail at Y:', this.player.y);
+        console.log('Player positioned on top of rail. Rail Y:', railY, 'Player Y:', this.player.y);
       }
 
       // Play grind sound
@@ -280,7 +280,7 @@ export default class Game extends Phaser.Scene {
         const railBounds = (body.gameObject as any).getBounds();
         
         // Add some tolerance to prevent rapid on/off grinding
-        const tolerance = 10;
+        const tolerance = 15;
         return Phaser.Geom.Rectangle.Overlaps(
           new Phaser.Geom.Rectangle(
             playerBounds.x - tolerance, 
