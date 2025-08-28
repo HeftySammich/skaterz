@@ -1,0 +1,329 @@
+Short answer: you don’t have to make any art first.
+I can give you a drop-in, code-generated GBA-style world that (a) looks good, (b) has real parallax, and (c) is angled like your reference. You can swap any piece with hand-drawn PNGs later—same sizes, same keys.
+
+Below is a complete “world pack” for your current Phaser 3 / TS build (32×32 tiles, ground at Y=160, rails at Y=110). It renders:
+	•	a multi-layer parallax (stars → skyline → foreground fence) that moves subtly,
+	•	a NYC apocalypse street (dithered asphalt, curb, sidewalk, crosswalks, manholes, debris),
+	•	an angled road look (oblique/GBA-ish) without breaking arcade physics, and
+	•	nicer rails/obstacles that match the style.
+
+Keep your existing player + NFT logic. Just add these files and wire them in where shown.
+
+⸻
+
+1) Palette (tight, GBA-ish)
+
+src/world/palette.ts
+
+export const PAL = {
+  // night sky
+  sky0: '#0a0f1a', sky1: '#111827', sky2: '#1a2436',
+  star: '#cbd5e1',
+
+  // skyline / ruins
+  bldg0: '#0c1b27', bldg1: '#132535', window: '#d7872f',
+
+  // road / sidewalk
+  asphalt0: '#2b2c33', asphalt1: '#3a3c45', crack: '#1f2026', lane: '#cfcf7a',
+  sidewalk0: '#6f6f7a', sidewalk1: '#8a8a95',
+  curbTop: '#a7a7b4', curbFace: '#5a5a65',
+
+  // props
+  steel: '#5d707b', grime: '#39424b', hazard: '#f2a130', cone: '#e36b3b',
+  fence: '#2b3944'
+};
+
+
+⸻
+
+2) Pretty 32×32 tiles (dithered + weathered) and props
+
+src/world/tiles32.ts
+
+import { PAL } from './palette';
+
+function hex(s:string){ const v=parseInt(s.slice(1),16); return [(v>>16)&255,(v>>8)&255,(v)&255]; }
+function dither(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,a:string,b:string){
+  const A=hex(a),B=hex(b), img=ctx.createImageData(w,h);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){
+    const idx=(j*w+i)*4, bit=((i&1)^(j&1))?1:0, C=bit?A:B;
+    img.data[idx]=C[0]; img.data[idx+1]=C[1]; img.data[idx+2]=C[2]; img.data[idx+3]=255;
+  }
+  ctx.putImageData(img,x,y);
+}
+
+export function buildNYCAtlas32(scene: Phaser.Scene){
+  const tw=32, th=32, cols=8, rows=3;
+  const atlas=document.createElement('canvas'); atlas.width=cols*tw; atlas.height=rows*th;
+  const g=atlas.getContext('2d')!; g.imageSmoothingEnabled=false;
+
+  // 0: asphalt A
+  dither(g, 0,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.strokeStyle=PAL.crack; g.lineWidth=1;
+  g.beginPath(); g.moveTo(5,26); g.lineTo(16,20); g.lineTo(28,23); g.stroke();
+
+  // 1: asphalt with lane paint
+  dither(g, 32,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.lane; g.fillRect(32+15,0,2,32);
+
+  // 2: crosswalk
+  dither(g, 64,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.lane; for(let x=-10;x<32;x+=7) g.fillRect(64+x,0,4,32);
+
+  // 3: manhole
+  dither(g, 96,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle='#404650'; g.fillRect(96+8,8,16,16);
+  g.fillStyle='#2d323a'; for(let x=96+10;x<96+22;x+=3) g.fillRect(x,12,1,8);
+
+  // 4: debris
+  dither(g, 128,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle='#cfcfd4'; g.fillRect(128+6,23,5,3); g.fillRect(128+23,14,3,2);
+  g.fillStyle=PAL.grime; g.fillRect(128+18,28,8,2);
+
+  // 5: sidewalk slab
+  dither(g, 160,0,tw,th, PAL.sidewalk0, PAL.sidewalk1);
+  g.strokeStyle = '#4c4c56'; g.strokeRect(160.5,0.5,tw-1,th-1);
+  g.beginPath(); g.moveTo(160,16); g.lineTo(192,16); g.stroke();
+
+  // 6: curb
+  dither(g, 192,0,tw,th, PAL.curbTop, PAL.sidewalk1);
+  g.fillStyle=PAL.curbFace; g.fillRect(192, 22, 32, 10);
+
+  // 7: hazard edge
+  dither(g, 224,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.hazard; for(let i=0;i<32;i+=6) g.fillRect(224+i, 24, 3, 8);
+
+  // row 2 props (rails / cones)
+  // Rails 32×8 (two stacked for 32×16 tile cell)
+  const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
+  const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
+  r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
+  [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
+  scene.textures.addCanvas('rail32', rail);
+
+  // Barricade 32×24
+  const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
+  const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
+  dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
+  bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
+  scene.textures.addCanvas('barricade32', bar);
+
+  // Cone 16×24 (two per tile)
+  const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
+  const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
+  cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8); cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
+  scene.textures.addCanvas('cone16x24', cone);
+
+  // Put sheet into textures
+  scene.textures.addCanvas('nyc32', atlas);
+}
+
+
+⸻
+
+3) Parallax + skyline + stars
+
+src/world/parallax.ts
+
+import { PAL } from './palette';
+
+export function buildParallax(scene: Phaser.Scene){
+  // Stars (tileSprite) — slow drift
+  const stars = scene.add.tileSprite(0, 0, 480, 160, createStars(scene)).setOrigin(0,0);
+  stars.setScrollFactor(0.05);
+
+  // Skyline silhouettes (tileSprite)
+  const skyline = scene.add.tileSprite(0, 40, 480, 80, createSkyline(scene)).setOrigin(0,0);
+  skyline.setScrollFactor(0.2);
+
+  // Foreground chain-link fence strip for depth
+  const fence = scene.add.tileSprite(0, 110, 480, 50, createFence(scene)).setOrigin(0,0);
+  fence.setScrollFactor(0.6).setAlpha(0.5);
+
+  return { stars, skyline, fence };
+}
+
+function createStars(scene: Phaser.Scene){
+  const w=240,h=160,c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
+  // vertical bands
+  for(let y=0;y<h;y++){
+    const t=y/h; g.fillStyle=t<.33?PAL.sky0:t<.66?PAL.sky1:PAL.sky2; g.fillRect(0,y,w,1);
+  }
+  // scatter stars
+  g.fillStyle = PAL.star;
+  for(let i=0;i<90;i++){ const x=Math.random()*w|0, y=Math.random()*h|0; if (y>20) g.fillRect(x,y,1,1); }
+  const key='starsTex'; scene.textures.addCanvas(key,c); return key;
+}
+
+function createSkyline(scene: Phaser.Scene){
+  const w=240,h=80,c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
+  g.fillStyle='transparent'; g.clearRect(0,0,w,h);
+  const R=(a:number,b:number)=>Math.floor(a+Math.random()*(b-a));
+  for(let i=0;i<12;i++){
+    const bw=R(16,36), bh=R(18,60), bx=R(-10,w-10), by=h-bh;
+    g.fillStyle=PAL.bldg0; g.fillRect(bx,by,bw,bh);
+    // broken roof
+    g.clearRect(bx+R(2,bw-6), by-2, R(2,4), 3);
+    // windows
+    g.fillStyle=PAL.window;
+    for(let yy=by+6; yy<by+bh-4; yy+=6)
+      for(let xx=bx+4; xx<bx+bw-4; xx+=6)
+        if(Math.random()<0.12) g.fillRect(xx,yy,1,2);
+  }
+  const key='skylineTex'; scene.textures.addCanvas(key,c); return key;
+}
+
+function createFence(scene: Phaser.Scene){
+  const w=240,h=50,c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
+  g.fillStyle = PAL.fence;  // diamond mesh
+  for(let y=0;y<h;y+=4) for(let x=((y/4)&1)*2; x<w; x+=4) g.fillRect(x,y,1,1);
+  const key='fenceTex'; scene.textures.addCanvas(key,c); return key;
+}
+
+
+⸻
+
+4) Angled street illusion (visual only; physics stays axis-aligned)
+
+src/world/angledStreet.ts
+
+// Renders a wide visual street/sidewalk strip, then rotates it slightly.
+// Physics ground remains an invisible static rectangle at Y=160.
+export function buildAngledStreet(scene: Phaser.Scene){
+  const group = scene.add.container(0, 80); // draw area anchor
+  group.angle = -7;                          // <- "angled like this"
+  group.setScrollFactor(1);
+
+  // Build 3 stacked tile strips: sidewalk, curb, asphalt (all tileSprites)
+  const sidewalk = scene.add.tileSprite(-40, 32, 800, 32, 'nyc32', 5).setOrigin(0,0); // tile index 5
+  const curb     = scene.add.tileSprite(-40, 64, 800, 32, 'nyc32', 6).setOrigin(0,0);
+  const asphalt1 = scene.add.tileSprite(-40, 96, 800, 32, 'nyc32', 0).setOrigin(0,0);
+  const asphalt2 = scene.add.tileSprite(-40,128, 800, 32, 'nyc32', 0).setOrigin(0,0);
+
+  [sidewalk, curb, asphalt1, asphalt2].forEach(s => { s.setScrollFactor(1); group.add(s); });
+
+  // decorative lanes / crosswalk / manholes sprinkled in front layer
+  const lanes = scene.add.tileSprite(-40, 96, 800, 32, 'nyc32', 1).setOrigin(0,0).setAlpha(0.7);
+  const cross = scene.add.tileSprite(-40, 96, 800, 32, 'nyc32', 2).setOrigin(0,0).setAlpha(0.25);
+  const debris= scene.add.tileSprite(-40,128, 800, 32, 'nyc32', 4).setOrigin(0,0).setAlpha(0.7);
+  const holes = scene.add.tileSprite(-40, 96, 800, 32, 'nyc32', 3).setOrigin(0,0).setAlpha(0.9);
+  [lanes,cross,debris,holes].forEach(s => { s.setScrollFactor(1); group.add(s); });
+
+  // Update function to keep infinite scroll feeling
+  const update = (scrollX:number)=>{
+    const sp = scrollX;  // same speed as world
+    [sidewalk, curb, asphalt1, asphalt2, lanes, cross, debris, holes].forEach(s => s.tilePositionX = sp);
+  };
+
+  return { group, update };
+}
+
+
+⸻
+
+5) World bootstrap (one call from your Game scene)
+
+src/world/index.ts
+
+import { buildNYCAtlas32 } from './tiles32';
+import { buildParallax } from './parallax';
+import { buildAngledStreet } from './angledStreet';
+
+export function createWorld(scene: Phaser.Scene){
+  buildNYCAtlas32(scene);
+  const par = buildParallax(scene);
+  const street = buildAngledStreet(scene);
+
+  // Pretty rails and obstacles that match visuals but keep physics simple
+  const rails = scene.physics.add.staticGroup();
+  for (let x=140; x<2000; x+=220) {
+    const rImg = scene.add.image(x, 110, 'rail32').setOrigin(0.5,1).setDepth(5);
+    scene.physics.add.existing(rImg, true); rails.add(rImg as any);
+  }
+
+  const obstacles = scene.physics.add.staticGroup();
+  for (let x=100; x<2000; x+=260) {
+    const type = (x/260)%2 ? 'barricade32':'cone16x24';
+    const img = scene.add.image(x, 160, type).setOrigin(0.5,1).setDepth(6);
+    scene.physics.add.existing(img, true); obstacles.add(img as any);
+  }
+
+  // invisible physics ground
+  const ground = scene.physics.add.staticGroup();
+  const slab = scene.add.rectangle(0, 160, 3000, 10, 0x000000, 0);
+  scene.physics.add.existing(slab, true);
+  ground.add(slab as any);
+
+  // expose an update hook
+  const update = (cameraScrollX:number)=>{
+    // parallax drift
+    par.stars.tilePositionX = cameraScrollX * 0.08;
+    par.skyline.tilePositionX = cameraScrollX * 0.25;
+    par.fence.tilePositionX = cameraScrollX * 0.6;
+    // angled street scroll
+    street.update(cameraScrollX);
+  };
+
+  return { ground, rails, obstacles, update };
+}
+
+
+⸻
+
+6) Use it in your scene (replace only the world bits)
+
+In Game.ts:
+
+import { createWorld } from '../world';
+
+export default class Game extends Phaser.Scene {
+  // ...
+  world!: ReturnType<typeof createWorld>;
+
+  create(){
+    // build the world visuals + physics
+    this.world = createWorld(this);
+
+    // player + physics like you already have...
+    // this.player = this.physics.add.sprite(...)
+
+    // collisions:
+    this.physics.add.collider(this.player, this.world.ground);
+    this.physics.add.overlap(this.player, this.world.rails, /* grind handler */);
+    this.physics.add.collider(this.player, this.world.obstacles, () => this.scene.restart());
+
+    // camera follow as before
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08, -90, 0);
+  }
+
+  update(){
+    this.world.update(this.cameras.main.scrollX);
+    // keep your jump/trick logic here
+  }
+}
+
+
+⸻
+
+Do you need to make assets?
+
+No. This pack programmatically builds everything, including the angled road look and parallax. If you later want handcrafted art:
+	•	Keep 32×32 tiles for ground/sidewalk/curb.
+	•	Export a single PNG strip (atlas) with tiles in this order so you can drop it in place of nyc32:
+0 asphaltA | 1 asphaltLane | 2 crosswalk | 3 manhole | 4 debris | 5 sidewalk | 6 curb | 7 hazard edge
+	•	Rails: 32×8 PNG (top bar), obstacles: 32×24 barricade, 16×24 cone.
+	•	Backgrounds: 240×160 tileable for stars, 240×80 for skyline, 240×50 for fence.
+
+I can also output these generated textures to real PNG files (via toDataURL) if you want to inspect/edit them in Aseprite.
+
+⸻
+
+Why this looks good (and fast)
+	•	Dithering and limited palette → GBA vibe instead of flat blocks.
+	•	3 parallax layers with different scroll factors → subtle depth even at 240×160.
+	•	Angled street via rotated visual container → the camera reads the scene like your reference while physics stays reliable.
+
+If you want the parallax to sway a bit (wind), I can add a tiny vertical sine wobble to the skyline/fence, and I can give you optional burnt cars / subway entrance / lamp posts as extra props next.

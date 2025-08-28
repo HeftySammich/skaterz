@@ -3,11 +3,11 @@ import { setupControls } from '../systems/controls';
 import { Score } from '../systems/score';
 import { ObstacleManager } from '../systems/obstacles';
 import { BitmapText } from '../utils/BitmapText';
+import { createWorld } from '../../world';
 
 export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
-  private ground!: Phaser.Physics.Arcade.StaticGroup;
-  private rails!: Phaser.Physics.Arcade.StaticGroup;
+  private world!: ReturnType<typeof createWorld>;
   private cursors!: ReturnType<typeof setupControls>;
   private score!: Score;
   private obstacleManager!: ObstacleManager;
@@ -16,7 +16,6 @@ export default class Game extends Phaser.Scene {
   private currentRail: any = null;
   private didTrickThisJump = false;
   private gameSpeed = 120;
-  private lastRailX = 0;
   private comboMultiplier = 1;
   private comboTimer = 0;
   
@@ -33,14 +32,8 @@ export default class Game extends Phaser.Scene {
     this.score = new Score();
     this.obstacleManager = new ObstacleManager(this);
 
-    // Create parallax background
-    this.createBackground();
-
-    // Create ground
-    this.createGround();
-
-    // Create rails
-    this.createRails();
+    // Create the complete world (replaces background, ground, rails)
+    this.world = createWorld(this);
 
     // Create player
     this.createPlayer();
@@ -49,7 +42,7 @@ export default class Game extends Phaser.Scene {
     this.setupCollisions();
     
     // Setup camera to follow player immediately
-    this.cameras.main.startFollow(this.player, true, 0.05, 0);
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08, -90, 0);
 
     // Setup controls
     this.cursors = setupControls(this);
@@ -57,61 +50,10 @@ export default class Game extends Phaser.Scene {
     // Create UI
     this.createUI();
 
-    // Audio is optional for this demo
-
-    console.log('Game scene created successfully');
+    console.log('Game scene created successfully with new world system');
   }
 
-  createBackground() {
-    // HD NYC apocalypse skyline background
-    const skyline = this.add.tileSprite(0, 20, 480, 80, 'skyline');
-    skyline.setOrigin(0, 0);
-    skyline.setScrollFactor(0.2); // Parallax effect
-  }
 
-  createGround() {
-    this.ground = this.physics.add.staticGroup();
-    
-    // Use NYC tiles for HD street
-    const streetHeight = 64; // Bottom 64 pixels for HD street
-    const streetStartY = 160 - streetHeight; // Start street at Y=96
-    
-    // Create multiple rows of HD street tiles (32x32) to fill the bottom
-    for (let x = 0; x < 400; x += 32) {
-      for (let y = streetStartY; y < 160; y += 32) {
-        const tileIndex = Math.floor(Math.random() * 8); // Random tile from sheet
-        const tile = this.ground.create(x, y, 'nyc_tiles');
-        tile.setOrigin(0, 0);
-        tile.refreshBody();
-      }
-    }
-  }
-
-  createRails() {
-    this.rails = this.physics.add.staticGroup();
-    this.lastRailX = 180;
-    
-    // Create initial long rails with more spacing
-    this.createRail(this.lastRailX);
-    this.createRail(this.lastRailX + 300); // More space between long rails
-  }
-
-  createRail(x: number) {
-    // Create much longer rails - 4 times longer for easier grinding
-    const railLength = 128; // 4 times longer than original 32px
-    
-    // Create multiple rail segments to make a long rail - positioned for visible grinding
-    for (let i = 0; i < 4; i++) {
-      const rail = this.add.image(x + (i * 32), 110, 'rail'); // Lowered to 110 for better visual grinding
-      rail.setOrigin(0.5, 0.5);
-      rail.setTint(0xff00ff); // Keep magenta tint for debugging
-      this.physics.add.existing(rail, true);
-      this.rails.add(rail as any);
-    }
-    
-    console.log('Created long rail at position:', x, 'to', x + railLength, 'at Y: 110');
-    this.lastRailX = x + railLength;
-  }
 
   createPlayer() {
     // Use the first animated frame as the sprite - position lower for easier rail access
@@ -141,7 +83,7 @@ export default class Game extends Phaser.Scene {
 
   setupCollisions() {
     // Ground collision with process callback to allow horizontal movement
-    this.physics.add.collider(this.player, this.ground, (player: any, ground: any) => {
+    this.physics.add.collider(this.player, this.world.ground, (player: any, ground: any) => {
       if (this.didTrickThisJump && this.comboTimer > 0) {
         // Successful trick landing
         this.score.addTrick(50 * this.comboMultiplier);
@@ -154,14 +96,20 @@ export default class Game extends Phaser.Scene {
       return true;
     });
 
-    // Rail overlap for automatic grinding - only start once per rail
-    this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      // Auto-grind when player first touches a rail (only log once)
+    // Rail overlap for automatic grinding
+    this.physics.add.overlap(this.player, this.world.rails, (player: any, rail: any) => {
+      // Auto-grind when player first touches a rail
       if (!this.isOnRail) {
         console.log('Player touched rail - starting auto-grind! Rail Y:', rail.y, 'Player Y:', player.y);
         this.startGrinding(rail);
-        this.currentRail = rail; // Track which rail we're on
+        this.currentRail = rail;
       }
+    });
+
+    // Obstacle collision
+    this.physics.add.collider(this.player, this.world.obstacles, () => {
+      console.log('Player hit obstacle - game over');
+      this.gameOver();
     });
   }
 
@@ -282,7 +230,7 @@ export default class Game extends Phaser.Scene {
       if (playerX > railX + railWidth + 50) { // Give some buffer
         // Check if there's another rail nearby
         const nextRail = this.physics.world.bodies.entries.find(body => {
-          if (!this.rails.contains(body.gameObject)) return false;
+          if (!this.world.rails.contains(body.gameObject)) return false;
           const rail = body.gameObject as any;
           return Math.abs(rail.x - playerX) < 100 && Math.abs(rail.y - this.currentRail.y) < 20;
         });
@@ -354,11 +302,8 @@ export default class Game extends Phaser.Scene {
       this.score.addGrindTick();
     }
 
-    // Update world (ground, rails, obstacles)
-    this.updateWorld();
-
-    // Obstacles disabled for cleaner experience
-    // this.obstacleManager.update(delta);
+    // Update the world (parallax, street scroll, dynamic content)
+    this.world.update(this.cameras.main.scrollX);
 
     // Increase difficulty over time
     this.gameSpeed += delta * 0.001;
@@ -373,47 +318,7 @@ export default class Game extends Phaser.Scene {
     this.updateUI();
   }
 
-  updateWorld() {
-    const cameraX = this.cameras.main.scrollX;
-    
-    // Extend ground - create full street blocks
-    const rightmostGround = Math.max(...this.ground.children.entries.map(child => (child as any).x));
-    if (rightmostGround < cameraX + 300) {
-      const streetHeight = 50;
-      const streetStartY = 160 - streetHeight;
-      
-      for (let x = rightmostGround + 32; x < cameraX + 400; x += 32) {
-        for (let y = streetStartY; y < 160; y += 32) {
-          const tile = this.ground.create(x, y, 'nyc_tiles');
-          tile.setOrigin(0, 0);
-          tile.refreshBody();
-        }
-      }
-    }
 
-    // Add new long rails with proper spacing
-    if (this.lastRailX < cameraX + 300) {
-      const newRailX = this.lastRailX + Phaser.Math.Between(250, 400);
-      this.createRail(newRailX);
-    }
-
-    // Remove old ground tiles and rails
-    this.ground.children.entries.forEach(child => {
-      if ((child as any).x < cameraX - 100) {
-        child.destroy();
-      }
-    });
-
-    this.rails.children.entries.forEach(child => {
-      if ((child as any).x < cameraX - 100) {
-        child.destroy();
-      }
-    });
-
-    // Camera follows player horizontally only
-    this.cameras.main.startFollow(this.player, true, 0.05, 0);
-    this.cameras.main.setLerp(0.05, 0);
-  }
 
   updateUI() {
     this.scoreText.setText(`SCORE: ${Math.floor(this.score.value)}`);
