@@ -46,6 +46,9 @@ export default class Game extends Phaser.Scene {
 
     // Setup physics collisions
     this.setupCollisions();
+    
+    // Setup camera to follow player immediately
+    this.cameras.main.startFollow(this.player, true, 0.05, 0);
 
     // Setup controls
     this.cursors = setupControls(this);
@@ -112,9 +115,10 @@ export default class Game extends Phaser.Scene {
     this.player.body!.setSize(64, 80); // Larger hitbox for 96x96 sprite
     this.player.setScale(0.6); // Scale down for mobile-friendly size
     
-    // Configure physics for smooth movement
-    this.player.body!.setDrag(0); // No air resistance
-    this.player.body!.setMaxVelocity(200, 600); // Allow high horizontal speeds
+    // Configure physics for smooth movement - cast to correct type
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    body.setDrag(0); // No air resistance
+    body.setMaxVelocity(200, 600); // Allow high horizontal speeds
     
     // Start skating animation
     this.player.play('skate');
@@ -161,17 +165,16 @@ export default class Game extends Phaser.Scene {
     this.comboText = new BitmapText(this, 8, 18, '', 0xffff00);
     this.comboText.setScrollFactor(0);
 
-    // Keep regular text for complex instructions
+    // Use bitmap text for instructions too for consistent HD 2D rendering
     this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '8px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 0
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: '#ffffff'
     });
     this.instructionsText.setOrigin(0.5);
     this.instructionsText.setScrollFactor(0);
     this.instructionsText.setDepth(100);
+    this.instructionsText.setResolution(4); // Extra high resolution for tiny text
   }
 
   startGrinding() {
@@ -300,6 +303,9 @@ export default class Game extends Phaser.Scene {
     if (this.player && this.player.body) {
       this.player.setVelocityX(this.gameSpeed);
       
+      // More detailed debug logging
+      console.log('Player velocity X:', this.player.body!.velocity.x, 'Position X:', this.player.x, 'GameSpeed:', this.gameSpeed, 'Camera X:', this.cameras.main.scrollX);
+      
       // Debug velocity if player stops moving
       if (Math.abs(this.player.body!.velocity.x) < 10) {
         console.log('Player stopped! Position:', this.player.x, 'Velocity:', this.player.body!.velocity.x, 'GameSpeed:', this.gameSpeed);
@@ -342,9 +348,9 @@ export default class Game extends Phaser.Scene {
       const streetHeight = 50;
       const streetStartY = 160 - streetHeight;
       
-      for (let x = rightmostGround + 16; x < cameraX + 400; x += 16) {
-        for (let y = streetStartY; y < 160; y += 16) {
-          const tile = this.ground.create(x, y, 'tiles');
+      for (let x = rightmostGround + 32; x < cameraX + 400; x += 32) {
+        for (let y = streetStartY; y < 160; y += 32) {
+          const tile = this.ground.create(x, y, 'nyc_tiles');
           tile.setOrigin(0, 0);
           tile.refreshBody();
         }
@@ -370,9 +376,9 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Camera follows player with less lag
-    this.cameras.main.startFollow(this.player, true, 0.1, 0);
-    this.cameras.main.setLerp(0.1, 0);
+    // Camera follows player horizontally only
+    this.cameras.main.startFollow(this.player, true, 0.05, 0);
+    this.cameras.main.setLerp(0.05, 0);
   }
 
   updateUI() {
