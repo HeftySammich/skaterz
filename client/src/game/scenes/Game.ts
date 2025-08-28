@@ -106,10 +106,16 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    this.player = this.physics.add.sprite(40, 85, 'zombie'); // Position on top of street
-    this.player.setCollideWorldBounds(false); // Remove world bounds constraint
+    // Use the first animated frame as the sprite
+    this.player = this.physics.add.sprite(40, 85, 'zombie_0');
+    this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
-    this.player.body!.setSize(12, 20); // Smaller hitbox for forgiving gameplay
+    
+    // Adjust size for the new 48x48 sprite
+    this.player.body!.setSize(32, 40); // Slightly larger hitbox for 48x48 sprite
+    
+    // Start skating animation
+    this.player.play('skate');
     
     // Auto-run
     this.player.setVelocityX(this.gameSpeed);
@@ -258,12 +264,19 @@ export default class Game extends Phaser.Scene {
         this.comboMultiplier = Math.min(this.comboMultiplier + 1, 5);
         this.comboTimer = 3000;
         
-        // Visual trick effect
+        // Visual trick effect - use the trickspin animation
+        this.player.play('trickspin');
+        
+        // Also add rotation tween for extra effect
         this.tweens.add({
           targets: this.player,
           angle: '+=360',
           duration: 400,
-          ease: 'Power2'
+          ease: 'Power2',
+          onComplete: () => {
+            // Return to skating animation after trick
+            this.player.play('skate');
+          }
         });
         
         this.playSound('trick');
