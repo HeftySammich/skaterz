@@ -1,0 +1,514 @@
+Absolutely—let’s map the whole thing end‑to‑end and give you a clean “vibe coding” path you can follow in Cursor or Replit. The plan below gets you to a shippable web game that also works as a Hedera dapp with HashPack, gates content for holders of your existing SentX NFTs, and keeps the GBA look.
+
+⸻
+
+0) MVP scope (so we can vibe fast)
+	•	2D endless/auto runner with one lane.
+	•	Inputs:
+	•	Tap / click / space → jump.
+	•	Tap again mid‑air → trick (flip).
+	•	Hold while on rail → grind.
+	•	Score: distance + obstacles cleared + trick multipliers + grind time.
+	•	Shop: spend off‑chain “Brains” points to unlock cosmetics (boards, wheels, hats).
+	•	NFT gating: if a connected wallet holds a Zombie Skater NFT (your collection on SentX), that skater skin is unlocked in‑game.
+
+⸻
+
+1) Tech stack (simple + proven)
+	•	Game: Phaser 3 (HTML5 canvas). Great for runners, collisions, sprite sheets.
+	•	Build/dev: Vite (super fast dev server) inside Cursor or Replit.
+	•	Art: Aseprite (or Piskel) for sprite sheets.
+	•	Wallet: HashPack via HashConnect (connect, sign, get account ID).
+	•	Read NFTs: Hedera Mirror Node (GraphQL by Hgraph) from the browser.
+	•	Storage (scores, cosmetics): start with localStorage; optional: Supabase if you want cloud profiles.
+	•	Optional chain features: HCS for public top‑10 scores later (can be phase 2).
+
+⸻
+
+2) GBA look (key guardrails)
+	•	Base resolution: 240×160. Render to canvas at 240×160; scale up 3–4× for desktop/mobile.
+	•	Scaling: nearest‑neighbor everywhere.
+
+canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+
+	•	Palette: you don’t need to copy GBA’s exact color rules; just keep it tight (e.g., 16–32 main colors).
+	•	Tiles: 8×8 and 16×16 for ground, rails, props. Character sprite height ~32–48px at base res.
+
+⸻
+
+3) Project bootstrapping (Cursor or Replit)
+
+Folder layout
+
+zombie-skater/
+  index.html
+  src/
+    main.ts (or .js)
+    scenes/Game.ts
+    scenes/Preload.ts
+    systems/controls.ts
+    systems/score.ts
+    systems/nftGate.ts
+    hedara/
+      hashpack.ts
+      hgraph.ts
+  assets/
+    spritesheets/
+    sfx/
+    fonts/
+  vite.config.ts
+  package.json
+
+Install
+
+# Replit: create a Node.js repl (or use the Vite + Phaser template)
+# Cursor: open folder and run:
+npm create vite@latest zombie-skater -- --template vanilla
+cd zombie-skater
+npm i phaser
+npm i -D typescript @types/node # if using TS
+npm run dev
+
+index.html
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover" />
+    <title>Zombie Skater</title>
+    <style>html,body{margin:0;background:#171717;}</style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
+src/main.ts
+
+import Phaser from 'phaser';
+import Preload from './scenes/Preload';
+import Game from './scenes/Game';
+
+const BASE_W = 240, BASE_H = 160;
+
+const config: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: BASE_W,
+  height: BASE_H,
+  pixelArt: true,              // <- nearest-neighbor
+  roundPixels: true,
+  physics: { default: 'arcade', arcade: { gravity: { y: 800 }, debug: false } },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    zoom: Math.floor(Math.min(window.innerWidth/BASE_W, window.innerHeight/BASE_H))
+  },
+  scene: [Preload, Game]
+};
+
+new Phaser.Game(config);
+
+src/scenes/Preload.ts
+
+import Phaser from 'phaser';
+
+export default class Preload extends Phaser.Scene {
+  constructor(){ super('Preload'); }
+  preload(){
+    // Load sprite sheets exported from Aseprite
+    this.load.spritesheet('zombie', 'assets/spritesheets/zombie.png',
+      { frameWidth: 32, frameHeight: 32 });
+    this.load.image('tiles', 'assets/spritesheets/tiles.png');
+    this.load.audio('jump', 'assets/sfx/jump.wav');
+  }
+  create(){ this.scene.start('Game'); }
+}
+
+src/scenes/Game.ts (MVP logic)
+
+import Phaser from 'phaser';
+import { setupControls } from '../systems/controls';
+import { Score } from '../systems/score';
+
+export default class Game extends Phaser.Scene {
+  player!: Phaser.Physics.Arcade.Sprite;
+  ground!: Phaser.Physics.Arcade.StaticGroup;
+  rails!: Phaser.Physics.Arcade.StaticGroup;
+  cursors!: ReturnType<typeof setupControls>;
+  score = new Score();
+
+  private isOnRail = false;
+  private didTrickThisJump = false;
+
+  constructor(){ super('Game'); }
+
+  create(){
+    // Level: flat ground + sporadic rails
+    this.ground = this.physics.add.staticGroup();
+    for (let x=0;x<400;x+=16) this.ground.create(x, 150, 'tiles').setOrigin(0,1).refreshBody();
+
+    this.rails = this.physics.add.staticGroup();
+    // simple rail every ~200px
+    for (let x=120;x<800;x+=200){
+      const rail = this.add.rectangle(x, 120, 48, 4, 0xffffff, 0).setOrigin(0,0.5);
+      this.physics.add.existing(rail, true);
+      this.rails.add(rail as any);
+    }
+
+    // Player
+    this.player = this.physics.add.sprite(24, 100, 'zombie', 0).setCollideWorldBounds(true);
+    this.player.setDepth(1);
+
+    // Auto-run
+    this.player.setVelocityX(80);
+
+    // Collisions
+    this.physics.add.collider(this.player, this.ground);
+    this.physics.add.overlap(this.player, this.rails, () => {
+      // treat as rail if holding
+      if (this.cursors.holding()) {
+        this.isOnRail = true;
+        this.player.setVelocityY(0);
+        this.player.y = (this.player.y > 120) ? 120 : this.player.y;
+        this.player.setGravityY(0);
+        this.score.addGrindTick();
+      }
+    });
+
+    // Controls
+    this.cursors = setupControls(this);
+
+    // UI
+    this.add.text(2,2,'SCORE',{fontFamily:'monospace',fontSize:'8px',color:'#fff'}).setScrollFactor(0).setDepth(10);
+  }
+
+  update(){
+    // Leave rail if not holding
+    if (this.isOnRail && !this.cursors.holding()){
+      this.isOnRail = false;
+      this.player.setGravityY(800);
+    }
+
+    // Jump / Trick
+    if (this.cursors.justTapped()){
+      if (this.player.body?.blocked.down || this.isOnRail){
+        // jump
+        this.isOnRail = false;
+        this.player.setGravityY(800);
+        this.player.setVelocityY(-260);
+        this.sound.play('jump');
+        this.didTrickThisJump = false;
+      } else {
+        // trick (single per airtime)
+        if (!this.didTrickThisJump){
+          this.didTrickThisJump = true;
+          // simple flip anim: rotate & score
+          this.tweens.add({ targets: this.player, angle: '+=360', duration: 350 });
+          this.score.addTrick(100);
+        }
+      }
+    }
+
+    // Distance scoring
+    this.score.addDistance(this.player.body?.velocity.x ?? 0);
+
+    // Simple fail condition: fall below ground
+    if (this.player.y > 200) this.scene.restart();
+  }
+}
+
+src/systems/controls.ts
+
+import Phaser from 'phaser';
+
+export function setupControls(scene: Phaser.Scene){
+  const pointer = scene.input.activePointer;
+  let lastTap = 0;
+
+  scene.input.mouse?.disableContextMenu();
+
+  return {
+    justTapped: () => {
+      const now = scene.time.now;
+      // treat any fresh pointerdown or space press as a tap
+      const key = scene.input.keyboard?.addKey('SPACE');
+      const tap = Phaser.Input.Pointer.LeftButtonDown(pointer) || Phaser.Input.Keyboard.JustDown(key!);
+      const ok = tap && now - lastTap > 150; // debounce a touch
+      if (ok) lastTap = now;
+      return ok;
+    },
+    holding: () => pointer.isDown || scene.input.keyboard?.addKey('DOWN')?.isDown
+  };
+}
+
+src/systems/score.ts
+
+export class Score {
+  value = 0;
+  addDistance(vx: number){ this.value += Math.floor(vx * 0.01); }
+  addTrick(pts: number){ this.value += pts; }
+  addGrindTick(){ this.value += 2; }
+}
+
+This is enough to see a skater, jump, trick once per airtime, and grind while holding.
+
+⸻
+
+4) Obstacles, difficulty, & combos (when you’re vibing)
+	•	Spawn obstacles (trash cans, barriers) off‑screen and move them left. Collide → game over.
+	•	Add combo meter: trick → +x multiplier for 3s; grind extends it; landing resets timer (keep multiplier).
+	•	Distance curve: increase player.velocityX by small increments every 15–20 seconds.
+	•	Sound: 8‑bit/lo‑fi FX for jump/land/grind.
+
+⸻
+
+5) Cosmetics & shop (points‑based)
+	•	Start with off‑chain currency Brains = lifetime points (accumulate).
+	•	A JSON list of cosmetics with costs.
+	•	LocalStorage “inventory” keyed by wallet (if connected) or “guest”.
+
+type Cosmetic = { id: string; type: 'board'|'hat'|'wheels'; cost: number; };
+const SHOP: Cosmetic[] = [
+  { id:'board_bloody', type:'board', cost: 500 },
+  { id:'hat_spike', type:'hat', cost: 350 },
+];
+
+
+⸻
+
+6) HashPack connect (authenticate the player)
+
+You’ll use HashConnect in the browser to:
+	1.	Pair with HashPack.
+	2.	Get the account ID (e.g., 0.0.x) and EVM address.
+	3.	Optionally sign a message for your backend (if you add Supabase) to bind wallet → profile.
+
+Flow (simplified pseudocode):
+
+import { HashConnect } from 'hashconnect'; // install the lib per docs
+
+const hashconnect = new HashConnect();
+const appMetadata = { name: "Zombie Skater", description: "GBA-style runner", icon: "..." };
+
+export async function connectWallet(){
+  const init = await hashconnect.init(appMetadata, 'testnet'); // or mainnet
+  const state = hashconnect.hcData; // contains pairing info
+  // present pairing QR / deep link; once paired:
+  const accountId = state.pairingData?.[0]?.accountIds?.[0]; // "0.0.x"
+  return accountId;
+}
+
+Note: exact calls vary slightly by HashConnect version. The pattern above (init → pair → get accountId) is what you’ll implement in Cursor.
+
+⸻
+
+7) NFT gating (read‑only, via GraphQL)
+
+Once you have account_id, query the Mirror Node GraphQL to see if the player owns any Zombie Skater NFT(s). You’ll need your collection’s token ID (e.g., 0.0.1234567).
+
+In the browser, call your GraphQL endpoint with fetch and gate the skin when result length > 0.
+
+Example queries you can drop into your code
+
+# Check if an account owns a Zombie Skater NFT (collection 0.0.<TOKEN_ID>)
+query DoesPlayerOwnSkater($tokenId: Long!, $accountId: Long!, $limit: Int = 1) {
+  nft(
+    where: { token_id: { _eq: $tokenId }, account_id: { _eq: $accountId }, deleted: { _eq: false } }
+    limit: $limit
+  ) {
+    token_id
+    serial_number
+    account_id
+    decoded_metadata
+  }
+}
+
+	•	Returns at least one row if the wallet owns any serial in that collection.
+	•	decoded_metadata usually contains an image/JSON URI you can use for the in‑game thumbnail.
+
+# Get the image/attributes for a specific NFT (for the selected skin)
+query SkaterNftDetails($tokenId: Long!, $serial: Long!) {
+  nft(where: { token_id: { _eq: $tokenId }, serial_number: { _eq: $serial } }) {
+    token_id
+    serial_number
+    decoded_metadata
+    token {
+      name
+      symbol
+      total_supply
+      custom_fee { royalty_fees fixed_fees }
+    }
+  }
+}
+
+# List all owners of the collection (useful for community stats / leaderboards)
+query AllSkaterHolders($tokenId: Long!, $limit: Int = 50, $offset: Int = 0) {
+  nft(
+    where: { token_id: { _eq: $tokenId }, deleted: { _eq: false } }
+    order_by: { serial_number: asc }
+    limit: $limit
+    offset: $offset
+  ) {
+    serial_number
+    account_id
+  }
+}
+
+Client call (in your code):
+
+const HGRAPH = "<your Hgraph Mirror GraphQL endpoint>";
+
+async function ownsSkater(accountIdNum: number, tokenIdNum: number) {
+  const q = `query($tokenId: Long!, $accountId: Long!, $limit: Int){
+    nft(where:{token_id:{_eq:$tokenId},account_id:{_eq:$accountId},deleted:{_eq:false}},limit:$limit){
+      serial_number
+    }
+  }`;
+  const res = await fetch(HGRAPH, {
+    method: 'POST',
+    headers: {'content-type':'application/json'},
+    body: JSON.stringify({ query: q, variables: { tokenId: tokenIdNum, accountId: accountIdNum, limit: 1 } })
+  }).then(r=>r.json());
+  return res.data?.nft?.length > 0;
+}
+
+If your wallet library gives you an EVM address, also store the Hedera account ID (HashPack exposes it). The queries above use numeric IDs (e.g., 7850223 for 0.0.7850223).
+
+⸻
+
+8) “Brains” points + shop UX
+	•	After each run, add score.value to brainsTotal.
+	•	“Customize” screen:
+	•	Left panel: your zombie skater preview (NFT skin if gated).
+	•	Right panel: cosmetics shop with costs; disabled if not enough Brains.
+	•	Save to localStorage under a key like zs:{accountId or guest}:profile.
+
+⸻
+
+9) Optional backend (later)
+
+If you want persistent cross‑device inventory and global leaderboards:
+	•	Add a tiny Node/Express or Supabase edge function.
+	•	Auth: have the player sign a nonce using HashPack once per session; verify server‑side; issue a JWT for your DB.
+	•	Anti‑cheat: only accept top scores + proof (seeded RNG + signed run hash) or just moderate the top 10.
+
+⸻
+
+10) Phase‑2 on‑chain goodies (optional)
+	•	HCS topic: submit signed score summaries for top runs.
+	•	HTS “Brains” as a fungible token (if you want tradeable points).
+	•	NFT cosmetics: new drops that the game recognizes as skins.
+
+⸻
+
+11) Deployment
+	•	Netlify/Vercel or a static bucket (Cloudflare Pages works great).
+	•	Add a Testnet toggle in settings while developing.
+	•	Only enable mainnet HashPack pairing when you’re ready.
+
+⸻
+
+12) Vibe‑coding checklist (use this like a script)
+
+Session 1 (60–90m)
+	•	Boot Vite + Phaser; base res 240×160; scaling pixelated.
+	•	Player auto‑run, jump, one trick per airtime; rail grind while holding.
+	•	Rough score HUD.
+
+Session 2
+	•	Procedural obstacles + collisions + game over.
+	•	Trick multiplier & grind score ticks.
+	•	Simple parallax background (2–3 layers).
+
+Session 3
+	•	Shop UI + Brains points; equip cosmetics.
+	•	Save/load from localStorage.
+
+Session 4
+	•	HashPack connect: read accountId.
+	•	Query Mirror Node GraphQL; if owns Zombie Skater NFT → unlock skin.
+	•	Show NFT thumbnail (from decoded_metadata URL).
+
+Session 5
+	•	Polish: SFX, juice (screenshake on land, trail on grind), pause menu.
+	•	Difficulty ramp & balancing.
+
+⸻
+
+13) Production tips
+	•	Frame budget: lock to 60fps; if you target mobile, keep draw calls low (batched tilemap).
+	•	Hitboxes: smaller than sprite for “forgiving” feel.
+	•	Input feel: coyote time (e.g., allow jump 80ms after leaving ground), jump buffer (accept tap 120ms early).
+	•	Analytics (privacy‑friendly): log run length, deaths by obstacle type; iterate level generation.
+	•	Fallback: if GraphQL or wallet is unavailable, let users play as “guest” and earn Brains locally.
+
+⸻
+
+Ready‑to‑paste GraphQL (copy these as-is)
+
+# Check Zombie Skater NFT ownership for a player
+query DoesPlayerOwnSkater($tokenId: Long!, $accountId: Long!, $limit: Int = 1) {
+  nft(
+    where: { token_id: { _eq: $tokenId }, account_id: { _eq: $accountId }, deleted: { _eq: false } }
+    limit: $limit
+  ) {
+    token_id
+    serial_number
+    account_id
+    decoded_metadata
+  }
+}
+
+# Fetch metadata for a specific NFT serial (to render art/traits in UI)
+query SkaterNftDetails($tokenId: Long!, $serial: Long!) {
+  nft(where: { token_id: { _eq: $tokenId }, serial_number: { _eq: $serial } }) {
+    token_id
+    serial_number
+    decoded_metadata
+    token { name symbol total_supply }
+  }
+}
+
+# List holders in the collection (for community features)
+query AllSkaterHolders($tokenId: Long!, $limit: Int = 50, $offset: Int = 0) {
+  nft(
+    where: { token_id: { _eq: $tokenId }, deleted: { _eq: false } }
+    order_by: { serial_number: asc }
+    limit: $limit
+    offset: $offset
+  ) {
+    serial_number
+    account_id
+  }
+}
+
+# (Optional) Recent transfers for the collection (activity feed)
+query RecentNftTransfers($tokenId: Long!, $limit: Int = 20) {
+  nft_transfer(
+    where: { token_id: { _eq: $tokenId } }
+    order_by: { consensus_timestamp: desc }
+    limit: $limit
+  ) {
+    consensus_timestamp
+    sender_account_id
+    receiver_account_id
+    serial_number
+    payer_account_id
+  }
+}
+
+	•	Use only the fields above in your client. Paginate lists with limit/offset.
+	•	Keep queries read‑only from the browser; no private keys or secrets needed.
+
+⸻
+
+If you want, I can tailor the code to the exact token ID(s) of your SentX collection and drop in the precise HashConnect calls you’re using; just share the collection’s 0.0.x and whether you want testnet or mainnet first.
+
+✦ Hgraph GQL Assistant
