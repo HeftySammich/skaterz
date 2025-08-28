@@ -1,6 +1,6 @@
 import { buildNYCAtlas32 } from './tiles32';
 import { buildParallax } from './parallax';
-import { buildAngledStreet } from './angledStreet';
+import { buildAngledStreet } from './angledStreet_mask';
 
 export function createWorld(scene: Phaser.Scene){
   buildNYCAtlas32(scene);

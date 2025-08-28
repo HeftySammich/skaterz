@@ -76,6 +76,8 @@ export default class Game extends Phaser.Scene {
     this.physics.add.existing(groundRect, true);
     (this.world as any).ground.clear(true, true); // remove old one if you used createWorld()
     (this.world as any).ground.add(groundRect as any);
+    
+    console.log('Physics ground positioned at Y:', floorY, 'for visual ground at x=0');
   }
 
   setupGBAPhysics() {
