@@ -204,22 +204,8 @@ export default class Game extends Phaser.Scene {
   }
 
   showTrickScore() {
-    const points = 50 * this.comboMultiplier;
-    const trickText = this.add.text(this.player.x, this.player.y - 20, `+${points}`, {
-      fontFamily: 'monospace',
-      fontSize: '8px',
-      color: '#ffff00',
-      stroke: '#000000',
-      strokeThickness: 1
-    });
-    
-    this.tweens.add({
-      targets: trickText,
-      y: trickText.y - 20,
-      alpha: 0,
-      duration: 1000,
-      onComplete: () => trickText.destroy()
-    });
+    // Score is still added, just no visual effect
+    // Points are already added to score in the calling function
   }
 
   playSound(key: string) {
