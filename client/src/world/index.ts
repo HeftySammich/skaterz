@@ -15,8 +15,9 @@ export function createWorld(scene: Phaser.Scene){
   }
 
   const obstacles = scene.physics.add.staticGroup();
-  for (let x=100; x<2000; x+=260) {
-    const type = (x/260)%2 ? 'barricade32':'cone16x24';
+  // Start obstacles further away and make them less frequent
+  for (let x=500; x<2000; x+=400) {
+    const type = (x/400)%2 ? 'barricade32':'cone16x24';
     const img = scene.add.image(x, 160, type).setOrigin(0.5,1).setDepth(6);
     scene.physics.add.existing(img, true); obstacles.add(img as any);
   }

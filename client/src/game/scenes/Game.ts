@@ -106,11 +106,11 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Obstacle collision
-    this.physics.add.collider(this.player, this.world.obstacles, () => {
-      console.log('Player hit obstacle - game over');
-      this.gameOver();
-    });
+    // Obstacle collision - disabled for now to focus on grinding mechanics
+    // this.physics.add.collider(this.player, this.world.obstacles, () => {
+    //   console.log('Player hit obstacle - game over');
+    //   this.gameOver();
+    // });
   }
 
   createUI() {

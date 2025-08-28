@@ -11,6 +11,10 @@ function dither(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number
 }
 
 export function buildNYCAtlas32(scene: Phaser.Scene){
+  // Check if textures already exist to avoid "already in use" errors
+  if (scene.textures.exists('nyc32')) {
+    return;
+  }
   const tw=32, th=32, cols=8, rows=3;
   const atlas=document.createElement('canvas'); atlas.width=cols*tw; atlas.height=rows*th;
   const g=atlas.getContext('2d')!; g.imageSmoothingEnabled=false;
@@ -53,25 +57,33 @@ export function buildNYCAtlas32(scene: Phaser.Scene){
 
   // row 2 props (rails / cones)
   // Rails 32×8 (two stacked for 32×16 tile cell)
-  const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
-  const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
-  r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
-  [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
-  scene.textures.addCanvas('rail32', rail);
+  if (!scene.textures.exists('rail32')) {
+    const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
+    const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
+    r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
+    [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
+    scene.textures.addCanvas('rail32', rail);
+  }
 
   // Barricade 32×24
-  const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
-  const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
-  dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
-  bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
-  scene.textures.addCanvas('barricade32', bar);
+  if (!scene.textures.exists('barricade32')) {
+    const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
+    const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
+    dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
+    bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
+    scene.textures.addCanvas('barricade32', bar);
+  }
 
   // Cone 16×24 (two per tile)
-  const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
-  const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
-  cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8); cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
-  scene.textures.addCanvas('cone16x24', cone);
+  if (!scene.textures.exists('cone16x24')) {
+    const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
+    const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
+    cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8); cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
+    scene.textures.addCanvas('cone16x24', cone);
+  }
 
   // Put sheet into textures
-  scene.textures.addCanvas('nyc32', atlas);
+  if (!scene.textures.exists('nyc32')) {
+    scene.textures.addCanvas('nyc32', atlas);
+  }
 }

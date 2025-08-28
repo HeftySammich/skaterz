@@ -17,6 +17,8 @@ export function buildParallax(scene: Phaser.Scene){
 }
 
 function createStars(scene: Phaser.Scene){
+  const key='starsTex'; 
+  if (scene.textures.exists(key)) return key;
   const w=240,h=160,c=document.createElement('canvas'); c.width=w; c.height=h;
   const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
   // vertical bands
@@ -26,10 +28,12 @@ function createStars(scene: Phaser.Scene){
   // scatter stars
   g.fillStyle = PAL.star;
   for(let i=0;i<90;i++){ const x=Math.random()*w|0, y=Math.random()*h|0; if (y>20) g.fillRect(x,y,1,1); }
-  const key='starsTex'; scene.textures.addCanvas(key,c); return key;
+  scene.textures.addCanvas(key,c); return key;
 }
 
 function createSkyline(scene: Phaser.Scene){
+  const key='skylineTex'; 
+  if (scene.textures.exists(key)) return key;
   const w=240,h=80,c=document.createElement('canvas'); c.width=w; c.height=h;
   const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
   g.fillStyle='transparent'; g.clearRect(0,0,w,h);
@@ -45,13 +49,15 @@ function createSkyline(scene: Phaser.Scene){
       for(let xx=bx+4; xx<bx+bw-4; xx+=6)
         if(Math.random()<0.12) g.fillRect(xx,yy,1,2);
   }
-  const key='skylineTex'; scene.textures.addCanvas(key,c); return key;
+  scene.textures.addCanvas(key,c); return key;
 }
 
 function createFence(scene: Phaser.Scene){
+  const key='fenceTex'; 
+  if (scene.textures.exists(key)) return key;
   const w=240,h=50,c=document.createElement('canvas'); c.width=w; c.height=h;
   const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
   g.fillStyle = PAL.fence;  // diamond mesh
   for(let y=0;y<h;y+=4) for(let x=((y/4)&1)*2; x<w; x+=4) g.fillRect(x,y,1,1);
-  const key='fenceTex'; scene.textures.addCanvas(key,c); return key;
+  scene.textures.addCanvas(key,c); return key;
 }
