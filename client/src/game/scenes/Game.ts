@@ -21,7 +21,7 @@ export default class Game extends Phaser.Scene {
   
   private scoreText!: BitmapText;
   private comboText!: BitmapText;
-  private instructionsText!: Phaser.GameObjects.Text;
+  private instructionsText!: BitmapText;
 
   constructor() {
     super('Game');
@@ -119,42 +119,35 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setDrag(0); // No air resistance
     body.setMaxVelocity(200, 600); // Allow high horizontal speeds
+    body.immovable = false;
     
     // Start skating animation
     this.player.play('skate');
     
     // Auto-run with immediate velocity
     this.player.setVelocityX(this.gameSpeed);
+    this.player.setCollideWorldBounds(false);
+    
     console.log('Player created with velocity:', this.gameSpeed);
   }
 
   setupCollisions() {
-    // Ground collision - maintain horizontal velocity
-    this.physics.add.collider(this.player, this.ground, () => {
-      if (this.didTrickThisJump && this.comboTimer > 0) {
-        // Successful trick landing
-        this.score.addTrick(50 * this.comboMultiplier);
-        this.showTrickScore();
-        this.didTrickThisJump = false;
-      }
-      // Ensure horizontal movement continues after landing
-      this.player.setVelocityX(this.gameSpeed);
-    });
+    // DISABLE GROUND COLLISION TEMPORARILY TO TEST MOVEMENT
+    // this.physics.add.collider(this.player, this.ground, () => {
+    //   if (this.didTrickThisJump && this.comboTimer > 0) {
+    //     // Successful trick landing
+    //     this.score.addTrick(50 * this.comboMultiplier);
+    //     this.showTrickScore();
+    //     this.didTrickThisJump = false;
+    //   }
+    // });
 
     // Rail overlap for grinding
     this.physics.add.overlap(this.player, this.rails, () => {
       if (this.cursors.holding()) {
         this.startGrinding();
-      } else {
-        // Ensure horizontal movement continues when passing over rails
-        this.player.setVelocityX(this.gameSpeed);
       }
     });
-
-    // Obstacle collisions disabled
-    // this.physics.add.overlap(this.player, this.obstacleManager.getObstacles(), () => {
-    //   this.gameOver();
-    // });
   }
 
   createUI() {
@@ -165,16 +158,9 @@ export default class Game extends Phaser.Scene {
     this.comboText = new BitmapText(this, 8, 18, '', 0xffff00);
     this.comboText.setScrollFactor(0);
 
-    // Use bitmap text for instructions too for consistent HD 2D rendering
-    this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
-      fontFamily: 'monospace',
-      fontSize: '6px',
-      color: '#ffffff'
-    });
-    this.instructionsText.setOrigin(0.5);
+    // Use bitmap text for instructions for crisp HD 2D rendering
+    this.instructionsText = new BitmapText(this, 60, 140, 'SPACE JUMP HOLD GRIND', 0xffffff);
     this.instructionsText.setScrollFactor(0);
-    this.instructionsText.setDepth(100);
-    this.instructionsText.setResolution(4); // Extra high resolution for tiny text
   }
 
   startGrinding() {
@@ -303,8 +289,10 @@ export default class Game extends Phaser.Scene {
     if (this.player && this.player.body) {
       this.player.setVelocityX(this.gameSpeed);
       
-      // More detailed debug logging
-      console.log('Player velocity X:', this.player.body!.velocity.x, 'Position X:', this.player.x, 'GameSpeed:', this.gameSpeed, 'Camera X:', this.cameras.main.scrollX);
+      // Reduce debug spam - only log occasionally
+      if (Math.floor(time) % 1000 === 0) {
+        console.log('Player velocity X:', this.player.body!.velocity.x, 'Position X:', this.player.x, 'GameSpeed:', this.gameSpeed, 'Camera X:', this.cameras.main.scrollX);
+      }
       
       // Debug velocity if player stops moving
       if (Math.abs(this.player.body!.velocity.x) < 10) {
