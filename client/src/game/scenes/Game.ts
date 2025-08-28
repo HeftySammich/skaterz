@@ -99,22 +99,22 @@ export default class Game extends Phaser.Scene {
     // Create much longer rails - 4 times longer for easier grinding
     const railLength = 128; // 4 times longer than original 32px
     
-    // Create multiple rail segments to make a long rail
+    // Create multiple rail segments to make a long rail - much lower for easy access
     for (let i = 0; i < 4; i++) {
-      const rail = this.add.image(x + (i * 32), 80, 'rail');
+      const rail = this.add.image(x + (i * 32), 105, 'rail'); // Lowered from 80 to 105
       rail.setOrigin(0.5, 0.5);
       rail.setTint(0xff00ff); // Keep magenta tint for debugging
       this.physics.add.existing(rail, true);
       this.rails.add(rail as any);
     }
     
-    console.log('Created long rail at position:', x, 'to', x + railLength, 'at Y: 80');
+    console.log('Created long rail at position:', x, 'to', x + railLength, 'at Y: 105');
     this.lastRailX = x + railLength;
   }
 
   createPlayer() {
-    // Use the first animated frame as the sprite - position higher up  
-    this.player = this.physics.add.sprite(40, 50, 'zombie_0');
+    // Use the first animated frame as the sprite - position lower for easier rail access
+    this.player = this.physics.add.sprite(40, 85, 'zombie_0'); // Lowered from 50 to 85
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -153,11 +153,19 @@ export default class Game extends Phaser.Scene {
       return true;
     });
 
-    // Rail overlap for grinding with better detection
+    // Rail overlap for grinding with better detection - now much easier to trigger
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
+      console.log('Player near rail at Y:', rail.y, 'Player Y:', player.y);
       if (this.cursors.holding()) {
-        console.log('Hold detected - starting grind on rail at Y:', rail.y);
+        console.log('Hold detected - starting grind on rail!');
         this.startGrinding();
+      } else {
+        // Auto-grind if player is close enough to rail level
+        const railDistance = Math.abs(player.y - rail.y);
+        if (railDistance < 25) {
+          console.log('Auto-grind triggered - player close to rail (distance:', railDistance + ')');
+          this.startGrinding();
+        }
       }
     });
   }
@@ -189,7 +197,7 @@ export default class Game extends Phaser.Scene {
       );
       
       if (rail) {
-        this.player.y = (rail.gameObject as any).y - 12;
+        this.player.y = (rail.gameObject as any).y - 8; // Closer positioning for easier grinding
         console.log('Positioned player on rail at Y:', this.player.y);
       }
 
