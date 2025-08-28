@@ -1,0 +1,453 @@
+You got it — here’s the complete package again, in one place. It fixes the handleJump crash, adds randomized + escalating difficulty, and ships prettier GBA-style art with parallax and the angled street look. Copy the files as named; then apply the small Game.ts patches at the end.
+
+⸻
+
+1) src/world/palette.ts
+
+GBA-leaning palette (more saturation + mids).
+
+export const PAL = {
+  // sky
+  sky0: '#274b8c', sky1: '#1f3d6e', sky2: '#162b4d',
+  star: '#ffecb3',
+
+  // skyline / windows
+  bldg0: '#0b1a2a', bldg1: '#12304a', window: '#f1a340',
+
+  // road / sidewalk
+  asphalt0: '#2d303b', asphalt1: '#454a57', crack: '#1c1e25', lane: '#e2e28e',
+  sidewalk0: '#757c8b', sidewalk1: '#9aa2b2',
+  curbTop: '#b9c0cf', curbFace: '#646c7a',
+
+  // props
+  steel: '#6f8391', grime: '#3f4955',
+  hazard: '#ffb648', cone: '#ff784f',
+  fence: '#345061'
+};
+
+
+⸻
+
+2) src/world/tiles32.ts
+
+Pretty 32×32 tiles + rails, pothole, broken wood block, knocked-over cone, barricade.
+
+import { PAL } from './palette';
+
+function hex(s:string){ const v=parseInt(s.slice(1),16); return [(v>>16)&255,(v>>8)&255,(v)&255]; }
+function dither(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,a:string,b:string){
+  const A=hex(a),B=hex(b), img=ctx.createImageData(w,h);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){
+    const idx=(j*w+i)*4, bit=((i&1)^(j&1))?1:0, C=bit?A:B;
+    img.data[idx]=C[0]; img.data[idx+1]=C[1]; img.data[idx+2]=C[2]; img.data[idx+3]=255;
+  }
+  ctx.putImageData(img,x,y);
+}
+
+export function buildNYCAtlas32(scene: Phaser.Scene){
+  const tw=32, th=32, cols=8, rows=3;
+  const atlas=document.createElement('canvas'); atlas.width=cols*tw; atlas.height=rows*th;
+  const g=atlas.getContext('2d')!; g.imageSmoothingEnabled=false;
+
+  // 0: asphalt A
+  dither(g, 0,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.strokeStyle=PAL.crack; g.lineWidth=1;
+  g.beginPath(); g.moveTo(5,26); g.lineTo(16,20); g.lineTo(28,23); g.stroke();
+
+  // 1: asphalt w/ lane
+  dither(g, 32,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.lane; g.fillRect(32+15,0,2,32);
+
+  // 2: crosswalk
+  dither(g, 64,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.lane; for(let x=-10;x<32;x+=7) g.fillRect(64+x,0,4,32);
+
+  // 3: manhole
+  dither(g, 96,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle='#404650'; g.fillRect(96+8,8,16,16);
+  g.fillStyle='#2d323a'; for(let x=96+10;x<96+22;x+=3) g.fillRect(x,12,1,8);
+
+  // 4: debris / grime
+  dither(g, 128,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle='#cfcfd4'; g.fillRect(128+6,23,5,3); g.fillRect(128+23,14,3,2);
+  g.fillStyle=PAL.grime; g.fillRect(128+18,28,8,2);
+
+  // 5: sidewalk
+  dither(g, 160,0,tw,th, PAL.sidewalk0, PAL.sidewalk1);
+  g.strokeStyle = '#4c4c56'; g.strokeRect(160.5,0.5,tw-1,th-1);
+  g.beginPath(); g.moveTo(160,16); g.lineTo(192,16); g.stroke();
+
+  // 6: curb
+  dither(g, 192,0,tw,th, PAL.curbTop, PAL.sidewalk1);
+  g.fillStyle=PAL.curbFace; g.fillRect(192, 22, 32, 10);
+
+  // 7: hazard edge
+  dither(g, 224,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle=PAL.hazard; for(let i=0;i<32;i+=6) g.fillRect(224+i,24,3,8);
+
+  scene.textures.addCanvas('nyc32', atlas);
+
+  // Rails 32×8
+  const rail=document.createElement('canvas'); rail.width=32; rail.height=8;
+  const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
+  r.fillStyle=PAL.steel; r.fillRect(0,3,32,2); r.fillStyle='#2c3942'; r.fillRect(0,2,32,1);
+  [6,16,26].forEach(x=>r.fillRect(x,5,2,3));
+  scene.textures.addCanvas('rail32', rail);
+
+  // Barricade 32×24
+  const bar=document.createElement('canvas'); bar.width=32; bar.height=24;
+  const bc=bar.getContext('2d')!; bc.imageSmoothingEnabled=false;
+  dither(bc,0,0,32,24,'#402a1f','#6b3f28'); bc.fillStyle=PAL.hazard;
+  bc.fillRect(4,7,24,4); bc.fillRect(4,15,24,4);
+  scene.textures.addCanvas('barricade32', bar);
+
+  // Cone upright 16×24
+  const cone=document.createElement('canvas'); cone.width=16; cone.height=24;
+  const cc=cone.getContext('2d')!; cc.imageSmoothingEnabled=false;
+  cc.fillStyle=PAL.cone; cc.fillRect(3,14,10,8); cc.fillRect(6,6,6,8);
+  cc.fillStyle=PAL.hazard; cc.fillRect(6,10,6,2);
+  scene.textures.addCanvas('cone16x24', cone);
+
+  // Knocked-over cone 24×12
+  const coneK=document.createElement('canvas'); coneK.width=24; coneK.height=12;
+  const ck=coneK.getContext('2d')!; ck.imageSmoothingEnabled=false;
+  ck.fillStyle=PAL.cone; ck.fillRect(2,6,16,5); ck.fillRect(16,3,6,3);
+  ck.fillStyle=PAL.hazard; ck.fillRect(4,7,12,2);
+  scene.textures.addCanvas('cone_knock24x12', coneK);
+
+  // Pothole 32×12
+  const hole=document.createElement('canvas'); hole.width=32; hole.height=12;
+  const hc=hole.getContext('2d')!; hc.imageSmoothingEnabled=false;
+  hc.fillStyle='#15171c'; hc.beginPath(); hc.ellipse(16,6,14,5,0,0,Math.PI*2); hc.fill();
+  hc.strokeStyle='#262a32'; hc.stroke();
+  scene.textures.addCanvas('pothole32x12', hole);
+
+  // Broken wood block 32×14
+  const wood=document.createElement('canvas'); wood.width=32; wood.height=14;
+  const wc=wood.getContext('2d')!; wc.imageSmoothingEnabled=false;
+  wc.fillStyle='#6b3f28'; wc.fillRect(0,6,32,8);
+  wc.fillStyle='#402a1f'; wc.fillRect(0,10,32,2);
+  wc.fillStyle='#814d34'; wc.fillRect(4,4,8,2); wc.fillRect(18,5,7,2);
+  scene.textures.addCanvas('woodblock32x14', wood);
+}
+
+
+⸻
+
+3) src/world/parallax.ts
+
+Stars + skyline + fence parallax, subtle drift.
+
+import { PAL } from './palette';
+
+export function buildParallax(scene: Phaser.Scene){
+  const stars = scene.add.tileSprite(0, 0, 480, 160, createStars(scene)).setOrigin(0,0);
+  stars.setScrollFactor(0.05);
+
+  const skyline = scene.add.tileSprite(0, 40, 480, 80, createSkyline(scene)).setOrigin(0,0);
+  skyline.setScrollFactor(0.2);
+
+  const fence = scene.add.tileSprite(0, 110, 480, 50, createFence(scene)).setOrigin(0,0);
+  fence.setScrollFactor(0.6).setAlpha(0.5);
+
+  return { stars, skyline, fence };
+}
+
+function createStars(scene: Phaser.Scene){
+  const w=240,h=160,c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
+  for(let y=0;y<h;y++){ const t=y/h; g.fillStyle=t<.33?PAL.sky0:t<.66?PAL.sky1:PAL.sky2; g.fillRect(0,y,w,1); }
+  g.fillStyle = PAL.star; for(let i=0;i<90;i++){ const x=Math.random()*w|0, y=Math.random()*h|0; if (y>20) g.fillRect(x,y,1,1); }
+  const key='starsTex'; scene.textures.addCanvas(key,c); return key;
+}
+function createSkyline(scene: Phaser.Scene){
+  const w=240,h=80,c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d')!; g.imageSmoothingEnabled=false;
+  const R=(a:number,b:number)=>Math.floor(a+Math.random()*(b-a));
+  for (let i=0;i<12;i++){
+    const bw=R(16,36), bh=R(18,60), bx=R(-10,w-10), by=h-bh;
+    g.fillStyle=PAL.bldg0; g.fillRect(bx,by,bw,bh);
+    g.clearRect(bx+R(2,bw-6), by-2, R(2,4), 3);
+    g.fillStyle=PAL.window;
+    for(let yy=by+6; yy<by+bh-4; yy+=6)
+      for(let xx=bx+4; xx<bx+bw-4; xx+=6)
+        if(Math.random()<0.12) g.fillRect(xx,yy,1,2);
+  }
+  const key='skylineTex'; scene.textures.addCanvas(key,c); return key;
+}
+function createFence(scene: Phaser.Scene){
+  const w=240,h=50,c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d')!; g.imageSmoothingEnabled=false; g.fillStyle = PAL.fence;
+  for(let y=0;y<h;y+=4) for(let x=((y/4)&1)*2; x<w; x+=4) g.fillRect(x,y,1,1);
+  const key='fenceTex'; scene.textures.addCanvas(key,c); return key;
+}
+
+
+⸻
+
+4) src/world/angledStreet.ts
+
+Angled street visuals + function to compute visual ground Y for any X.
+
+export function buildAngledStreet(scene: Phaser.Scene){
+  const group = scene.add.container(0, 80);
+  group.angle = -7;                 // angled like the reference
+  group.setScrollFactor(1);
+
+  // Tile layers (use the indices from nyc32)
+  const addStrip = (tx: number, y: number, alpha=1) => {
+    const s = scene.add.tileSprite(-40, y, 800, 32, 'nyc32', tx).setOrigin(0,0).setAlpha(alpha);
+    s.setScrollFactor(1); group.add(s); return s;
+  };
+
+  const sidewalk = addStrip(5, 32);
+  const curb     = addStrip(6, 64);
+  const asphalt1 = addStrip(0, 96);
+  const asphalt2 = addStrip(0,128);
+
+  const lanes  = addStrip(1, 96, 0.7);
+  const cross  = addStrip(2, 96, 0.25);
+  const debris = addStrip(4,128, 0.7);
+  const holes  = addStrip(3, 96, 0.9);
+
+  const update = (scrollX:number)=>{
+    [sidewalk, curb, asphalt1, asphalt2, lanes, cross, debris, holes]
+      .forEach(s => s.tilePositionX = scrollX);
+  };
+
+  // Visual asphalt baseline y=f(x)
+  function visualGroundYFor(worldX: number){
+    const theta = Phaser.Math.DegToRad(group.angle);
+    const localY = 128; // lower asphalt strip Y inside the container
+    const base = group.y + localY * Math.cos(theta);
+    const delta = (worldX - group.x) * Math.sin(theta);
+    return base + delta;
+  }
+
+  return { group, update, visualGroundYFor };
+}
+
+
+⸻
+
+5) src/world/spawner.ts
+
+Procedural LevelDirector: spawns rails + hazards with increasing difficulty.
+
+type Spawn = 'pothole'|'wood'|'cone_knock'|'barricade'|'rail';
+
+export class LevelDirector {
+  private scene: Phaser.Scene;
+  private world: any; // expects visualGroundYFor(x), rails, obstacles
+  private nextX = 220;
+  private baseSpeed = 100;
+  private maxSpeed  = 180;
+
+  constructor(scene: Phaser.Scene, world: any){ this.scene = scene; this.world = world; }
+
+  private difficulty(scrollX: number){ return Math.min(1, scrollX / 3500); }
+
+  update(scrollX: number){
+    const d = this.difficulty(scrollX);
+    while (this.nextX < scrollX + 480 + 160) {
+      this.spawnOne(this.nextX, d);
+      const gapMin = Phaser.Math.Linear(240, 120, d);
+      const gapMax = Phaser.Math.Linear(360, 180, d);
+      this.nextX += Phaser.Math.Between(gapMin|0, gapMax|0);
+    }
+  }
+  getSpeed(scrollX: number){
+    const d = this.difficulty(scrollX);
+    return Phaser.Math.Linear(this.baseSpeed, this.maxSpeed, d);
+  }
+
+  private spawnOne(x: number, d: number){
+    const bag: [Spawn, number][] = [
+      ['rail',       Phaser.Math.Linear(60, 30, d)],
+      ['pothole',    Phaser.Math.Linear(10, 35, d)],
+      ['wood',       Phaser.Math.Linear(8,  25, d)],
+      ['cone_knock', Phaser.Math.Linear(6,  22, d)],
+      ['barricade',  Phaser.Math.Linear(16, 30, d)],
+    ];
+    const type = pick(bag);
+    if (type==='rail') return this.spawnRail(x);
+    if (type==='pothole') return this.spawnPothole(x);
+    if (type==='wood') return this.spawnWood(x);
+    if (type==='cone_knock') return this.spawnCone(x);
+    return this.spawnBarricade(x);
+  }
+
+  private groundY(x: number){ return this.world.visualGroundYFor(x); }
+
+  private spawnRail(x: number){
+    const y = this.groundY(x) - 18;
+    const img = this.scene.add.image(x, y, 'rail32').setOrigin(0.5,1).setDepth(6);
+    this.scene.physics.add.existing(img, true);
+    this.world.rails.add(img as any);
+  }
+  private spawnPothole(x: number){
+    const y = this.groundY(x) - 1;
+    this.scene.add.image(x, y, 'pothole32x12').setOrigin(0.5,1).setDepth(7);
+    const hit = this.scene.add.rectangle(x, y-4, 22, 6, 0x000000, 0);
+    this.scene.physics.add.existing(hit, true);
+    this.world.obstacles.add(hit as any);
+  }
+  private spawnWood(x: number){
+    const y = this.groundY(x);
+    const img = this.scene.add.image(x, y, 'woodblock32x14').setOrigin(0.5,1).setDepth(7);
+    this.scene.physics.add.existing(img, true);
+    this.world.obstacles.add(img as any);
+  }
+  private spawnCone(x: number){
+    const y = this.groundY(x);
+    const img = this.scene.add.image(x, y, 'cone_knock24x12').setOrigin(0.5,1).setDepth(7);
+    this.scene.physics.add.existing(img, true);
+    this.world.obstacles.add(img as any);
+  }
+  private spawnBarricade(x: number){
+    const y = this.groundY(x)-2;
+    const img = this.scene.add.image(x, y, 'barricade32').setOrigin(0.5,1).setDepth(7);
+    this.scene.physics.add.existing(img, true);
+    this.world.obstacles.add(img as any);
+  }
+}
+
+function pick(bag: [Spawn, number][]): Spawn {
+  const total = bag.reduce((s, [,w])=>s+w, 0);
+  let r = Math.random() * total;
+  for (const [k,w] of bag) { if ((r-=w) <= 0) return k; }
+  return bag[0][0];
+}
+
+
+⸻
+
+6) src/world/index.ts
+
+Wire everything together (parallax, angled street, physics ground, groups).
+
+import { buildNYCAtlas32 } from './tiles32';
+import { buildParallax } from './parallax';
+import { buildAngledStreet } from './angledStreet';
+
+export function createWorld(scene: Phaser.Scene){
+  buildNYCAtlas32(scene);
+  const par = buildParallax(scene);
+  const street = buildAngledStreet(scene);
+
+  const rails = scene.physics.add.staticGroup();
+  const obstacles = scene.physics.add.staticGroup();
+
+  // Initial invisible physics floor — we'll recalibrate in Game.ts
+  const ground = scene.physics.add.staticGroup();
+  const slab = scene.add.rectangle(0, 160, 3000, 10, 0x000000, 0);
+  scene.physics.add.existing(slab, true);
+  ground.add(slab as any);
+
+  const update = (cameraScrollX:number)=>{
+    const t = scene.time.now * 0.001;
+    par.stars.tilePositionX   = cameraScrollX * 0.06;
+    par.skyline.tilePositionX = cameraScrollX * 0.22 + Math.sin(t*0.5)*2;
+    par.fence.tilePositionX   = cameraScrollX * 0.55;
+    street.update(cameraScrollX);
+  };
+
+  return { ground, rails, obstacles, update, visualGroundYFor: street.visualGroundYFor };
+}
+
+
+⸻
+
+7) Game.ts — patches you must apply
+
+Imports (top):
+
+import { createWorld } from './world';
+import { LevelDirector } from './world/spawner';
+
+Fields (inside the class):
+
+private COYOTE_MS = 90;
+private BUFFER_MS = 120;
+private coyote = 0;
+private jumpBuffer = 0;
+private handleJump = () => { this.jumpBuffer = this.BUFFER_MS; };
+
+private director!: LevelDirector;
+private shadow!: Phaser.GameObjects.Ellipse;
+private world!: ReturnType<typeof createWorld>;
+
+In create() (after you create the scene but before gameplay loop):
+
+this.world = createWorld(this);
+
+// Recalibrate physics ground to match angled street at x=0
+const floorY = (this.world as any).visualGroundYFor(0) - 6;
+const groundRect = this.add.rectangle(0, floorY, 5000, 10, 0x00ff00, 0);
+this.physics.add.existing(groundRect, true);
+(this.world as any).ground.clear(true, true);
+(this.world as any).ground.add(groundRect as any);
+
+// Player collider tuning (feet feel right)
+this.player.setSize(20, 28).setOffset(14, 18);
+(this.physics.world as any).gravity.y = 950;
+
+// Shadow that hugs the visual ground
+this.shadow = this.add.ellipse(this.player.x, this.player.y+18, 22, 6, 0x000000, 0.45).setDepth(2);
+
+// Input hooks (fixes the crash)
+this.input.on('pointerdown', this.handleJump);
+this.input.keyboard?.on('keydown-SPACE', this.handleJump);
+
+// Colliders (use your existing grind handler)
+this.physics.add.collider(this.player, this.world.ground);
+this.physics.add.overlap(this.player, this.world.rails, /* your grind logic here */);
+this.physics.add.collider(this.player, this.world.obstacles, () => this.scene.restart());
+
+// Director for randomization & difficulty
+this.director = new LevelDirector(this, this.world);
+
+In update(time, delta) (replace your jump section and add the world/director updates):
+
+// timers
+this.coyote = Math.max(0, this.coyote - delta);
+this.jumpBuffer = Math.max(0, this.jumpBuffer - delta);
+
+const body = this.player.body as Phaser.Physics.Arcade.Body;
+const onGround = body.blocked.down || this.isOnRail;
+if (onGround) this.coyote = this.COYOTE_MS;
+
+// buffered + coyote jump
+if (this.jumpBuffer > 0 && this.coyote > 0) {
+  this.jumpBuffer = 0; this.coyote = 0;
+  this.isOnRail = false; body.allowGravity = true;
+  this.player.setVelocityY(-280);
+  this.didTrickThisJump = false;
+}
+
+// Rim-light in air (optional GBA sheen)
+if (onGround) this.player.clearTint(); else this.player.setTintFill(0x99ffcc);
+
+// Parallax + spawns + speed ramp
+const camX = this.cameras.main.scrollX;
+this.world.update(camX);
+this.director.update(camX);
+this.player.setVelocityX(this.director.getSpeed(camX));
+
+// Shadow rides the visual asphalt
+const yVis = (this.world as any).visualGroundYFor(this.player.x);
+this.shadow.setPosition(this.player.x, yVis - 2);
+this.shadow.scaleX = Phaser.Math.Clamp(1 - (this.player.y - (yVis - 14)) / 80, 0.6, 1.1);
+this.shadow.scaleY = Phaser.Math.Clamp(1 - (this.player.y - (yVis - 14)) / 80, 0.4, 1.0);
+
+Keep your existing grind overlap logic and trick logic as is; the director only spawns content.
+
+⸻
+
+What you get
+	•	Crash fix — a real handleJump() and buffered/coyote jump for great feel.
+	•	Procedural level — rails + potholes, broken wood block, knocked cone, barricade; spacing tightens and hazard weights increase with distance.
+	•	GBA look — richer palette, dithered tiles, parallax skyline/fence with subtle drift.
+	•	Angled street — visual tilt with a shadow glued to the computed ground curve so the skater never looks like he’s floating.
+
+If you want a follow-up pack with ramps (launch pads), combo rail sequences, and a grind multiplier that ticks up the longer you hold, say the word and I’ll drop that in too.

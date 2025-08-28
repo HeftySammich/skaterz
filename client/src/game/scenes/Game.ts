@@ -4,11 +4,13 @@ import { Score } from '../systems/score';
 import { ObstacleManager } from '../systems/obstacles';
 import { BitmapText } from '../utils/BitmapText';
 import { createWorld } from '../../world';
+import { LevelDirector } from '../../world/spawner';
 
 export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private shadow!: Phaser.GameObjects.Ellipse;
   private world!: ReturnType<typeof createWorld>;
+  private levelDirector!: LevelDirector;
   private cursors!: ReturnType<typeof setupControls>;
   private score!: Score;
   private obstacleManager!: ObstacleManager;
@@ -41,6 +43,7 @@ export default class Game extends Phaser.Scene {
 
     // Create the complete world (replaces background, ground, rails)
     this.world = createWorld(this);
+    this.levelDirector = new LevelDirector(this, this.world);
 
     // Create player
     this.createPlayer();
@@ -157,11 +160,11 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Obstacle collision - disabled for now to focus on grinding mechanics
-    // this.physics.add.collider(this.player, this.world.obstacles, () => {
-    //   console.log('Player hit obstacle - game over');
-    //   this.gameOver();
-    // });
+    // Obstacle collision
+    this.physics.add.collider(this.player, this.world.obstacles, () => {
+      console.log('Player hit obstacle - game over');
+      this.gameOver();
+    });
   }
 
   createUI() {
@@ -339,6 +342,12 @@ export default class Game extends Phaser.Scene {
       this.playSound('trick');
     }
 
+    // Update level director for procedural spawning
+    this.levelDirector.update(this.cameras.main.scrollX);
+    
+    // Update game speed based on difficulty
+    this.gameSpeed = this.levelDirector.getSpeed(this.cameras.main.scrollX);
+
     // Force player to maintain horizontal velocity every frame
     if (this.player && this.player.body) {
       this.player.setVelocityX(this.gameSpeed);
@@ -379,8 +388,7 @@ export default class Game extends Phaser.Scene {
     // Update the world (parallax, street scroll, dynamic content)
     this.world.update(this.cameras.main.scrollX, time);
 
-    // Increase difficulty over time
-    this.gameSpeed += delta * 0.001;
+    // Game speed is now handled by LevelDirector
 
     // Fail condition - moved down to give more room
     if (this.player.y > 200) {
