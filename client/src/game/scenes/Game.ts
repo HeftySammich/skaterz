@@ -273,6 +273,11 @@ export default class Game extends Phaser.Scene {
       }
     }
 
+    // Maintain player auto-run speed
+    if (!this.isOnRail) {
+      this.player.setVelocityX(this.gameSpeed);
+    }
+
     // Continuous scoring
     this.score.addDistance(this.gameSpeed * delta / 1000);
     
