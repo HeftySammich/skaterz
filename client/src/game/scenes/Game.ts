@@ -90,21 +90,26 @@ export default class Game extends Phaser.Scene {
     this.rails = this.physics.add.staticGroup();
     this.lastRailX = 180;
     
-    // Create initial rails
+    // Create initial long rails with more spacing
     this.createRail(this.lastRailX);
-    this.createRail(this.lastRailX + 200);
+    this.createRail(this.lastRailX + 300); // More space between long rails
   }
 
   createRail(x: number) {
-    // Use HD rail asset - position lower for easier access
-    const rail = this.add.image(x, 80, 'rail');
-    rail.setOrigin(0.5, 0.5);
-    rail.setTint(0xff00ff); // Make rails visible with magenta tint for debugging
-    this.physics.add.existing(rail, true);
-    this.rails.add(rail as any);
+    // Create much longer rails - 4 times longer for easier grinding
+    const railLength = 128; // 4 times longer than original 32px
     
-    console.log('Created rail at position:', x, 80);
-    this.lastRailX = x;
+    // Create multiple rail segments to make a long rail
+    for (let i = 0; i < 4; i++) {
+      const rail = this.add.image(x + (i * 32), 80, 'rail');
+      rail.setOrigin(0.5, 0.5);
+      rail.setTint(0xff00ff); // Keep magenta tint for debugging
+      this.physics.add.existing(rail, true);
+      this.rails.add(rail as any);
+    }
+    
+    console.log('Created long rail at position:', x, 'to', x + railLength, 'at Y: 80');
+    this.lastRailX = x + railLength;
   }
 
   createPlayer() {
@@ -355,9 +360,9 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Add new rails
+    // Add new long rails with proper spacing
     if (this.lastRailX < cameraX + 300) {
-      const newRailX = this.lastRailX + Phaser.Math.Between(180, 250);
+      const newRailX = this.lastRailX + Phaser.Math.Between(250, 400);
       this.createRail(newRailX);
     }
 
