@@ -148,32 +148,33 @@ export default class Game extends Phaser.Scene {
   }
 
   createUI() {
-    this.scoreText = this.add.text(8, 8, 'SCORE: 0', {
-      fontFamily: 'monospace',
-      fontSize: '10px',
+    // HD UI Text with higher resolution
+    this.scoreText = this.add.text(16, 16, 'SCORE: 0', {
+      fontFamily: '"Courier New", monospace',
+      fontSize: '20px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 4
     });
     this.scoreText.setScrollFactor(0);
     this.scoreText.setDepth(100);
 
-    this.comboText = this.add.text(8, 22, '', {
-      fontFamily: 'monospace',
-      fontSize: '8px',
+    this.comboText = this.add.text(16, 44, '', {
+      fontFamily: '"Courier New", monospace',
+      fontSize: '16px',
       color: '#ffff00',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 3
     });
     this.comboText.setScrollFactor(0);
     this.comboText.setDepth(100);
 
     this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
-      fontFamily: 'monospace',
-      fontSize: '6px',
+      fontFamily: '"Courier New", monospace',
+      fontSize: '12px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 1
+      strokeThickness: 2
     });
     this.instructionsText.setOrigin(0.5);
     this.instructionsText.setScrollFactor(0);
@@ -213,8 +214,30 @@ export default class Game extends Phaser.Scene {
   }
 
   showTrickScore() {
-    // Score is still added, just no visual effect
-    // Points are already added to score in the calling function
+    const points = 50 * this.comboMultiplier;
+    
+    // Create HD trick score popup
+    const trickText = this.add.text(this.player.x, this.player.y - 60, `+${points}`, {
+      fontFamily: '"Courier New", monospace',
+      fontSize: '24px',
+      color: '#00ff00',
+      stroke: '#000000',
+      strokeThickness: 4
+    });
+    
+    trickText.setDepth(150);
+    
+    // Animate the popup
+    this.tweens.add({
+      targets: trickText,
+      y: trickText.y - 40,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        trickText.destroy();
+      }
+    });
   }
 
   playSound(key: string) {

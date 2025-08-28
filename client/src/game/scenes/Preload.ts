@@ -19,8 +19,11 @@ export default class Preload extends Phaser.Scene {
       y: 60,
       text: 'Loading...',
       style: {
-        font: '12px monospace',
-        color: '#ffffff'
+        fontFamily: '"Courier New", monospace',
+        fontSize: '24px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3
       }
     });
     loadingText.setOrigin(0.5, 0.5);

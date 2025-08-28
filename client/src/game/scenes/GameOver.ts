@@ -17,52 +17,52 @@ export default class GameOver extends Phaser.Scene {
     overlay.fillStyle(0x000000, 0.7);
     overlay.fillRect(0, 0, 240, 160);
 
-    // Game Over text
+    // HD Game Over text
     this.add.text(120, 50, 'GAME OVER', {
-      fontFamily: 'monospace',
-      fontSize: '16px',
+      fontFamily: '"Courier New", monospace',
+      fontSize: '32px',
       color: '#ff0000',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 4
     }).setOrigin(0.5);
 
-    // Final score
+    // HD Final score
     this.add.text(120, 75, `FINAL SCORE: ${Math.floor(this.finalScore)}`, {
-      fontFamily: 'monospace',
-      fontSize: '10px',
+      fontFamily: '"Courier New", monospace',
+      fontSize: '20px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 3
     }).setOrigin(0.5);
 
-    // High score (using localStorage)
+    // HD High score (using localStorage)
     const highScore = this.getHighScore();
     if (this.finalScore > highScore) {
       this.setHighScore(this.finalScore);
       this.add.text(120, 90, 'NEW HIGH SCORE!', {
-        fontFamily: 'monospace',
-        fontSize: '8px',
+        fontFamily: '"Courier New", monospace',
+        fontSize: '16px',
         color: '#ffff00',
         stroke: '#000000',
-        strokeThickness: 2
+        strokeThickness: 3
       }).setOrigin(0.5);
     } else {
       this.add.text(120, 90, `HIGH SCORE: ${Math.floor(highScore)}`, {
-        fontFamily: 'monospace',
-        fontSize: '8px',
+        fontFamily: '"Courier New", monospace',
+        fontSize: '16px',
         color: '#ffffff',
         stroke: '#000000',
-        strokeThickness: 2
+        strokeThickness: 3
       }).setOrigin(0.5);
     }
 
-    // Restart instructions
+    // HD Restart instructions
     this.add.text(120, 120, 'PRESS SPACE TO RESTART', {
-      fontFamily: 'monospace',
-      fontSize: '8px',
+      fontFamily: '"Courier New", monospace',
+      fontSize: '16px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 3
     }).setOrigin(0.5);
 
     // Input handling
