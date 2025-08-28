@@ -313,23 +313,25 @@ export default class Game extends Phaser.Scene {
       this.didTrickThisJump = false;
       this.playSound('jump');
       console.log('Player jumped with velocity -280 from Y:', this.player.y);
-    } else if (!this.didTrickThisJump) {
-      // Air trick
+    } else if (!this.didTrickThisJump && !this.isOnRail) {
+      // Air trick - only when not on rail and not already doing a trick
       this.didTrickThisJump = true;
       this.comboMultiplier = Math.min(this.comboMultiplier + 1, 5);
       this.comboTimer = 3000;
       
       console.log('Air trick performed! Combo:', this.comboMultiplier);
       
-      // Visual trick effect
-      this.player.play('trickspin');
+      // Simple rotation without animation spam
+      this.tweens.killTweensOf(this.player); // Stop any existing tweens
+      this.player.setAngle(0); // Reset angle first
       
       this.tweens.add({
         targets: this.player,
-        angle: '+=360',
-        duration: 400,
+        angle: 360,
+        duration: 600,
         ease: 'Power2',
         onComplete: () => {
+          this.player.setAngle(0); // Reset angle after trick
           this.player.play('skate');
         }
       });
@@ -361,14 +363,17 @@ export default class Game extends Phaser.Scene {
     const onGround = (this.player.body as Phaser.Physics.Arcade.Body).blocked.down || this.isOnRail;
     if (onGround) {
       this.player.clearTint();
+      // Reset trick state when landing
+      if (this.didTrickThisJump) {
+        this.didTrickThisJump = false;
+        this.tweens.killTweensOf(this.player);
+        this.player.setAngle(0);
+      }
       if (this.player.anims.currentAnim?.key !== 'skate') {
         this.player.play('skate');
       }
     } else {
       this.player.setTintFill(0x99ffcc); // faint mint rim when airborne
-      if (!this.didTrickThisJump && this.player.anims.currentAnim?.key !== 'trickspin') {
-        this.player.setTexture('zombie_2');
-      }
     }
 
     // Update the world (parallax, street scroll, dynamic content)
