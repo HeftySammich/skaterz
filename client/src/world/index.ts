@@ -1,46 +1,33 @@
-import { buildParallax } from './parallax';
+// src/world/index.ts
+import { buildCityBack, buildStreetLayer, VisualGroundY } from './cityVisuals';
 
-export function createWorld(scene: Phaser.Scene) {
-  // --- Background parallax (stars, skyline, fence)
-  const par = buildParallax(scene);
+export function createWorld(scene: Phaser.Scene){
+  // back layer (sky + buildings)
+  const back = buildCityBack(scene);
 
-  // --- Flat asphalt rectangle for the road
-  const road = scene.add.rectangle(0, 160, 5000, 64, 0x2d303b) // asphalt gray
-    .setOrigin(0, 1)
-    .setDepth(3);
+  // fore layer (angled-looking street polygon)
+  const street = buildStreetLayer(scene);
 
-  // Physics ground matches the road baseline
-  scene.physics.add.existing(road, true);
+  // physics ground = invisible static body on the baseline
   const ground = scene.physics.add.staticGroup();
-  ground.add(road as any);
+  const floorRect = scene.add.rectangle(0, VisualGroundY(), 5000, 10, 0x000000, 0);
+  scene.physics.add.existing(floorRect, true);
+  ground.add(floorRect as any);
 
-  // --- Road details (paint + cracks)
-  for (let i = 0; i < 30; i++) {
-    // dashed yellow lane lines
-    scene.add.rectangle(i * 200, 148, 60, 4, 0xe2e28e)
-      .setDepth(4)
-      .setScrollFactor(1);
-  }
-  // a few cracks
-  scene.add.rectangle(350, 152, 40, 2, 0x1c1e25).setDepth(4).setScrollFactor(1);
-  scene.add.rectangle(700, 154, 20, 2, 0x1c1e25).setDepth(4).setScrollFactor(1);
-
-  // --- Groups for rails + obstacles
+  // groups for gameplay
   const rails = scene.physics.add.staticGroup();
   const obstacles = scene.physics.add.staticGroup();
 
-  // --- Update hook (parallax only)
-  const update = (cameraScrollX: number) => {
+  // depth sanity: back(1), street(3), rails(6), obstacles(7), player(10+)
+
+  const update = (scrollX: number) => {
     const t = scene.time.now * 0.001;
-    par.stars.tilePositionX   = cameraScrollX * 0.06;
-    par.skyline.tilePositionX = cameraScrollX * 0.22 + Math.sin(t*0.5)*2;
-    par.fence.tilePositionX   = cameraScrollX * 0.55;
+    // keep back layer parallax subtle
+    back.tilePositionX = scrollX * 0.25;
+    street.tilePositionX = scrollX * 1.0;
   };
 
-  // Visual ground Y (constant baseline)
-  function visualGroundYFor(_x: number) {
-    return 160; // flat ground baseline
-  }
+  function visualGroundYFor(_x: number){ return VisualGroundY(); }
 
   return { ground, rails, obstacles, update, visualGroundYFor };
 }

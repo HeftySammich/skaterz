@@ -382,7 +382,7 @@ export default class Game extends Phaser.Scene {
     }
 
     // Update the world (parallax, street scroll, dynamic content)
-    this.world.update(this.cameras.main.scrollX, time);
+    this.world.update(this.cameras.main.scrollX);
 
     // Game speed is now handled by LevelDirector
 
