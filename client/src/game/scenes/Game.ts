@@ -148,37 +148,40 @@ export default class Game extends Phaser.Scene {
   }
 
   createUI() {
-    // HD UI Text with higher resolution
-    this.scoreText = this.add.text(16, 16, 'SCORE: 0', {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '20px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 4
-    });
-    this.scoreText.setScrollFactor(0);
-    this.scoreText.setDepth(100);
-
-    this.comboText = this.add.text(16, 44, '', {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '16px',
-      color: '#ffff00',
-      stroke: '#000000',
-      strokeThickness: 3
-    });
-    this.comboText.setScrollFactor(0);
-    this.comboText.setDepth(100);
-
-    this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
-      fontFamily: '"Courier New", monospace',
+    // HD 2D pixel-perfect text - small size but crisp rendering
+    this.scoreText = this.add.text(8, 8, 'SCORE: 0', {
+      fontFamily: 'monospace',
       fontSize: '12px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 1
+    });
+    this.scoreText.setScrollFactor(0);
+    this.scoreText.setDepth(100);
+    this.scoreText.setResolution(2); // HD 2D rendering
+
+    this.comboText = this.add.text(8, 22, '', {
+      fontFamily: 'monospace', 
+      fontSize: '10px',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 1
+    });
+    this.comboText.setScrollFactor(0);
+    this.comboText.setDepth(100);
+    this.comboText.setResolution(2); // HD 2D rendering
+
+    this.instructionsText = this.add.text(120, 140, 'SPACE: Jump/Trick | HOLD: Grind', {
+      fontFamily: 'monospace',
+      fontSize: '8px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 1
     });
     this.instructionsText.setOrigin(0.5);
     this.instructionsText.setScrollFactor(0);
     this.instructionsText.setDepth(100);
+    this.instructionsText.setResolution(2); // HD 2D rendering
   }
 
   startGrinding() {
@@ -216,16 +219,17 @@ export default class Game extends Phaser.Scene {
   showTrickScore() {
     const points = 50 * this.comboMultiplier;
     
-    // Create HD trick score popup
+    // Create HD 2D trick score popup - small but crisp
     const trickText = this.add.text(this.player.x, this.player.y - 60, `+${points}`, {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '24px',
+      fontFamily: 'monospace',
+      fontSize: '14px',
       color: '#00ff00',
       stroke: '#000000',
-      strokeThickness: 4
+      strokeThickness: 1
     });
     
     trickText.setDepth(150);
+    trickText.setResolution(2); // HD 2D rendering
     
     // Animate the popup
     this.tweens.add({

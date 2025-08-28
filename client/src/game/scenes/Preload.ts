@@ -19,14 +19,15 @@ export default class Preload extends Phaser.Scene {
       y: 60,
       text: 'Loading...',
       style: {
-        fontFamily: '"Courier New", monospace',
-        fontSize: '24px',
+        fontFamily: 'monospace',
+        fontSize: '14px',
         color: '#ffffff',
         stroke: '#000000',
-        strokeThickness: 3
+        strokeThickness: 1
       }
     });
     loadingText.setOrigin(0.5, 0.5);
+    loadingText.setResolution(2); // HD 2D rendering
 
     this.load.on('progress', (value: number) => {
       progressBar.clear();

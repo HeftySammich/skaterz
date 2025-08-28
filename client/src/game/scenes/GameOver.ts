@@ -17,53 +17,58 @@ export default class GameOver extends Phaser.Scene {
     overlay.fillStyle(0x000000, 0.7);
     overlay.fillRect(0, 0, 240, 160);
 
-    // HD Game Over text
-    this.add.text(120, 50, 'GAME OVER', {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '32px',
+    // HD 2D Game Over text - pixel perfect
+    const gameOverText = this.add.text(120, 50, 'GAME OVER', {
+      fontFamily: 'monospace',
+      fontSize: '18px',
       color: '#ff0000',
       stroke: '#000000',
-      strokeThickness: 4
+      strokeThickness: 1
     }).setOrigin(0.5);
+    gameOverText.setResolution(2);
 
-    // HD Final score
-    this.add.text(120, 75, `FINAL SCORE: ${Math.floor(this.finalScore)}`, {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '20px',
+    // HD 2D Final score
+    const finalScoreText = this.add.text(120, 75, `FINAL SCORE: ${Math.floor(this.finalScore)}`, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 3
+      strokeThickness: 1
     }).setOrigin(0.5);
+    finalScoreText.setResolution(2);
 
-    // HD High score (using localStorage)
+    // HD 2D High score (using localStorage)
     const highScore = this.getHighScore();
+    let highScoreText;
     if (this.finalScore > highScore) {
       this.setHighScore(this.finalScore);
-      this.add.text(120, 90, 'NEW HIGH SCORE!', {
-        fontFamily: '"Courier New", monospace',
-        fontSize: '16px',
+      highScoreText = this.add.text(120, 90, 'NEW HIGH SCORE!', {
+        fontFamily: 'monospace',
+        fontSize: '10px',
         color: '#ffff00',
         stroke: '#000000',
-        strokeThickness: 3
+        strokeThickness: 1
       }).setOrigin(0.5);
     } else {
-      this.add.text(120, 90, `HIGH SCORE: ${Math.floor(highScore)}`, {
-        fontFamily: '"Courier New", monospace',
-        fontSize: '16px',
+      highScoreText = this.add.text(120, 90, `HIGH SCORE: ${Math.floor(highScore)}`, {
+        fontFamily: 'monospace',
+        fontSize: '10px',
         color: '#ffffff',
         stroke: '#000000',
-        strokeThickness: 3
+        strokeThickness: 1
       }).setOrigin(0.5);
     }
+    highScoreText.setResolution(2);
 
-    // HD Restart instructions
-    this.add.text(120, 120, 'PRESS SPACE TO RESTART', {
-      fontFamily: '"Courier New", monospace',
-      fontSize: '16px',
+    // HD 2D Restart instructions
+    const restartText = this.add.text(120, 120, 'PRESS SPACE TO RESTART', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
       color: '#ffffff',
       stroke: '#000000',
-      strokeThickness: 3
+      strokeThickness: 1
     }).setOrigin(0.5);
+    restartText.setResolution(2);
 
     // Input handling
     this.input.keyboard?.addKey('SPACE').on('down', () => {
