@@ -153,10 +153,11 @@ export default class Game extends Phaser.Scene {
       return true;
     });
 
-    // Rail overlap for grinding with better detection
+    // Rail overlap for automatic grinding
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      if (this.cursors.holding() && !this.isOnRail) {
-        console.log('Hold detected - starting grind on rail at Y:', rail.y);
+      // Auto-grind when player touches any rail
+      if (!this.isOnRail) {
+        console.log('Player touched rail - auto-grinding! Rail Y:', rail.y, 'Player Y:', player.y);
         this.startGrinding();
       }
     });
@@ -171,7 +172,7 @@ export default class Game extends Phaser.Scene {
     this.comboText.setScrollFactor(0);
 
     // Use bitmap text for instructions for crisp HD 2D rendering
-    this.instructionsText = new BitmapText(this, 60, 140, 'TAP JUMP HOLD GRIND', 0xffffff);
+    this.instructionsText = new BitmapText(this, 60, 140, 'TAP TO JUMP AUTO GRIND', 0xffffff);
     this.instructionsText.setScrollFactor(0);
   }
 
@@ -268,42 +269,49 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Stop grinding if not holding
-    if (this.isOnRail && !this.cursors.holding()) {
-      this.stopGrinding();
+    // Auto-stop grinding when no longer touching rails
+    if (this.isOnRail) {
+      // Check if still overlapping with any rail
+      const stillOnRail = this.physics.world.bodies.entries.some(body => 
+        this.rails.contains(body.gameObject) && 
+        Phaser.Geom.Rectangle.Overlaps(this.player.getBounds(), (body.gameObject as any).getBounds())
+      );
+      
+      if (!stillOnRail) {
+        console.log('Player left rail - stopping grind');
+        this.stopGrinding();
+      }
     }
 
-    // Handle jump/trick input
+    // Handle jump input - any touch makes zombie jump
     if (this.cursors.justTapped()) {
       if (this.player.body!.blocked.down || this.isOnRail) {
-        // Jump from ground or rail - moderate jump to reach rails
+        // Jump from ground or rail
         this.stopGrinding();
-        this.player.setVelocityY(-300); // Reduced jump height
+        this.player.setVelocityY(-350); // Good jump height to reach rails
         this.playSound('jump');
         this.didTrickThisJump = false;
-        console.log('Player jumped from ground/rail with velocity -300 from Y:', this.player.y);
+        console.log('Player jumped with velocity -350 from Y:', this.player.y);
         
-        // Keep skating animation for ground jumps
+        // Keep skating animation
         this.player.play('skate');
       } else if (!this.didTrickThisJump) {
-        // Only do tricks when already in the air (not on ground)
+        // Air trick
         this.didTrickThisJump = true;
         this.comboMultiplier = Math.min(this.comboMultiplier + 1, 5);
         this.comboTimer = 3000;
         
         console.log('Air trick performed! Combo:', this.comboMultiplier);
         
-        // Visual trick effect - use the trickspin animation
+        // Visual trick effect
         this.player.play('trickspin');
         
-        // Also add rotation tween for extra effect
         this.tweens.add({
           targets: this.player,
           angle: '+=360',
           duration: 400,
           ease: 'Power2',
           onComplete: () => {
-            // Return to skating animation after trick
             this.player.play('skate');
           }
         });
