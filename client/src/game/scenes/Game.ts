@@ -132,10 +132,10 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Obstacle collisions
-    this.physics.add.overlap(this.player, this.obstacleManager.getObstacles(), () => {
-      this.gameOver();
-    });
+    // Obstacle collisions disabled
+    // this.physics.add.overlap(this.player, this.obstacleManager.getObstacles(), () => {
+    //   this.gameOver();
+    // });
   }
 
   createUI() {
@@ -282,8 +282,8 @@ export default class Game extends Phaser.Scene {
     // Update world (ground, rails, obstacles)
     this.updateWorld();
 
-    // Update obstacle manager
-    this.obstacleManager.update(delta);
+    // Obstacles disabled for cleaner experience
+    // this.obstacleManager.update(delta);
 
     // Increase difficulty over time
     this.gameSpeed += delta * 0.001;
