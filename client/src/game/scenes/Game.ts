@@ -68,11 +68,17 @@ export default class Game extends Phaser.Scene {
   createGround() {
     this.ground = this.physics.add.staticGroup();
     
-    // Create initial ground tiles
+    // Create a proper street that fills the bottom third of the screen
+    const streetHeight = 50; // Bottom 50 pixels will be street
+    const streetStartY = 160 - streetHeight; // Start street at Y=110
+    
+    // Create multiple rows of street tiles to fill the bottom
     for (let x = 0; x < 400; x += 16) {
-      const tile = this.ground.create(x, 140, 'tiles');
-      tile.setOrigin(0, 0);
-      tile.refreshBody();
+      for (let y = streetStartY; y < 160; y += 16) {
+        const tile = this.ground.create(x, y, 'tiles');
+        tile.setOrigin(0, 0);
+        tile.refreshBody();
+      }
     }
   }
 
@@ -100,7 +106,7 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    this.player = this.physics.add.sprite(40, 100, 'zombie');
+    this.player = this.physics.add.sprite(40, 85, 'zombie'); // Position on top of street
     this.player.setCollideWorldBounds(false); // Remove world bounds constraint
     this.player.setDepth(10);
     this.player.body!.setSize(12, 20); // Smaller hitbox for forgiving gameplay
@@ -300,13 +306,18 @@ export default class Game extends Phaser.Scene {
   updateWorld() {
     const cameraX = this.cameras.main.scrollX;
     
-    // Extend ground
+    // Extend ground - create full street blocks
     const rightmostGround = Math.max(...this.ground.children.entries.map(child => (child as any).x));
     if (rightmostGround < cameraX + 300) {
+      const streetHeight = 50;
+      const streetStartY = 160 - streetHeight;
+      
       for (let x = rightmostGround + 16; x < cameraX + 400; x += 16) {
-        const tile = this.ground.create(x, 140, 'tiles');
-        tile.setOrigin(0, 0);
-        tile.refreshBody();
+        for (let y = streetStartY; y < 160; y += 16) {
+          const tile = this.ground.create(x, y, 'tiles');
+          tile.setOrigin(0, 0);
+          tile.refreshBody();
+        }
       }
     }
 
