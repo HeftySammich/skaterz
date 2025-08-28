@@ -96,12 +96,14 @@ export default class Game extends Phaser.Scene {
   }
 
   createRail(x: number) {
-    // Use HD rail asset
-    const rail = this.add.image(x, 100, 'rail');
+    // Use HD rail asset - position lower for easier access
+    const rail = this.add.image(x, 80, 'rail');
     rail.setOrigin(0.5, 0.5);
+    rail.setTint(0xff00ff); // Make rails visible with magenta tint for debugging
     this.physics.add.existing(rail, true);
     this.rails.add(rail as any);
     
+    console.log('Created rail at position:', x, 80);
     this.lastRailX = x;
   }
 
@@ -148,12 +150,12 @@ export default class Game extends Phaser.Scene {
 
     // Rail overlap for grinding with better detection
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      console.log('Player overlapping with rail');
+      console.log('Player overlapping with rail at Y:', rail.y, 'Player Y:', player.y);
       if (this.cursors.holding()) {
         console.log('Hold detected - starting grind!');
         this.startGrinding();
       } else {
-        console.log('No hold detected - not grinding');
+        console.log('No hold detected - not grinding. Try holding the screen longer!');
       }
     });
   }
@@ -167,7 +169,7 @@ export default class Game extends Phaser.Scene {
     this.comboText.setScrollFactor(0);
 
     // Use bitmap text for instructions for crisp HD 2D rendering
-    this.instructionsText = new BitmapText(this, 60, 140, 'SPACE JUMP HOLD GRIND', 0xffffff);
+    this.instructionsText = new BitmapText(this, 60, 140, 'TAP JUMP HOLD GRIND', 0xffffff);
     this.instructionsText.setScrollFactor(0);
   }
 
@@ -264,11 +266,12 @@ export default class Game extends Phaser.Scene {
     // Handle jump/trick input
     if (this.cursors.justTapped()) {
       if (this.player.body!.blocked.down || this.isOnRail) {
-        // Jump
+        // Jump - higher jump to reach rails at Y=80
         this.stopGrinding();
-        this.player.setVelocityY(-280);
+        this.player.setVelocityY(-400);
         this.playSound('jump');
         this.didTrickThisJump = false;
+        console.log('Player jumped with velocity -400 from Y:', this.player.y);
       } else if (!this.didTrickThisJump) {
         // Trick in air
         this.didTrickThisJump = true;
