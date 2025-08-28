@@ -110,7 +110,7 @@ export default class Game extends Phaser.Scene {
   }
 
   setupCollisions() {
-    // Ground collision
+    // Ground collision - maintain horizontal velocity
     this.physics.add.collider(this.player, this.ground, () => {
       if (this.didTrickThisJump && this.comboTimer > 0) {
         // Successful trick landing
@@ -118,12 +118,17 @@ export default class Game extends Phaser.Scene {
         this.showTrickScore();
         this.didTrickThisJump = false;
       }
+      // Ensure horizontal movement continues after landing
+      this.player.setVelocityX(this.gameSpeed);
     });
 
     // Rail overlap for grinding
     this.physics.add.overlap(this.player, this.rails, () => {
       if (this.cursors.holding()) {
         this.startGrinding();
+      } else {
+        // Ensure horizontal movement continues when passing over rails
+        this.player.setVelocityX(this.gameSpeed);
       }
     });
 
