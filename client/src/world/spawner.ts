@@ -42,35 +42,35 @@ export class LevelDirector {
   }
 
   private spawnRail(x: number){
-    const y = 160 - 18; // flat ground baseline - rail height
-    const img = this.scene.add.image(x, y, 'rail32').setOrigin(0.5,1).setDepth(6);
-    this.scene.physics.add.existing(img, true);
-    this.world.rails.add(img as any);
+    const BASE = 160;
+    const rail = this.scene.add.image(x, BASE-18, 'rail32').setOrigin(0.5,1).setDepth(6);
+    this.scene.physics.add.existing(rail, true);
+    this.world.rails.add(rail as any);
   }
   private spawnPothole(x: number){
-    const y = 160 - 1; // flat ground baseline
-    this.scene.add.image(x, y, 'pothole32x12').setOrigin(0.5,1).setDepth(7);
-    const hit = this.scene.add.rectangle(x, y-4, 22, 6, 0x000000, 0);
+    const BASE = 160;
+    this.scene.add.image(x, BASE-1, 'pothole32x12').setOrigin(0.5,1).setDepth(7);
+    const hit = this.scene.add.rectangle(x, BASE-4, 22, 6, 0x000000, 0);
     this.scene.physics.add.existing(hit, true);
     this.world.obstacles.add(hit as any);
   }
   private spawnWood(x: number){
-    const y = 160; // flat ground baseline
-    const img = this.scene.add.image(x, y, 'woodblock32x14').setOrigin(0.5,1).setDepth(7);
-    this.scene.physics.add.existing(img, true);
-    this.world.obstacles.add(img as any);
+    const BASE = 160;
+    const wood = this.scene.add.image(x, BASE, 'woodblock32x14').setOrigin(0.5,1).setDepth(7);
+    this.scene.physics.add.existing(wood, true);
+    this.world.obstacles.add(wood as any);
   }
   private spawnCone(x: number){
-    const y = 160; // flat ground baseline
-    const img = this.scene.add.image(x, y, 'cone_knock24x12').setOrigin(0.5,1).setDepth(7);
-    this.scene.physics.add.existing(img, true);
-    this.world.obstacles.add(img as any);
+    const BASE = 160;
+    const cone = this.scene.add.image(x, BASE, 'cone_knock24x12').setOrigin(0.5,1).setDepth(7);
+    this.scene.physics.add.existing(cone, true);
+    this.world.obstacles.add(cone as any);
   }
   private spawnBarricade(x: number){
-    const y = 160 - 2; // flat ground baseline - small offset
-    const img = this.scene.add.image(x, y, 'barricade32').setOrigin(0.5,1).setDepth(7);
-    this.scene.physics.add.existing(img, true);
-    this.world.obstacles.add(img as any);
+    const BASE = 160;
+    const barricade = this.scene.add.image(x, BASE-2, 'barricade32').setOrigin(0.5,1).setDepth(7);
+    this.scene.physics.add.existing(barricade, true);
+    this.world.obstacles.add(barricade as any);
   }
 }
 
