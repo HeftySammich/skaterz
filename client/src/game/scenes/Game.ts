@@ -150,12 +150,9 @@ export default class Game extends Phaser.Scene {
 
     // Rail overlap for grinding with better detection
     this.physics.add.overlap(this.player, this.rails, (player: any, rail: any) => {
-      console.log('Player overlapping with rail at Y:', rail.y, 'Player Y:', player.y);
       if (this.cursors.holding()) {
-        console.log('Hold detected - starting grind!');
+        console.log('Hold detected - starting grind on rail at Y:', rail.y);
         this.startGrinding();
-      } else {
-        console.log('No hold detected - not grinding. Try holding the screen longer!');
       }
     });
   }
@@ -266,17 +263,22 @@ export default class Game extends Phaser.Scene {
     // Handle jump/trick input
     if (this.cursors.justTapped()) {
       if (this.player.body!.blocked.down || this.isOnRail) {
-        // Jump - higher jump to reach rails at Y=80
+        // Jump from ground or rail - higher jump to reach rails at Y=80
         this.stopGrinding();
         this.player.setVelocityY(-400);
         this.playSound('jump');
         this.didTrickThisJump = false;
-        console.log('Player jumped with velocity -400 from Y:', this.player.y);
+        console.log('Player jumped from ground/rail with velocity -400 from Y:', this.player.y);
+        
+        // Keep skating animation for ground jumps
+        this.player.play('skate');
       } else if (!this.didTrickThisJump) {
-        // Trick in air
+        // Only do tricks when already in the air (not on ground)
         this.didTrickThisJump = true;
         this.comboMultiplier = Math.min(this.comboMultiplier + 1, 5);
         this.comboTimer = 3000;
+        
+        console.log('Air trick performed! Combo:', this.comboMultiplier);
         
         // Visual trick effect - use the trickspin animation
         this.player.play('trickspin');
