@@ -1,6 +1,6 @@
 // Auto-crop a subject out of the image (uses corner color as "bg") then scale to 'target'
 export async function cropAndMakeTexture(
-  scene: Phaser.Scene, inKey: string, outKey: string, target = 48
+  scene: Phaser.Scene, inKey: string, outKey: string, target = 96
 ) {
   const tex = scene.textures.get(inKey);
   const img = tex.getSourceImage() as HTMLImageElement;
@@ -41,11 +41,11 @@ export async function cropAndMakeTexture(
 
 // Build small lean/tilt frames from a base texture to simulate a skate loop.
 export function synthesizeLeanFrames(
-  scene: Phaser.Scene, baseKey: string, framePrefix: string, angles = [-6,-3,0,3,6,3]
+  scene: Phaser.Scene, baseKey: string, framePrefix: string, angles = [-4,-2,0,2,4,2]
 ) {
   const base = scene.textures.get(baseKey).getSourceImage() as HTMLCanvasElement|HTMLImageElement;
   angles.forEach((deg,idx)=>{
-    const s = 48, pad = 2;
+    const s = 96, pad = 4;
     const c = document.createElement('canvas'); c.width=s+pad*2; c.height=s+pad*2;
     const ctx=c.getContext('2d')!; ctx.imageSmoothingEnabled=false;
     ctx.translate((s+pad*2)/2, (s+pad*2)/2);

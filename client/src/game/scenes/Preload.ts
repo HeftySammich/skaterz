@@ -52,21 +52,24 @@ export default class Preload extends Phaser.Scene {
       makeSkyline(this);
       makeNYCTiles(this);
 
-      // 1) Crop & scale your zombie image to 48x48
-      await cropAndMakeTexture(this, 'zombie_full', 'zombie_base', 48);
+      // 1) Crop & scale your zombie image to 96x96 for HD quality
+      await cropAndMakeTexture(this, 'zombie_full', 'zombie_base', 96);
       
       // 2) Synthesize 6 animation frames with subtle lean/tilt
       synthesizeLeanFrames(this, 'zombie_base', 'zombie');
 
-      // Create a small crown for NFT owners
+      // Create a HD crown for NFT owners
       const crownCanvas = document.createElement('canvas');
-      crownCanvas.width = 8;
-      crownCanvas.height = 6;
+      crownCanvas.width = 16;
+      crownCanvas.height = 12;
       const ctx = crownCanvas.getContext('2d')!;
       ctx.imageSmoothingEnabled = false;
       ctx.fillStyle = '#f7b51b';
-      [[1,5],[2,2],[3,4],[4,1],[5,3],[6,5]].forEach(([x,y]) => ctx.fillRect(x,y,1,1));
-      this.textures.addCanvas('crown8', crownCanvas);
+      // Scale up the crown pattern 2x for HD
+      [[2,10],[4,4],[6,8],[8,2],[10,6],[12,10]].forEach(([x,y]) => {
+        ctx.fillRect(x,y,2,2);
+      });
+      this.textures.addCanvas('crown16', crownCanvas);
 
       // Define animations
       const frameKeys = [];
@@ -99,14 +102,14 @@ export default class Preload extends Phaser.Scene {
   }
 
   createFallbackSprite() {
-    // Simple fallback if image loading fails
+    // HD fallback if image loading fails
     const zombieTexture = this.add.graphics();
     zombieTexture.fillStyle(0x8fbc8f); // green zombie color
-    zombieTexture.fillRect(0, 0, 48, 48);
+    zombieTexture.fillRect(0, 0, 96, 96);
     zombieTexture.fillStyle(0xff0000); // red eyes
-    zombieTexture.fillRect(12, 12, 4, 4);
-    zombieTexture.fillRect(32, 12, 4, 4);
-    zombieTexture.generateTexture('zombie_base', 48, 48);
+    zombieTexture.fillRect(24, 24, 8, 8);
+    zombieTexture.fillRect(64, 24, 8, 8);
+    zombieTexture.generateTexture('zombie_base', 96, 96);
     zombieTexture.destroy();
     
     // Create single frame versions for fallback

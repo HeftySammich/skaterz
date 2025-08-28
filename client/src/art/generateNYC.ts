@@ -11,60 +11,60 @@ function dither(ctx: CanvasRenderingContext2D, x:number,y:number,w:number,h:numb
 }
 
 export function makeNYCTiles(scene: Phaser.Scene) {
-  const tw=16, th=16, cols=8, rows=4;
+  const tw=32, th=32, cols=8, rows=4; // Double resolution for HD
   const sheet=document.createElement('canvas'); sheet.width=cols*tw; sheet.height=rows*th;
   const g=sheet.getContext('2d')!; g.imageSmoothingEnabled=false;
 
-  // 0: asphalt base (dither + cracks)
+  // 0: asphalt base (dither + cracks) - HD version
   dither(g, 0,0,tw,th, PAL.asphalt0, PAL.asphalt1);
-  g.strokeStyle = PAL.asphaltCrack; g.lineWidth=1;
-  g.beginPath(); g.moveTo(3,12); g.lineTo(10,8); g.lineTo(14,10); g.stroke();
+  g.strokeStyle = PAL.asphaltCrack; g.lineWidth=2;
+  g.beginPath(); g.moveTo(6,24); g.lineTo(20,16); g.lineTo(28,20); g.stroke();
 
-  // 1: asphalt with lane paint line
-  dither(g, 16,0,tw,th, PAL.asphalt0, PAL.asphalt1);
-  g.fillStyle = PAL.lanePaint; g.fillRect(16+7,0,2,16);
-
-  // 2: crosswalk (diagonal)
+  // 1: asphalt with lane paint line - HD version
   dither(g, 32,0,tw,th, PAL.asphalt0, PAL.asphalt1);
-  g.fillStyle = PAL.lanePaint; for(let x=-6;x<16;x+=5) g.fillRect(32+x,0,3,16);
+  g.fillStyle = PAL.lanePaint; g.fillRect(32+14,0,4,32);
 
-  // 3: manhole
-  dither(g, 48,0,tw,th, PAL.asphalt0, PAL.asphalt1);
-  g.fillStyle = '#404650'; g.fillRect(48+4,4,8,8);
-  g.fillStyle = '#2d323a'; for (let i=48+5;i<48+11;i+=2) g.fillRect(i,6,1,4);
+  // 2: crosswalk (diagonal) - HD version
+  dither(g, 64,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = PAL.lanePaint; for(let x=-12;x<32;x+=10) g.fillRect(64+x,0,6,32);
 
-  // 4: sidewalk slab
-  dither(g, 0,16,tw,th, PAL.sidewalk0, PAL.sidewalk1);
-  g.strokeStyle = '#4c4c56'; g.strokeRect(0.5,16.5,tw-1,th-1);
-  g.beginPath(); g.moveTo(0,16+8); g.lineTo(16,16+8); g.stroke();
+  // 3: manhole - HD version
+  dither(g, 96,0,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = '#404650'; g.fillRect(96+8,8,16,16);
+  g.fillStyle = '#2d323a'; for (let i=96+10;i<96+22;i+=4) g.fillRect(i,12,2,8);
 
-  // 5: curb (top + face)
-  dither(g, 16,16,tw,th, PAL.curbTop, PAL.sidewalk1);
-  g.fillStyle = PAL.curbFace; g.fillRect(16,16+10,16,6);
+  // 4: sidewalk slab - HD version
+  dither(g, 0,32,tw,th, PAL.sidewalk0, PAL.sidewalk1);
+  g.strokeStyle = '#4c4c56'; g.lineWidth=2; g.strokeRect(1,33,tw-2,th-2);
+  g.beginPath(); g.moveTo(0,32+16); g.lineTo(32,32+16); g.stroke();
 
-  // 6: debris (papers)
-  dither(g, 32,16,tw,th, PAL.asphalt0, PAL.asphalt1);
-  g.fillStyle = '#cfcfd4'; g.fillRect(32+3,16+11,3,2); g.fillRect(32+11,16+6,2,2);
+  // 5: curb (top + face) - HD version
+  dither(g, 32,32,tw,th, PAL.curbTop, PAL.sidewalk1);
+  g.fillStyle = PAL.curbFace; g.fillRect(32,32+20,32,12);
 
-  // 7: hazard edge
-  dither(g, 48,16,tw,th, PAL.asphalt0, PAL.asphalt1);
-  g.fillStyle = PAL.hazard; for(let i=0;i<16;i+=4) g.fillRect(48+i,16+12,2,4);
+  // 6: debris (papers) - HD version
+  dither(g, 64,32,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = '#cfcfd4'; g.fillRect(64+6,32+22,6,4); g.fillRect(64+22,32+12,4,4);
+
+  // 7: hazard edge - HD version
+  dither(g, 96,32,tw,th, PAL.asphalt0, PAL.asphalt1);
+  g.fillStyle = PAL.hazard; for(let i=0;i<32;i+=8) g.fillRect(96+i,32+24,4,8);
 
   scene.textures.addCanvas('nyc_tiles', sheet);
 
-  // Rail 48x6 + posts
-  const rail=document.createElement('canvas'); rail.width=48; rail.height=6;
+  // HD Rail 96x12 + posts
+  const rail=document.createElement('canvas'); rail.width=96; rail.height=12;
   const r=rail.getContext('2d')!; r.imageSmoothingEnabled=false;
-  r.fillStyle = PAL.steel; r.fillRect(0,2,48,2);
-  r.fillStyle = '#2c3942'; r.fillRect(0,1,48,1);
-  [6,24,42].forEach(x=>r.fillRect(x,3,2,3));
+  r.fillStyle = PAL.steel; r.fillRect(0,4,96,4);
+  r.fillStyle = '#2c3942'; r.fillRect(0,2,96,2);
+  [12,48,84].forEach(x=>r.fillRect(x,6,4,6));
   scene.textures.addCanvas('rail', rail);
 
-  // Barricade 16x24
-  const ob=document.createElement('canvas'); ob.width=16; ob.height=24;
+  // HD Barricade 32x48
+  const ob=document.createElement('canvas'); ob.width=32; ob.height=48;
   const o=ob.getContext('2d')!; o.imageSmoothingEnabled=false;
-  dither(o, 0,0,16,24, '#402a1f', '#6b3f28');
-  o.fillStyle = PAL.hazard; o.fillRect(2,6,12,3); o.fillRect(2,14,12,3);
+  dither(o, 0,0,32,48, '#402a1f', '#6b3f28');
+  o.fillStyle = PAL.hazard; o.fillRect(4,12,24,6); o.fillRect(4,28,24,6);
   scene.textures.addCanvas('barricade', ob);
 }
 

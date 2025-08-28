@@ -58,24 +58,24 @@ export default class Game extends Phaser.Scene {
   }
 
   createBackground() {
-    // Simple gradient background for GBA feel
-    const bg = this.add.graphics();
-    bg.fillGradientStyle(0x87ceeb, 0x87ceeb, 0x90ee90, 0x90ee90);
-    bg.fillRect(0, 0, 240, 160);
-    bg.setScrollFactor(0);
+    // HD NYC apocalypse skyline background
+    const skyline = this.add.tileSprite(0, 20, 480, 80, 'skyline');
+    skyline.setOrigin(0, 0);
+    skyline.setScrollFactor(0.2); // Parallax effect
   }
 
   createGround() {
     this.ground = this.physics.add.staticGroup();
     
-    // Create a proper street that fills the bottom third of the screen
-    const streetHeight = 50; // Bottom 50 pixels will be street
-    const streetStartY = 160 - streetHeight; // Start street at Y=110
+    // Use NYC tiles for HD street
+    const streetHeight = 64; // Bottom 64 pixels for HD street
+    const streetStartY = 160 - streetHeight; // Start street at Y=96
     
-    // Create multiple rows of street tiles to fill the bottom
-    for (let x = 0; x < 400; x += 16) {
-      for (let y = streetStartY; y < 160; y += 16) {
-        const tile = this.ground.create(x, y, 'tiles');
+    // Create multiple rows of HD street tiles (32x32) to fill the bottom
+    for (let x = 0; x < 400; x += 32) {
+      for (let y = streetStartY; y < 160; y += 32) {
+        const tileIndex = Math.floor(Math.random() * 8); // Random tile from sheet
+        const tile = this.ground.create(x, y, 'nyc_tiles');
         tile.setOrigin(0, 0);
         tile.refreshBody();
       }
@@ -92,12 +92,8 @@ export default class Game extends Phaser.Scene {
   }
 
   createRail(x: number) {
-    // Rail post
-    const post = this.add.rectangle(x, 110, 4, 20, 0x666666);
-    this.physics.add.existing(post, true);
-    
-    // Rail bar
-    const rail = this.add.rectangle(x, 100, 48, 4, 0xcccccc);
+    // Use HD rail asset
+    const rail = this.add.image(x, 100, 'rail');
     rail.setOrigin(0.5, 0.5);
     this.physics.add.existing(rail, true);
     this.rails.add(rail as any);
@@ -111,8 +107,9 @@ export default class Game extends Phaser.Scene {
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Adjust size for the new 48x48 sprite
-    this.player.body!.setSize(32, 40); // Slightly larger hitbox for 48x48 sprite
+    // Adjust size for the new 96x96 HD sprite  
+    this.player.body!.setSize(64, 80); // Larger hitbox for 96x96 sprite
+    this.player.setScale(0.6); // Scale down for mobile-friendly size
     
     // Start skating animation
     this.player.play('skate');
