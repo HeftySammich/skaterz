@@ -101,7 +101,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     this.player = this.physics.add.sprite(40, 100, 'zombie');
-    this.player.setCollideWorldBounds(true);
+    this.player.setCollideWorldBounds(false); // Remove world bounds constraint
     this.player.setDepth(10);
     this.player.body!.setSize(12, 20); // Smaller hitbox for forgiving gameplay
     
@@ -278,9 +278,12 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // Maintain player auto-run speed
-    if (!this.isOnRail) {
-      this.player.setVelocityX(this.gameSpeed);
+    // Maintain player auto-run speed - force it every frame
+    this.player.setVelocityX(this.gameSpeed);
+    
+    // Debug: log player position and velocity if stopped
+    if (Math.abs(this.player.body!.velocity.x) < 10) {
+      console.log('Player stopped! Position:', this.player.x, 'Velocity:', this.player.body!.velocity.x);
     }
 
     // Continuous scoring
@@ -340,8 +343,9 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Camera follows player
+    // Camera follows player with less lag
     this.cameras.main.startFollow(this.player, true, 0.1, 0);
+    this.cameras.main.setLerp(0.1, 0);
   }
 
   updateUI() {
