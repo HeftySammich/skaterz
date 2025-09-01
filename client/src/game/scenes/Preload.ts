@@ -37,15 +37,15 @@ export default class Preload extends Phaser.Scene {
     this.anims.create({
       key: 'jump',
       frames: [{ key: 'skater_jump' }],
-      frameRate: 12,
+      frameRate: 10,
       repeat: -1
     });
 
     this.anims.create({
       key: 'trick',
       frames: [{ key: 'skater_trick' }],
-      frameRate: 15,
-      repeat: 0
+      frameRate: 12,
+      repeat: -1 // Loop the trick animation
     });
 
     console.log('Zombie skater loaded with animations');

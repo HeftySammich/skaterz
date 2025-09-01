@@ -41,9 +41,9 @@ export default class Game extends Phaser.Scene {
       this.handleLanding();
     });
 
-    // Set camera to show full scene, not just follow player closely
+    // Set camera to show much wider view
     this.cameras.main.setBounds(0, 0, 2000, 160);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -60, -20);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, -10);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -121,17 +121,17 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    // Create player sprite at much smaller, appropriate size
-    this.player = this.physics.add.sprite(40, 140, 'skater_idle');
+    // Create player sprite at tiny size for proper GBA scale
+    this.player = this.physics.add.sprite(50, 145, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Much smaller scale for proper GBA proportions
-    this.player.setScale(0.25);
+    // Very small scale for authentic retro game look
+    this.player.setScale(0.15);
     
-    // Physics body setup - smaller collision box
+    // Physics body setup - tiny collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setSize(16, 20);
+    body.setSize(12, 16);
     body.setMaxVelocity(400, 600);
     
     // Start skating animation
@@ -156,33 +156,31 @@ export default class Game extends Phaser.Scene {
   }
 
   performJump() {
-    if (this.jumpCount < this.maxJumps) {
-      if (this.jumpCount === 0) {
-        // First jump - regular jump
-        this.player.setVelocityY(this.JUMP_VELOCITY);
-        this.player.play('jump');
-        this.isGrounded = false;
-        console.log('Regular jump performed');
-      } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
-        // Second jump - trick with float
-        this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-        this.player.play('trick');
-        this.hasDoubleJumped = true;
-        this.trickActive = true;
-        
-        // Reduce gravity for float effect during trick
-        this.physics.world.gravity.y = this.FLOAT_GRAVITY;
-        
-        // Return to normal gravity after trick animation
-        this.time.delayedCall(800, () => {
-          this.physics.world.gravity.y = this.GRAVITY;
-          this.trickActive = false;
-        });
-        
-        console.log('Trick jump performed with float effect');
-      }
+    if (this.jumpCount === 0 && this.isGrounded) {
+      // First jump - regular jump using jump GIF
+      this.player.setVelocityY(this.JUMP_VELOCITY);
+      this.player.play('jump');
+      this.isGrounded = false;
+      this.jumpCount = 1;
+      console.log('First jump performed');
+    } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
+      // Second jump - trick with float using trick GIF
+      this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
+      this.player.play('trick');
+      this.hasDoubleJumped = true;
+      this.trickActive = true;
+      this.jumpCount = 2;
       
-      this.jumpCount++;
+      // Reduce gravity for float effect during trick
+      this.physics.world.gravity.y = this.FLOAT_GRAVITY;
+      
+      // Return to normal gravity after trick animation
+      this.time.delayedCall(1000, () => {
+        this.physics.world.gravity.y = this.GRAVITY;
+        this.trickActive = false;
+      });
+      
+      console.log('Double jump trick performed with float effect');
     }
   }
 
