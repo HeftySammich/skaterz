@@ -14,10 +14,10 @@ export default class Game extends Phaser.Scene {
   private maxJumps = 2; // Regular jump + trick jump
   
   // Physics constants
-  private readonly JUMP_VELOCITY = -400;
-  private readonly TRICK_JUMP_VELOCITY = -380; // Strong second jump
-  private readonly GRAVITY = 600; // Reduced from default 800
-  private readonly FLOAT_GRAVITY = 300; // Much lighter during tricks
+  private readonly JUMP_VELOCITY = -350;
+  private readonly TRICK_JUMP_VELOCITY = -320; // Moderate second jump
+  private readonly GRAVITY = 700; // Less floaty than before
+  private readonly FLOAT_GRAVITY = 500; // Moderate float during tricks
 
   constructor() {
     super('Game');
@@ -41,8 +41,8 @@ export default class Game extends Phaser.Scene {
       this.handleLanding();
     });
 
-    // Set camera to show much wider view
-    this.cameras.main.setBounds(0, 0, 2000, 160);
+    // Remove camera bounds for infinite world
+    this.cameras.main.setBounds();
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, -10);
     
     // ESC to return to main menu
@@ -98,9 +98,9 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, 0, 800, 160, 'seamless_bg')
+      const background = scene.add.tileSprite(0, 0, 2000, 160, 'seamless_bg')
         .setOrigin(0, 0)
-        .setScrollFactor(0.7)
+        .setScrollFactor(0)
         .setDepth(1);
 
       // Physics ground - invisible collision surface at street level
@@ -111,7 +111,8 @@ export default class Game extends Phaser.Scene {
       ground.add(streetSurface as any);
 
       const update = (scrollX: number) => {
-        background.tilePositionX = scrollX * 0.8;
+        // Infinite scrolling background
+        background.tilePositionX = scrollX * 1.0;
       };
 
       return { ground, update };
@@ -175,7 +176,7 @@ export default class Game extends Phaser.Scene {
       this.physics.world.gravity.y = this.FLOAT_GRAVITY;
       
       // Return to normal gravity after trick animation
-      this.time.delayedCall(1200, () => {
+      this.time.delayedCall(800, () => {
         this.physics.world.gravity.y = this.GRAVITY;
         this.trickActive = false;
       });
