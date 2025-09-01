@@ -45,8 +45,8 @@ export default class Game extends Phaser.Scene {
     // Physics collisions with proper overlap detection
     this.physics.add.collider(this.player, this.world.ground, () => {
       // Only process landing if player is moving downward and not already grounded
-      if (this.player.body!.velocity.y >= 0 && !this.isGrounded) {
-        console.log(`Collision detected: velocity.y=${this.player.body!.velocity.y}, grounded=${this.isGrounded}`);
+      if (this.player.body!.velocity.y > 5 && !this.isGrounded) {
+        console.log(`Collision detected: velocity.y=${this.player.body!.velocity.y}, playerY=${this.player.y}, grounded=${this.isGrounded}`);
         this.handleLanding();
       }
     });
@@ -133,7 +133,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(50, 140, 'skater_idle');
+    this.player = this.physics.add.sprite(50, 135, 'skater_idle'); // Raised slightly higher
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -145,11 +145,12 @@ export default class Game extends Phaser.Scene {
     body.setSize(12, 16);
     body.setMaxVelocity(400, 600);
     body.setBounce(0); // No bouncing
+    body.setOffset(0, 0); // Make sure offset is clean
     
     // Start skating animation
     this.player.play('skate');
     
-    console.log('Player created with enhanced physics');
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}`);
   }
 
   handleLanding() {
@@ -207,6 +208,12 @@ export default class Game extends Phaser.Scene {
   update() {
     // Continuous movement forward
     this.player.setVelocityX(120);
+    
+    // Debug player physics every few frames
+    if (this.time.now % 200 < 16) { // Every ~200ms
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      console.log(`Player: y=${Math.round(this.player.y)}, velocity.y=${Math.round(body.velocity.y)}, grounded=${this.isGrounded}, touching.down=${body.touching.down}`);
+    }
     
     // Handle jumping with simple state check
     if ((Phaser.Input.Keyboard.JustDown(this.cursors.space!) || 
