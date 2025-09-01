@@ -7,17 +7,17 @@ export class Splash2 extends Phaser.Scene {
     // Second splash with development info
     this.cameras.main.setBackgroundColor('#1f3d6e');
     
-    // Studio text
-    this.add.text(240, 70, 'REPLIT STUDIOS', {
-      fontSize: '20px',
+    // Studio text (GBA screen is 240x160)
+    this.add.text(120, 65, 'REPLIT STUDIOS', {
+      fontSize: '16px',
       color: '#ffecb3',
       fontFamily: 'monospace',
       align: 'center'
     }).setOrigin(0.5);
 
     // Presents text
-    this.add.text(240, 100, 'PRESENTS', {
-      fontSize: '12px',
+    this.add.text(120, 90, 'PRESENTS', {
+      fontSize: '10px',
       color: '#b9c0cf',
       fontFamily: 'monospace',
       align: 'center'

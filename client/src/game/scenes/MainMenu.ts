@@ -11,24 +11,24 @@ export class MainMenu extends Phaser.Scene {
     // Menu background
     this.cameras.main.setBackgroundColor('#162b4d');
     
-    // Title
-    this.add.text(240, 40, 'ZOMBIE SKATER', {
-      fontSize: '28px',
+    // Title (GBA screen is 240x160)
+    this.add.text(120, 35, 'ZOMBIE SKATER', {
+      fontSize: '20px',
       color: '#ffecb3',
       fontFamily: 'monospace',
       align: 'center'
     }).setOrigin(0.5);
 
     // Menu options
-    const startGame = this.add.text(240, 100, 'START GAME', {
-      fontSize: '16px',
+    const startGame = this.add.text(120, 80, 'START GAME', {
+      fontSize: '14px',
       color: '#b9c0cf',
       fontFamily: 'monospace',
       align: 'center'
     }).setOrigin(0.5);
 
-    const options = this.add.text(240, 130, 'OPTIONS', {
-      fontSize: '16px',
+    const options = this.add.text(120, 105, 'OPTIONS', {
+      fontSize: '14px',
       color: '#b9c0cf',
       fontFamily: 'monospace',
       align: 'center'
@@ -37,8 +37,8 @@ export class MainMenu extends Phaser.Scene {
     this.menuItems = [startGame, options];
 
     // Controls hint
-    this.add.text(240, 150, 'USE ARROW KEYS + ENTER', {
-      fontSize: '8px',
+    this.add.text(120, 140, 'ARROW KEYS + ENTER', {
+      fontSize: '7px',
       color: '#646c7a',
       fontFamily: 'monospace',
       align: 'center'
@@ -47,13 +47,13 @@ export class MainMenu extends Phaser.Scene {
     // Set up input
     this.cursors = this.input.keyboard!.createCursorKeys();
     
-    // Touch/click support
+    // Touch/click support (adjusted for GBA resolution)
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const y = pointer.y;
-      if (y >= 85 && y <= 115) {
+      if (y >= 65 && y <= 95) {
         this.selectItem(0);
         this.confirmSelection();
-      } else if (y >= 115 && y <= 145) {
+      } else if (y >= 90 && y <= 120) {
         this.selectItem(1);
         this.confirmSelection();
       }
