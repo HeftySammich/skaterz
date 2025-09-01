@@ -42,7 +42,7 @@ export default class Game extends Phaser.Scene {
     });
 
     // Remove camera bounds for infinite world
-    this.cameras.main.setBounds();
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 160);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, -10);
     
     // ESC to return to main menu
@@ -103,9 +103,9 @@ export default class Game extends Phaser.Scene {
         .setScrollFactor(0)
         .setDepth(1);
 
-      // Physics ground - invisible collision surface at street level
+      // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
-      const streetSurface = scene.add.rectangle(0, 155, 10000, 10, 0x000000, 0);
+      const streetSurface = scene.add.rectangle(0, 155, Number.MAX_SAFE_INTEGER, 10, 0x000000, 0);
       streetSurface.setVisible(false); // Make invisible
       scene.physics.add.existing(streetSurface, true);
       ground.add(streetSurface as any);
@@ -157,15 +157,19 @@ export default class Game extends Phaser.Scene {
   }
 
   performJump() {
-    if (this.jumpCount === 0 && this.isGrounded) {
-      // First jump - regular jump
+    // Clear any existing velocity to ensure consistent jumps
+    const currentVelY = this.player.body!.velocity.y;
+    
+    if (this.isGrounded) {
+      // First jump - only when grounded
       this.player.setVelocityY(this.JUMP_VELOCITY);
       this.player.setTexture('skater_jump');
       this.isGrounded = false;
       this.jumpCount = 1;
-      console.log('First jump performed - using jump texture');
+      this.hasDoubleJumped = false;
+      console.log(`First jump: velocity set to ${this.JUMP_VELOCITY}, was ${currentVelY}`);
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
-      // Second jump - trick with float
+      // Second jump - only if first jump was performed and no double jump yet
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
       this.player.setTexture('skater_trick');
       this.hasDoubleJumped = true;
@@ -181,7 +185,7 @@ export default class Game extends Phaser.Scene {
         this.trickActive = false;
       });
       
-      console.log('Double jump trick performed with float effect - using trick texture');
+      console.log(`Double jump: velocity set to ${this.TRICK_JUMP_VELOCITY}, was ${currentVelY}`);
     }
   }
 
@@ -189,24 +193,24 @@ export default class Game extends Phaser.Scene {
     // Continuous movement forward
     this.player.setVelocityX(120);
     
-    // Handle jumping
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.space!) || 
-        Phaser.Input.Keyboard.JustDown(this.cursors.up!)) {
+    // Handle jumping - prevent multiple jumps in same frame
+    if ((Phaser.Input.Keyboard.JustDown(this.cursors.space!) || 
+         Phaser.Input.Keyboard.JustDown(this.cursors.up!))) {
       this.performJump();
     }
     
-    // Update world scrolling
+    // Update world scrolling for infinite background
     this.world.update(this.cameras.main.scrollX);
     
-    // Debug animation state
-    if (this.player.anims.currentAnim) {
-      console.log('Current animation:', this.player.anims.currentAnim.key);
-    }
-    
-    // Check if player fell too far
+    // Check if player fell too far (infinite runner should never end)
     if (this.player.y > 220) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
+    }
+    
+    // Debug jump state
+    if (this.player.body!.velocity.y < -10) {
+      console.log(`Jumping: velocity Y = ${this.player.body!.velocity.y}, grounded = ${this.isGrounded}, jumpCount = ${this.jumpCount}`);
     }
   }
 }
