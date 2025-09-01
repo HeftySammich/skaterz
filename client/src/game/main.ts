@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
 import Preload from './scenes/Preload';
+import { Splash1 } from './scenes/Splash1';
+import { Splash2 } from './scenes/Splash2';
+import { Splash3 } from './scenes/Splash3';
+import { MainMenu } from './scenes/MainMenu';
+import { OptionsMenu } from './scenes/OptionsMenu';
 import Game from './scenes/Game';
 import GameOver from './scenes/GameOver';
 
@@ -33,7 +38,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       autoCenter: Phaser.Scale.CENTER_BOTH,
       zoom: Math.max(2, Math.floor(Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H)))
     },
-    scene: [Preload, Game, GameOver],
+    scene: [Preload, Splash1, Splash2, Splash3, MainMenu, OptionsMenu, Game, GameOver],
     backgroundColor: '#2c5f2d' // GBA green background
   };
 

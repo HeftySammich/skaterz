@@ -8,6 +8,15 @@ This is a retro-style 2D endless runner game inspired by skateboarding, featurin
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### Complete Asset Removal (Jan 2025)
+- **Added splash screen system**: Three sequential splash screens (title, studio, warning) leading to main menu
+- **Implemented menu navigation**: Main menu with Start Game and Options selections using keyboard/touch controls
+- **Removed all visual assets**: Completely cleared zombie skater sprite, street graphics, background art, and procedural generation
+- **Clean slate preparation**: Game scene now shows placeholder message, ready for new asset integration
+- **Maintained menu structure**: Splash screens → Main Menu → Options/Game with proper scene transitions
+
 ## System Architecture
 
 ### Frontend Architecture
