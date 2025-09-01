@@ -41,9 +41,9 @@ export default class Game extends Phaser.Scene {
       this.handleLanding();
     });
 
-    // Set camera to show full game area with smooth following
+    // Set camera to show full scene, not just follow player closely
     this.cameras.main.setBounds(0, 0, 2000, 160);
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08, -50, 0);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -60, -20);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -98,14 +98,15 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, 0, 960, 160, 'seamless_bg')
+      const background = scene.add.tileSprite(0, 0, 480, 160, 'seamless_bg')
         .setOrigin(0, 0)
-        .setScrollFactor(0.5)
+        .setScrollFactor(0.8)
         .setDepth(1);
 
-      // Physics ground
+      // Physics ground - invisible collision surface at street level
       const ground = scene.physics.add.staticGroup();
-      const streetSurface = scene.add.rectangle(0, 150, 10000, 20, 0x000000, 0);
+      const streetSurface = scene.add.rectangle(0, 155, 10000, 10, 0x000000, 0);
+      streetSurface.setVisible(false); // Make invisible
       scene.physics.add.existing(streetSurface, true);
       ground.add(streetSurface as any);
 
@@ -120,17 +121,17 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    // Create player sprite at appropriate size for GBA view
-    this.player = this.physics.add.sprite(60, 130, 'skater_idle');
+    // Create player sprite at much smaller, appropriate size
+    this.player = this.physics.add.sprite(40, 140, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Scale smaller for better view of background
-    this.player.setScale(0.5);
+    // Much smaller scale for proper GBA proportions
+    this.player.setScale(0.25);
     
-    // Physics body setup
+    // Physics body setup - smaller collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setSize(24, 30);
+    body.setSize(16, 20);
     body.setMaxVelocity(400, 600);
     
     // Start skating animation
