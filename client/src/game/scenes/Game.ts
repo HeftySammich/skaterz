@@ -5,6 +5,9 @@ export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private world!: any;
+  private jumpParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private trickParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private dustParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
   
   // Enhanced jumping mechanics
   private isGrounded = true;
@@ -33,6 +36,9 @@ export default class Game extends Phaser.Scene {
     
     // Create player
     this.createPlayer();
+    
+    // Create particle effects
+    this.createParticleEffects();
     
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -158,6 +164,51 @@ export default class Game extends Phaser.Scene {
     console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=150`);
   }
 
+  createParticleEffects() {
+    // Create simple colored particles using rectangles
+    
+    // Jump dust particles (when taking off)
+    this.dustParticles = this.add.particles(0, 0, 'pixel', {
+      speed: { min: 20, max: 60 },
+      scale: { start: 0.3, end: 0 },
+      lifespan: 300,
+      quantity: 3,
+      angle: { min: 225, max: 315 }, // Spread behind player
+      alpha: { start: 0.8, end: 0 },
+      tint: 0x8B4513, // Brown dust color
+      emitting: false
+    });
+
+    // Jump particles (blue sparkles on first jump)
+    this.jumpParticles = this.add.particles(0, 0, 'pixel', {
+      speed: { min: 30, max: 80 },
+      scale: { start: 0.4, end: 0 },
+      lifespan: 400,
+      quantity: 5,
+      angle: { min: 0, max: 360 },
+      alpha: { start: 1, end: 0 },
+      tint: 0x00FFFF, // Cyan sparkles
+      emitting: false
+    });
+
+    // Trick particles (golden trail during double jump)
+    this.trickParticles = this.add.particles(0, 0, 'pixel', {
+      speed: { min: 10, max: 40 },
+      scale: { start: 0.5, end: 0.1 },
+      lifespan: 600,
+      quantity: 2,
+      angle: { min: 0, max: 360 },
+      alpha: { start: 1, end: 0 },
+      tint: 0xFFD700, // Gold trail
+      emitting: false
+    });
+
+    // Set particle depths
+    this.dustParticles.setDepth(5);
+    this.jumpParticles.setDepth(15);
+    this.trickParticles.setDepth(15);
+  }
+
   handleLanding() {
     this.isGrounded = true;
     this.hasDoubleJumped = false;
@@ -186,6 +237,13 @@ export default class Game extends Phaser.Scene {
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
+      
+      // Trigger jump particles
+      this.dustParticles.setPosition(this.player.x, this.player.y + 8);
+      this.dustParticles.explode(3);
+      this.jumpParticles.setPosition(this.player.x, this.player.y);
+      this.jumpParticles.explode(5);
+      
       console.log('First jump performed');
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
       // Second jump - trick jump
@@ -195,6 +253,10 @@ export default class Game extends Phaser.Scene {
       this.trickActive = true;
       this.jumpCount = 2;
       
+      // Trigger trick particles - continuous golden trail
+      this.trickParticles.setPosition(this.player.x, this.player.y);
+      this.trickParticles.start();
+      
       // Reduce gravity for float effect during trick
       this.physics.world.gravity.y = this.FLOAT_GRAVITY;
       
@@ -202,6 +264,7 @@ export default class Game extends Phaser.Scene {
       this.time.delayedCall(600, () => {
         this.physics.world.gravity.y = this.GRAVITY;
         this.trickActive = false;
+        this.trickParticles.stop(); // Stop trick particle trail
       });
       
       console.log('Double jump performed');
@@ -228,6 +291,11 @@ export default class Game extends Phaser.Scene {
     
     // Update world scrolling for infinite background
     this.world.update(this.cameras.main.scrollX);
+    
+    // Update trick particles to follow player during tricks
+    if (this.trickActive && this.trickParticles.emitting) {
+      this.trickParticles.setPosition(this.player.x, this.player.y);
+    }
     
     // Check if player fell too far (infinite runner should never end)
     if (this.player.y > 200) {

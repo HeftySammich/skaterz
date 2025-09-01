@@ -26,6 +26,13 @@ export default class Preload extends Phaser.Scene {
   }
 
   create() {
+    // Create a simple white pixel texture for particles
+    const pixelGraphics = this.add.graphics();
+    pixelGraphics.fillStyle(0xFFFFFF);
+    pixelGraphics.fillRect(0, 0, 4, 4);
+    pixelGraphics.generateTexture('pixel', 4, 4);
+    pixelGraphics.destroy();
+
     // Create skater animations
     this.anims.create({
       key: 'skate',
