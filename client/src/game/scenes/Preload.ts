@@ -7,13 +7,15 @@ export default class Preload extends Phaser.Scene {
   }
 
   preload() {
-    // For now, create placeholder until you add your AI-generated image
-    console.log('Ready for seamless background image');
+    // Load zombie skater assets
+    this.load.image('skater_idle', 'assets/skater_idle.png');
+    this.load.image('skater_jump', 'assets/skater_jump.gif');
+    this.load.image('skater_trick', 'assets/skater_trick.gif');
     
     const loadingText = this.make.text({
       x: 120,
       y: 80,
-      text: 'Loading seamless background...',
+      text: 'Loading zombie skater...',
       style: {
         fontFamily: 'Courier, "Courier New", monospace',
         fontSize: '12px',
@@ -24,8 +26,29 @@ export default class Preload extends Phaser.Scene {
   }
 
   create() {
-    // All visual assets removed - clean slate for new assets
-    console.log('Preload complete - all visual assets removed for replacement');
+    // Create skater animations
+    this.anims.create({
+      key: 'skate',
+      frames: [{ key: 'skater_idle' }],
+      frameRate: 8,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'jump',
+      frames: [{ key: 'skater_jump' }],
+      frameRate: 12,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: 'trick',
+      frames: [{ key: 'skater_trick' }],
+      frameRate: 15,
+      repeat: 0
+    });
+
+    console.log('Zombie skater loaded with animations');
     
     // Start with splash screens
     this.scene.start('Splash1');
