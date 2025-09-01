@@ -7,7 +7,7 @@ export default class Preload extends Phaser.Scene {
   }
 
   preload() {
-    // Load zombie skater assets
+    // Load zombie skater assets - use static frames since Phaser can't load GIFs
     this.load.image('skater_idle', 'assets/skater_idle.png');
     this.load.image('skater_jump', 'assets/skater_jump.gif');
     this.load.image('skater_trick', 'assets/skater_trick.gif');
@@ -37,15 +37,15 @@ export default class Preload extends Phaser.Scene {
     this.anims.create({
       key: 'jump',
       frames: [{ key: 'skater_jump' }],
-      frameRate: 10,
-      repeat: -1
+      frameRate: 8,
+      repeat: 0
     });
 
     this.anims.create({
       key: 'trick',
       frames: [{ key: 'skater_trick' }],
-      frameRate: 12,
-      repeat: -1 // Loop the trick animation
+      frameRate: 8,
+      repeat: 0
     });
 
     console.log('Zombie skater loaded with animations');

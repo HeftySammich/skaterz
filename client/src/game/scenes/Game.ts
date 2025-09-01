@@ -14,10 +14,10 @@ export default class Game extends Phaser.Scene {
   private maxJumps = 2; // Regular jump + trick jump
   
   // Physics constants
-  private readonly JUMP_VELOCITY = -350;
-  private readonly TRICK_JUMP_VELOCITY = -280;
+  private readonly JUMP_VELOCITY = -400;
+  private readonly TRICK_JUMP_VELOCITY = -380; // Strong second jump
   private readonly GRAVITY = 600; // Reduced from default 800
-  private readonly FLOAT_GRAVITY = 400; // Even lighter during tricks
+  private readonly FLOAT_GRAVITY = 300; // Much lighter during tricks
 
   constructor() {
     super('Game');
@@ -98,9 +98,9 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, 0, 480, 160, 'seamless_bg')
+      const background = scene.add.tileSprite(0, 0, 800, 160, 'seamless_bg')
         .setOrigin(0, 0)
-        .setScrollFactor(0.8)
+        .setScrollFactor(0.7)
         .setDepth(1);
 
       // Physics ground - invisible collision surface at street level
@@ -111,7 +111,7 @@ export default class Game extends Phaser.Scene {
       ground.add(streetSurface as any);
 
       const update = (scrollX: number) => {
-        background.tilePositionX = scrollX * 1.0;
+        background.tilePositionX = scrollX * 0.8;
       };
 
       return { ground, update };
@@ -147,26 +147,26 @@ export default class Game extends Phaser.Scene {
       this.trickActive = false;
       this.jumpCount = 0;
       
-      // Return to normal gravity and skating animation
+      // Return to normal gravity and skating texture
       this.physics.world.gravity.y = this.GRAVITY;
-      this.player.play('skate');
+      this.player.setTexture('skater_idle');
       
-      console.log('Player landed - jump abilities reset');
+      console.log('Player landed - jump abilities reset - back to idle texture');
     }
   }
 
   performJump() {
     if (this.jumpCount === 0 && this.isGrounded) {
-      // First jump - regular jump using jump GIF
+      // First jump - regular jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
-      this.player.play('jump');
+      this.player.setTexture('skater_jump');
       this.isGrounded = false;
       this.jumpCount = 1;
-      console.log('First jump performed');
+      console.log('First jump performed - using jump texture');
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
-      // Second jump - trick with float using trick GIF
+      // Second jump - trick with float
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      this.player.play('trick');
+      this.player.setTexture('skater_trick');
       this.hasDoubleJumped = true;
       this.trickActive = true;
       this.jumpCount = 2;
@@ -175,12 +175,12 @@ export default class Game extends Phaser.Scene {
       this.physics.world.gravity.y = this.FLOAT_GRAVITY;
       
       // Return to normal gravity after trick animation
-      this.time.delayedCall(1000, () => {
+      this.time.delayedCall(1200, () => {
         this.physics.world.gravity.y = this.GRAVITY;
         this.trickActive = false;
       });
       
-      console.log('Double jump trick performed with float effect');
+      console.log('Double jump trick performed with float effect - using trick texture');
     }
   }
 
@@ -196,6 +196,11 @@ export default class Game extends Phaser.Scene {
     
     // Update world scrolling
     this.world.update(this.cameras.main.scrollX);
+    
+    // Debug animation state
+    if (this.player.anims.currentAnim) {
+      console.log('Current animation:', this.player.anims.currentAnim.key);
+    }
     
     // Check if player fell too far
     if (this.player.y > 220) {
