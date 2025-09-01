@@ -72,9 +72,10 @@ Preferred communication style: Simple, everyday language.
 - **ESBuild**: Fast JavaScript bundler for production
 - **PostCSS**: CSS processing with Autoprefixer
 
-### Blockchain Integration (Configured)
-- **Hedera Network**: Ready for NFT integration and decentralized features
-- **HashPack Wallet**: Wallet connection capability for future features
+### Blockchain Integration (Architecture Ready)
+- **Hedera Network**: Infrastructure planned for NFT integration and decentralized features
+- **HashPack Wallet**: Architecture prepared for wallet connection (requires implementation)
+- **Status**: Dependencies not yet installed, integration points identified
 
 ### Audio and Media
 - **Web Audio API**: Sound effects and background music support
