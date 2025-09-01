@@ -37,9 +37,12 @@ export default class Game extends Phaser.Scene {
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     
-    // Physics collisions
+    // Physics collisions with proper overlap detection
     this.physics.add.collider(this.player, this.world.ground, () => {
-      this.handleLanding();
+      // Only process landing if player is moving downward and not already grounded
+      if (this.player.body!.velocity.y > 0 && !this.isGrounded) {
+        this.handleLanding();
+      }
     });
 
     // Remove camera bounds for infinite world
@@ -106,7 +109,7 @@ export default class Game extends Phaser.Scene {
 
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
-      const streetSurface = scene.add.rectangle(0, 155, Number.MAX_SAFE_INTEGER, 10, 0x000000, 0);
+      const streetSurface = scene.add.rectangle(0, 150, Number.MAX_SAFE_INTEGER, 20, 0x000000, 0);
       streetSurface.setVisible(false); // Make invisible
       scene.physics.add.existing(streetSurface, true);
       ground.add(streetSurface as any);
@@ -124,7 +127,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(50, 145, 'skater_idle');
+    this.player = this.physics.add.sprite(50, 140, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -135,6 +138,7 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setSize(12, 16);
     body.setMaxVelocity(400, 600);
+    body.setBounce(0); // No bouncing
     
     // Start skating animation
     this.player.play('skate');
@@ -143,34 +147,34 @@ export default class Game extends Phaser.Scene {
   }
 
   handleLanding() {
-    // Only process landing if player is actually falling/moving down
-    if (!this.isGrounded && this.player.body!.velocity.y >= 0) {
-      this.isGrounded = true;
-      this.hasDoubleJumped = false;
-      this.trickActive = false;
-      this.jumpCount = 0;
-      
-      // Return to normal gravity and skating texture
-      this.physics.world.gravity.y = this.GRAVITY;
-      this.player.setTexture('skater_idle');
-      
-      console.log('Player landed');
+    this.isGrounded = true;
+    this.hasDoubleJumped = false;
+    this.trickActive = false;
+    this.jumpCount = 0;
+    
+    // Return to normal gravity and skating texture
+    this.physics.world.gravity.y = this.GRAVITY;
+    this.player.setTexture('skater_idle');
+    
+    // Clear any upward velocity to prevent bouncing
+    if (this.player.body!.velocity.y < 0) {
+      this.player.setVelocityY(0);
     }
+    
+    console.log('Player landed');
   }
 
   performJump() {
-    const currentVelY = this.player.body!.velocity.y;
-    
-    if (this.isGrounded && currentVelY >= -10) {
-      // First jump - only when truly grounded and not already jumping
+    if (this.isGrounded) {
+      // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
       this.player.setTexture('skater_jump');
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
       console.log('First jump performed');
-    } else if (this.jumpCount === 1 && !this.hasDoubleJumped && currentVelY > -50) {
-      // Second jump - only if not already jumping too fast upward
+    } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
+      // Second jump - trick jump
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
       this.player.setTexture('skater_trick');
       this.hasDoubleJumped = true;
@@ -194,17 +198,10 @@ export default class Game extends Phaser.Scene {
     // Continuous movement forward
     this.player.setVelocityX(120);
     
-    // Handle jumping with debounce to prevent rapid firing
+    // Handle jumping with simple state check
     if ((Phaser.Input.Keyboard.JustDown(this.cursors.space!) || 
          Phaser.Input.Keyboard.JustDown(this.cursors.up!))) {
-      // Add small delay to prevent multiple jumps from collision bouncing
-      if (!this.jumpDebounce) {
-        this.performJump();
-        this.jumpDebounce = true;
-        this.time.delayedCall(100, () => {
-          this.jumpDebounce = false;
-        });
-      }
+      this.performJump();
     }
     
     // Update world scrolling for infinite background
