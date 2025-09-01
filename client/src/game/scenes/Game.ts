@@ -37,6 +37,11 @@ export default class Game extends Phaser.Scene {
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     
+    // Add touch/click controls for mobile
+    this.input.on('pointerdown', () => {
+      this.performJump();
+    });
+    
     // Physics collisions with proper overlap detection
     this.physics.add.collider(this.player, this.world.ground, () => {
       // Only process landing if player is moving downward and not already grounded

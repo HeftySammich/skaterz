@@ -40,6 +40,13 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       height: 160,
       zoom: 1 // No additional zoom - show full scene
     },
+    input: {
+      keyboard: true,
+      mouse: true,
+      touch: true,
+      gamepad: false,
+      activePointers: 1
+    },
     scene: [Preload, Splash1, Splash2, Splash3, MainMenu, OptionsMenu, Game, GameOver],
     backgroundColor: '#2c5f2d' // GBA green background
   };
