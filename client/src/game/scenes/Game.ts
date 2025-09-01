@@ -14,10 +14,10 @@ export default class Game extends Phaser.Scene {
   private maxJumps = 2; // Regular jump + trick jump
   
   // Physics constants
-  private readonly JUMP_VELOCITY = -350;
-  private readonly TRICK_JUMP_VELOCITY = -320; // Moderate second jump
-  private readonly GRAVITY = 700; // Less floaty than before
-  private readonly FLOAT_GRAVITY = 500; // Moderate float during tricks
+  private readonly JUMP_VELOCITY = -280;
+  private readonly TRICK_JUMP_VELOCITY = -260; // Moderate second jump
+  private readonly GRAVITY = 800; // Less floaty, more responsive
+  private readonly FLOAT_GRAVITY = 600; // Less float during tricks
 
   constructor() {
     super('Game');
@@ -152,7 +152,7 @@ export default class Game extends Phaser.Scene {
       this.physics.world.gravity.y = this.GRAVITY;
       this.player.setTexture('skater_idle');
       
-      console.log('Player landed - jump abilities reset - back to idle texture');
+      console.log('Player landed');
     }
   }
 
@@ -167,7 +167,7 @@ export default class Game extends Phaser.Scene {
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
-      console.log(`First jump: velocity set to ${this.JUMP_VELOCITY}, was ${currentVelY}`);
+      console.log('First jump performed');
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
       // Second jump - only if first jump was performed and no double jump yet
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
@@ -180,12 +180,12 @@ export default class Game extends Phaser.Scene {
       this.physics.world.gravity.y = this.FLOAT_GRAVITY;
       
       // Return to normal gravity after trick animation
-      this.time.delayedCall(800, () => {
+      this.time.delayedCall(600, () => {
         this.physics.world.gravity.y = this.GRAVITY;
         this.trickActive = false;
       });
       
-      console.log(`Double jump: velocity set to ${this.TRICK_JUMP_VELOCITY}, was ${currentVelY}`);
+      console.log('Double jump performed');
     }
   }
 
@@ -206,11 +206,6 @@ export default class Game extends Phaser.Scene {
     if (this.player.y > 220) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
-    }
-    
-    // Debug jump state
-    if (this.player.body!.velocity.y < -10) {
-      console.log(`Jumping: velocity Y = ${this.player.body!.velocity.y}, grounded = ${this.isGrounded}, jumpCount = ${this.jumpCount}`);
     }
   }
 }

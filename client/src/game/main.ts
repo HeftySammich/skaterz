@@ -29,7 +29,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { x: 0, y: 700 }, // Moderate gravity
+        gravity: { x: 0, y: 800 }, // Less floaty gravity
         debug: false
       }
     },
