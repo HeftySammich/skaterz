@@ -116,10 +116,14 @@ export default class Game extends Phaser.Scene {
 
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
-      const streetSurface = scene.add.rectangle(0, 148, Number.MAX_SAFE_INTEGER, 10, 0x000000, 0);
-      streetSurface.setVisible(false); // Make invisible
-      scene.physics.add.existing(streetSurface, true);
-      ground.add(streetSurface as any);
+      
+      // Create multiple ground segments for reliable collision
+      for (let x = -2000; x <= 4000; x += 400) {
+        const groundSegment = scene.add.rectangle(x, 155, 400, 30, 0x000000, 0);
+        groundSegment.setVisible(false);
+        scene.physics.add.existing(groundSegment, true);
+        ground.add(groundSegment as any);
+      }
 
       const update = (scrollX: number) => {
         // Infinite scrolling background
@@ -134,7 +138,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(50, 140, 'skater_idle');
+    this.player = this.physics.add.sprite(50, 145, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -151,7 +155,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground at y=148`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=155`);
   }
 
   handleLanding() {
@@ -226,7 +230,7 @@ export default class Game extends Phaser.Scene {
     this.world.update(this.cameras.main.scrollX);
     
     // Check if player fell too far (infinite runner should never end)
-    if (this.player.y > 180) {
+    if (this.player.y > 200) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
     }
