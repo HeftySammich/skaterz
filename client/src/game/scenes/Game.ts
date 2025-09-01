@@ -44,9 +44,10 @@ export default class Game extends Phaser.Scene {
     
     // Physics collisions with proper overlap detection
     this.physics.add.collider(this.player, this.world.ground, () => {
-      // Only process landing if player is moving downward and not already grounded
-      if (this.player.body!.velocity.y > 5 && !this.isGrounded) {
-        console.log(`Collision detected: velocity.y=${this.player.body!.velocity.y}, playerY=${this.player.y}, grounded=${this.isGrounded}`);
+      // Process landing if not already grounded and player is actually touching ground
+      const body = this.player.body as Phaser.Physics.Arcade.Body;
+      if (!this.isGrounded && body.touching.down) {
+        console.log(`Collision detected: velocity.y=${body.velocity.y}, playerY=${this.player.y}, touching.down=${body.touching.down}`);
         this.handleLanding();
       }
     });
@@ -115,7 +116,7 @@ export default class Game extends Phaser.Scene {
 
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
-      const streetSurface = scene.add.rectangle(0, 150, Number.MAX_SAFE_INTEGER, 20, 0x000000, 0);
+      const streetSurface = scene.add.rectangle(0, 148, Number.MAX_SAFE_INTEGER, 10, 0x000000, 0);
       streetSurface.setVisible(false); // Make invisible
       scene.physics.add.existing(streetSurface, true);
       ground.add(streetSurface as any);
@@ -133,7 +134,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(50, 135, 'skater_idle'); // Raised slightly higher
+    this.player = this.physics.add.sprite(50, 140, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -150,7 +151,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground at y=148`);
   }
 
   handleLanding() {
@@ -225,9 +226,16 @@ export default class Game extends Phaser.Scene {
     this.world.update(this.cameras.main.scrollX);
     
     // Check if player fell too far (infinite runner should never end)
-    if (this.player.y > 220) {
+    if (this.player.y > 180) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
+    }
+    
+    // Reset stuck states - if touching ground but not grounded, fix it
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    if (body.touching.down && !this.isGrounded && body.velocity.y >= 0) {
+      console.log('Fixing stuck state - player touching ground but not marked as grounded');
+      this.handleLanding();
     }
   }
 }
