@@ -1,6 +1,26 @@
+# Dependencies
 node_modules
+
+# Build outputs
 dist
-.DS_Store
 server/public
+
+# Environment files (CRITICAL - keeps secrets safe)
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+
+# Temporary files
 vite.config.ts.*
 *.tar.gz
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
