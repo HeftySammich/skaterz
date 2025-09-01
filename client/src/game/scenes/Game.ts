@@ -54,8 +54,68 @@ export default class Game extends Phaser.Scene {
 
   createSeamlessWorld() {
     // Import and use the seamless background system
-    const { createSeamlessWorld } = require('../../world/seamlessBackground');
+    import('../../world/seamlessBackground').then(module => {
+      return module.createSeamlessWorld(this);
+    });
+    
+    // For now, return a simple world until import resolves
+    const { createSeamlessWorld } = this.loadSeamlessWorld();
     return createSeamlessWorld(this);
+  }
+
+  loadSeamlessWorld() {
+    // Inline the seamless world creation to avoid import issues
+    const GROUND_Y = 160;
+    
+    const createSeamlessWorld = (scene: Phaser.Scene) => {
+      // Create placeholder background
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.width = 480;
+      bgCanvas.height = 160;
+      const ctx = bgCanvas.getContext('2d')!;
+      ctx.imageSmoothingEnabled = false;
+      
+      // Simple gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+      gradient.addColorStop(0, '#274b8c');
+      gradient.addColorStop(0.6, '#646c7a');
+      gradient.addColorStop(1, '#2d303b');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 480, 160);
+      
+      // Street area
+      ctx.fillStyle = '#4a4a4a';
+      ctx.fillRect(0, 120, 480, 40);
+      
+      // Lane markings
+      ctx.fillStyle = '#e2e28e';
+      for (let x = 0; x < 480; x += 60) {
+        ctx.fillRect(x, 135, 30, 3);
+      }
+      
+      if (!scene.textures.exists('seamless_bg')) {
+        scene.textures.addCanvas('seamless_bg', bgCanvas);
+      }
+      
+      const background = scene.add.tileSprite(0, 0, 480, 160, 'seamless_bg')
+        .setOrigin(0, 0)
+        .setScrollFactor(1)
+        .setDepth(1);
+
+      // Physics ground
+      const ground = scene.physics.add.staticGroup();
+      const streetSurface = scene.add.rectangle(0, GROUND_Y, 10000, 10, 0x000000, 0);
+      scene.physics.add.existing(streetSurface, true);
+      ground.add(streetSurface as any);
+
+      const update = (scrollX: number) => {
+        background.tilePositionX = scrollX * 1.0;
+      };
+
+      return { ground, update };
+    };
+
+    return { createSeamlessWorld };
   }
 
   createPlayer() {
