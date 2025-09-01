@@ -242,8 +242,8 @@ export default class Game extends Phaser.Scene {
       this.handleLanding();
     }
     
-    // Force zombie on the street level - simple ground enforcement
-    if (this.player.y > 142) {
+    // Force zombie on the street level only when falling down
+    if (this.player.y > 150 && body.velocity.y > 0) {
       this.player.y = 142;
       this.player.setVelocityY(0);
       if (!this.isGrounded) {
