@@ -1,1 +1,1 @@
-export { createWorld } from './citySimple';
+export { createSeamlessWorld as createWorld } from './seamlessBackground';

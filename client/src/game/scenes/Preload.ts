@@ -7,11 +7,13 @@ export default class Preload extends Phaser.Scene {
   }
 
   preload() {
-    // Minimal loading for clean slate
+    // For now, create placeholder until you add your AI-generated image
+    console.log('Ready for seamless background image');
+    
     const loadingText = this.make.text({
       x: 120,
       y: 80,
-      text: 'Ready for new assets...',
+      text: 'Loading seamless background...',
       style: {
         fontFamily: 'Courier, "Courier New", monospace',
         fontSize: '12px',
@@ -19,8 +21,6 @@ export default class Preload extends Phaser.Scene {
       }
     });
     loadingText.setOrigin(0.5, 0.5);
-    
-    // No visual assets loaded - clean slate
   }
 
   create() {
