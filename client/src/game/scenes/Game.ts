@@ -41,8 +41,9 @@ export default class Game extends Phaser.Scene {
       this.handleLanding();
     });
 
-    // Camera follows player
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -60, 0);
+    // Set camera to show full game area with smooth following
+    this.cameras.main.setBounds(0, 0, 2000, 160);
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08, -50, 0);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -97,14 +98,14 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, 0, 480, 160, 'seamless_bg')
+      const background = scene.add.tileSprite(0, 0, 960, 160, 'seamless_bg')
         .setOrigin(0, 0)
-        .setScrollFactor(1)
+        .setScrollFactor(0.5)
         .setDepth(1);
 
       // Physics ground
       const ground = scene.physics.add.staticGroup();
-      const streetSurface = scene.add.rectangle(0, GROUND_Y, 10000, 10, 0x000000, 0);
+      const streetSurface = scene.add.rectangle(0, 150, 10000, 20, 0x000000, 0);
       scene.physics.add.existing(streetSurface, true);
       ground.add(streetSurface as any);
 
@@ -119,17 +120,17 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    // Create player sprite at appropriate size
-    this.player = this.physics.add.sprite(60, 100, 'skater_idle');
+    // Create player sprite at appropriate size for GBA view
+    this.player = this.physics.add.sprite(60, 130, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Scale appropriately for GBA style
-    this.player.setScale(0.8);
+    // Scale smaller for better view of background
+    this.player.setScale(0.5);
     
     // Physics body setup
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setSize(32, 40);
+    body.setSize(24, 30);
     body.setMaxVelocity(400, 600);
     
     // Start skating animation

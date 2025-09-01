@@ -36,7 +36,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      zoom: Math.max(2, Math.floor(Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H)))
+      zoom: 3 // Fixed zoom for better visibility
     },
     scene: [Preload, Splash1, Splash2, Splash3, MainMenu, OptionsMenu, Game, GameOver],
     backgroundColor: '#2c5f2d' // GBA green background
