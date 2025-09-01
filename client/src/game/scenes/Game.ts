@@ -117,9 +117,9 @@ export default class Game extends Phaser.Scene {
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
       
-      // Create multiple ground segments for reliable collision
+      // Create multiple ground segments for reliable collision at street level
       for (let x = -2000; x <= 4000; x += 400) {
-        const groundSegment = scene.add.rectangle(x, 155, 400, 30, 0x000000, 0);
+        const groundSegment = scene.add.rectangle(x, 150, 400, 20, 0x000000, 0);
         groundSegment.setVisible(false);
         scene.physics.add.existing(groundSegment, true);
         ground.add(groundSegment as any);
@@ -138,7 +138,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(50, 145, 'skater_idle');
+    this.player = this.physics.add.sprite(50, 142, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -155,7 +155,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=155`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=150`);
   }
 
   handleLanding() {
@@ -215,9 +215,9 @@ export default class Game extends Phaser.Scene {
     this.player.setVelocityX(120);
     
     // Debug player physics every few frames
-    if (this.time.now % 200 < 16) { // Every ~200ms
+    if (this.time.now % 500 < 16) { // Every ~500ms
       const body = this.player.body as Phaser.Physics.Arcade.Body;
-      console.log(`Player: y=${Math.round(this.player.y)}, velocity.y=${Math.round(body.velocity.y)}, grounded=${this.isGrounded}, touching.down=${body.touching.down}`);
+      console.log(`Player: y=${Math.round(this.player.y)}, velocity.y=${Math.round(body.velocity.y)}, grounded=${this.isGrounded}`);
     }
     
     // Handle jumping with simple state check
@@ -240,6 +240,16 @@ export default class Game extends Phaser.Scene {
     if (body.touching.down && !this.isGrounded && body.velocity.y >= 0) {
       console.log('Fixing stuck state - player touching ground but not marked as grounded');
       this.handleLanding();
+    }
+    
+    // Force zombie on the street level - simple ground enforcement
+    if (this.player.y > 142) {
+      this.player.y = 142;
+      this.player.setVelocityY(0);
+      if (!this.isGrounded) {
+        console.log('Enforcing ground level - zombie was falling');
+        this.handleLanding();
+      }
     }
   }
 }
