@@ -45,7 +45,8 @@ export default class Game extends Phaser.Scene {
     // Physics collisions with proper overlap detection
     this.physics.add.collider(this.player, this.world.ground, () => {
       // Only process landing if player is moving downward and not already grounded
-      if (this.player.body!.velocity.y > 0 && !this.isGrounded) {
+      if (this.player.body!.velocity.y >= 0 && !this.isGrounded) {
+        console.log(`Collision detected: velocity.y=${this.player.body!.velocity.y}, grounded=${this.isGrounded}`);
         this.handleLanding();
       }
     });
@@ -170,6 +171,8 @@ export default class Game extends Phaser.Scene {
   }
 
   performJump() {
+    console.log(`Jump attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}`);
+    
     if (this.isGrounded) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
@@ -196,6 +199,8 @@ export default class Game extends Phaser.Scene {
       });
       
       console.log('Double jump performed');
+    } else {
+      console.log('Jump blocked - already used both jumps');
     }
   }
 
