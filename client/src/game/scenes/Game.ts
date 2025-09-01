@@ -235,20 +235,24 @@ export default class Game extends Phaser.Scene {
       this.scene.restart();
     }
     
-    // Reset stuck states - if touching ground but not grounded, fix it
+    // Get physics body for ground checks
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    if (body.touching.down && !this.isGrounded && body.velocity.y >= 0) {
-      console.log('Fixing stuck state - player touching ground but not marked as grounded');
+    
+    // Clean ground landing system
+    if (this.player.y >= 142 && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = 142;
+      this.player.setVelocityY(0);
+      console.log('Landing on ground');
       this.handleLanding();
     }
     
-    // Force zombie on the street level only when falling down
-    if (this.player.y > 150 && body.velocity.y > 0) {
-      this.player.y = 142;
-      this.player.setVelocityY(0);
-      if (!this.isGrounded) {
-        console.log('Enforcing ground level - zombie was falling');
-        this.handleLanding();
+    // Keep zombie stable on ground when grounded
+    if (this.isGrounded) {
+      if (this.player.y > 142) {
+        this.player.y = 142;
+      }
+      if (body.velocity.y > 0) {
+        this.player.setVelocityY(0);
       }
     }
   }
