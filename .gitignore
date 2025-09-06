@@ -64,6 +64,10 @@ coverage/
 replit.nix
 .upm/
 
+# Replit agent state (exclude these)
+.local/
+.config/
+
 # Database files
 *.db
 *.sqlite
