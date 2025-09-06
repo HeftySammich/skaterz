@@ -8,9 +8,9 @@ import { OptionsMenu } from './scenes/OptionsMenu';
 import Game from './scenes/Game';
 import GameOver from './scenes/GameOver';
 
-// GBA resolution
-const BASE_W = 240;
-const BASE_H = 160;
+// Scaled up resolution
+const BASE_W = 640;
+const BASE_H = 960;
 
 export function createGame(parent: HTMLElement): Phaser.Game {
   const config: Phaser.Types.Core.GameConfig = {
@@ -29,15 +29,15 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { x: 0, y: 800 }, // Less floaty gravity
+        gravity: { x: 0, y: 4800 }, // Less floaty gravity
         debug: false
       }
     },
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 240,
-      height: 160,
+      width: 640,
+      height: 960,
       zoom: 1 // No additional zoom - show full scene
     },
     input: {

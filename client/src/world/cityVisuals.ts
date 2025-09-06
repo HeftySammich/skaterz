@@ -1,6 +1,6 @@
 // src/world/cityVisuals.ts
-const GROUND_Y = 160;      // physics baseline
-const STREET_H = 64;       // total street band height
+const GROUND_Y = 960;      // physics baseline
+const STREET_H = 384;       // total street band height
 const SLOPE_DEG = -8;      // how "angled" the top edge looks
 const SLOPE = Math.tan(SLOPE_DEG * Math.PI / 180); // Δy per px of x
 
@@ -34,7 +34,7 @@ function drawBuildings(g:CanvasRenderingContext2D, w:number, h:number){
 }
 
 export function buildCityBack(scene: Phaser.Scene){
-  const w = 720, h = 160;
+  const w = 4320, h = 960;
   const c = document.createElement('canvas'); c.width=w; c.height=h;
   const g = c.getContext('2d')!; g.imageSmoothingEnabled=false;
 
@@ -43,12 +43,12 @@ export function buildCityBack(scene: Phaser.Scene){
 
   const key = 'city_back';
   scene.textures.addCanvas(key, c);
-  const t = scene.add.tileSprite(0, 0, 480, 160, key).setOrigin(0,0).setScrollFactor(0.25).setDepth(1);
+  const t = scene.add.tileSprite(0, 0, 2880, 960, key).setOrigin(0,0).setScrollFactor(0.25).setDepth(1);
   return t;
 }
 
 export function buildStreetLayer(scene: Phaser.Scene){
-  const w = 960, h = 160;
+  const w = 5760, h = 960;
   const c = document.createElement('canvas'); c.width=w; c.height=h;
   const g = c.getContext('2d')!; g.imageSmoothingEnabled=false;
 
@@ -104,7 +104,7 @@ export function buildStreetLayer(scene: Phaser.Scene){
 
   const key = 'city_street';
   scene.textures.addCanvas(key, c);
-  const t = scene.add.tileSprite(0, 0, 480, 160, key).setOrigin(0,0).setScrollFactor(1).setDepth(3);
+  const t = scene.add.tileSprite(0, 0, 2880, 960, key).setOrigin(0,0).setScrollFactor(1).setDepth(3);
   return t;
 }
 

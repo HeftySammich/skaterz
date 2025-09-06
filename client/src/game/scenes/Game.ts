@@ -18,10 +18,10 @@ export default class Game extends Phaser.Scene {
   private jumpDebounce = false;
   
   // Physics constants
-  private readonly JUMP_VELOCITY = -280;
-  private readonly TRICK_JUMP_VELOCITY = -260; // Moderate second jump
-  private readonly GRAVITY = 800; // Less floaty, more responsive
-  private readonly FLOAT_GRAVITY = 600; // Less float during tricks
+  private readonly JUMP_VELOCITY = -1680;
+  private readonly TRICK_JUMP_VELOCITY = -1560; // Moderate second jump
+  private readonly GRAVITY = 4800; // Less floaty, more responsive
+  private readonly FLOAT_GRAVITY = 3600; // Less float during tricks
 
   constructor() {
     super('Game');
@@ -59,7 +59,7 @@ export default class Game extends Phaser.Scene {
     });
 
     // Remove camera bounds for infinite world
-    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 160);
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, -10);
     
     // ESC to return to main menu
@@ -144,7 +144,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(50, 142, 'skater_idle');
+    this.player = this.physics.add.sprite(300, 852, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -153,15 +153,15 @@ export default class Game extends Phaser.Scene {
     
     // Physics body setup - tiny collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setSize(12, 16);
-    body.setMaxVelocity(400, 600);
+    body.setSize(72, 96);
+    body.setMaxVelocity(2400, 3600);
     body.setBounce(0); // No bouncing
     body.setOffset(0, 0); // Make sure offset is clean
     
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=150`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=900`);
   }
 
   createParticleEffects() {
@@ -275,7 +275,7 @@ export default class Game extends Phaser.Scene {
 
   update() {
     // Continuous movement forward
-    this.player.setVelocityX(120);
+    this.player.setVelocityX(720);
     
     // Debug player physics every few frames
     if (this.time.now % 500 < 16) { // Every ~500ms
@@ -307,8 +307,8 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Clean ground landing system
-    if (this.player.y >= 142 && body.velocity.y > 0 && !this.isGrounded) {
-      this.player.y = 142;
+    if (this.player.y >= 852 && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = 852;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();

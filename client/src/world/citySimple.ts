@@ -1,8 +1,8 @@
 // Minimal "looks like a city street" renderer
 // flat physics baseline (y=160) + slanted top edge for the street band
 
-const GROUND_Y = 160;      // <-- your physics floor
-const STREET_H = 64;       // height of the entire street band
+const GROUND_Y = 960;      // <-- your physics floor
+const STREET_H = 384;       // height of the entire street band
 const TILT_DEG  = -8;      // visual slope (negative = down to the right)
 const SLOPE     = Math.tan(TILT_DEG * Math.PI / 180); // Δy per px of x
 
@@ -95,20 +95,20 @@ export function createWorld(scene: Phaser.Scene){
   // Check if textures already exist to avoid duplication errors
   if (!scene.textures.exists('city_back')) {
     // ---- BACKGROUND (tileable skyline) ----
-    const backCanvas = drawSkyline(960, 160);
+    const backCanvas = drawSkyline(5760, 960);
     scene.textures.addCanvas('city_back', backCanvas);
   }
   
   if (!scene.textures.exists('city_street')) {
     // ---- STREET LAYER (angled-looking strip) ----
-    const streetCanvas = drawStreet(960, 160);
+    const streetCanvas = drawStreet(5760, 960);
     scene.textures.addCanvas('city_street', streetCanvas);
   }
   
-  const skyline = scene.add.tileSprite(0,0,480,160,'city_back')
+  const skyline = scene.add.tileSprite(0,0,2880,960,'city_back')
     .setOrigin(0,0).setScrollFactor(0.25).setDepth(1);
 
-  const street = scene.add.tileSprite(0,0,480,160,'city_street')
+  const street = scene.add.tileSprite(0,0,2880,960,'city_street')
     .setOrigin(0,0).setScrollFactor(1).setDepth(5);
 
   // ---- PHYSICS GROUND (invisible, exactly on baseline) ----

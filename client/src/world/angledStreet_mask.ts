@@ -3,11 +3,11 @@
 // No rotation used. Physics stays axis-aligned.
 
 // Tunables
-const STREET_HEIGHT = 64;               // total visual band height (curb+asphalt)
-const STREET_Y = 112;                   // top of band at x = origin
+const STREET_HEIGHT = 384;               // total visual band height (curb+asphalt)
+const STREET_Y = 672;                   // top of band at x = origin
 const TILT_DEG = -7;                    // visual slope (negative tilts down to the right)
 const SLOPE = Math.tan(Phaser.Math.DegToRad(TILT_DEG)); // pixels of Y per pixel of X
-const BAND_WIDTH = 1600;                // how wide we draw the repeating street
+const BAND_WIDTH = 9600;                // how wide we draw the repeating street
 
 export function buildAngledStreet(scene: Phaser.Scene) {
   // Container that holds all street strips (no rotation)
@@ -15,7 +15,7 @@ export function buildAngledStreet(scene: Phaser.Scene) {
 
   // Helper to make a horizontal TileSprite strip
   const makeStrip = (key: string, y: number, alpha = 1) =>
-    scene.add.tileSprite(0, y, BAND_WIDTH, 32, key)
+    scene.add.tileSprite(0, y, BAND_WIDTH, 192, key)
       .setOrigin(0, 0)
       .setAlpha(alpha)
       .setScrollFactor(1);
