@@ -56,14 +56,23 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // Serve the app on port 8080 locally, 5000 on Replit
   // this serves both the API and the client
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 8080;
+
+  if (process.env.REPLIT_DB_URL || process.env.REPL_ID) {
+    // Replit environment - use 0.0.0.0 binding
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on 0.0.0.0:${port}`);
+    });
+  } else {
+    // Local environment - simple port binding
+    server.listen(port, () => {
+      log(`serving on localhost:${port}`);
+    });
+  }
 })();
