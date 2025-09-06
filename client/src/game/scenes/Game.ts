@@ -60,7 +60,7 @@ export default class Game extends Phaser.Scene {
 
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, -10);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -600, -60);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -83,39 +83,39 @@ export default class Game extends Phaser.Scene {
 
   loadSeamlessWorld() {
     // Inline the seamless world creation to avoid import issues
-    const GROUND_Y = 160;
+    const GROUND_Y = 960;
     
     const createSeamlessWorld = (scene: Phaser.Scene) => {
       // Create placeholder background
       const bgCanvas = document.createElement('canvas');
-      bgCanvas.width = 480;
-      bgCanvas.height = 160;
+      bgCanvas.width = 2880;
+      bgCanvas.height = 960;
       const ctx = bgCanvas.getContext('2d')!;
       ctx.imageSmoothingEnabled = false;
       
       // Simple gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+      const gradient = ctx.createLinearGradient(0, 0, 0, 960);
       gradient.addColorStop(0, '#274b8c');
       gradient.addColorStop(0.6, '#646c7a');
       gradient.addColorStop(1, '#2d303b');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 480, 160);
+      ctx.fillRect(0, 0, 2880, 960);
       
       // Street area
       ctx.fillStyle = '#4a4a4a';
-      ctx.fillRect(0, 120, 480, 40);
+      ctx.fillRect(0, 720, 2880, 240);
       
       // Lane markings
       ctx.fillStyle = '#e2e28e';
-      for (let x = 0; x < 480; x += 60) {
-        ctx.fillRect(x, 135, 30, 3);
+      for (let x = 0; x < 2880; x += 360) {
+        ctx.fillRect(x, 810, 180, 18);
       }
       
       if (!scene.textures.exists('seamless_bg')) {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, 0, 2000, 160, 'seamless_bg')
+      const background = scene.add.tileSprite(0, 0, 12000, 960, 'seamless_bg')
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDepth(1);
@@ -124,8 +124,8 @@ export default class Game extends Phaser.Scene {
       const ground = scene.physics.add.staticGroup();
       
       // Create multiple ground segments for reliable collision at street level
-      for (let x = -2000; x <= 4000; x += 400) {
-        const groundSegment = scene.add.rectangle(x, 150, 400, 20, 0x000000, 0);
+      for (let x = -12000; x <= 24000; x += 2400) {
+        const groundSegment = scene.add.rectangle(x, 900, 2400, 120, 0x000000, 0);
         groundSegment.setVisible(false);
         scene.physics.add.existing(groundSegment, true);
         ground.add(groundSegment as any);
@@ -169,8 +169,8 @@ export default class Game extends Phaser.Scene {
     
     // Jump dust particles (when taking off)
     this.dustParticles = this.add.particles(0, 0, 'pixel', {
-      speed: { min: 20, max: 60 },
-      scale: { start: 0.3, end: 0 },
+      speed: { min: 120, max: 360 },
+      scale: { start: 1.8, end: 0 },
       lifespan: 300,
       quantity: 3,
       angle: { min: 225, max: 315 }, // Spread behind player
@@ -181,8 +181,8 @@ export default class Game extends Phaser.Scene {
 
     // Jump particles (blue sparkles on first jump)
     this.jumpParticles = this.add.particles(0, 0, 'pixel', {
-      speed: { min: 30, max: 80 },
-      scale: { start: 0.4, end: 0 },
+      speed: { min: 180, max: 480 },
+      scale: { start: 2.4, end: 0 },
       lifespan: 400,
       quantity: 5,
       angle: { min: 0, max: 360 },
@@ -193,8 +193,8 @@ export default class Game extends Phaser.Scene {
 
     // Trick particles (golden trail during double jump)
     this.trickParticles = this.add.particles(0, 0, 'pixel', {
-      speed: { min: 10, max: 40 },
-      scale: { start: 0.5, end: 0.1 },
+      speed: { min: 60, max: 240 },
+      scale: { start: 3.0, end: 0.6 },
       lifespan: 600,
       quantity: 2,
       angle: { min: 0, max: 360 },
@@ -239,7 +239,7 @@ export default class Game extends Phaser.Scene {
       this.hasDoubleJumped = false;
       
       // Trigger jump particles
-      this.dustParticles.setPosition(this.player.x, this.player.y + 8);
+      this.dustParticles.setPosition(this.player.x, this.player.y + 48);
       this.dustParticles.explode(3);
       this.jumpParticles.setPosition(this.player.x, this.player.y);
       this.jumpParticles.explode(5);
@@ -298,7 +298,7 @@ export default class Game extends Phaser.Scene {
     }
     
     // Check if player fell too far (infinite runner should never end)
-    if (this.player.y > 200) {
+    if (this.player.y > 1200) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
     }
@@ -316,8 +316,8 @@ export default class Game extends Phaser.Scene {
     
     // Keep zombie stable on ground when grounded
     if (this.isGrounded) {
-      if (this.player.y > 142) {
-        this.player.y = 142;
+      if (this.player.y > 852) {
+        this.player.y = 852;
       }
       if (body.velocity.y > 0) {
         this.player.setVelocityY(0);
