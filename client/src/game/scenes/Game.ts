@@ -60,7 +60,7 @@ export default class Game extends Phaser.Scene {
 
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -600, -60);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, 0);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -125,7 +125,7 @@ export default class Game extends Phaser.Scene {
       
       // Create multiple ground segments for reliable collision at street level
       for (let x = -12000; x <= 24000; x += 2400) {
-        const groundSegment = scene.add.rectangle(x, 900, 2400, 120, 0x000000, 0);
+        const groundSegment = scene.add.rectangle(x, 600, 2400, 120, 0x000000, 0);
         groundSegment.setVisible(false);
         scene.physics.add.existing(groundSegment, true);
         ground.add(groundSegment as any);
@@ -144,12 +144,12 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(300, 852, 'skater_idle');
+    this.player = this.physics.add.sprite(320, 600, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Very small scale for authentic retro game look
-    this.player.setScale(0.15);
+    // Proper scale for visibility at new resolution
+    this.player.setScale(0.6);
     
     // Physics body setup - tiny collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
@@ -161,7 +161,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=900`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=600`);
   }
 
   createParticleEffects() {
@@ -307,8 +307,8 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Clean ground landing system
-    if (this.player.y >= 852 && body.velocity.y > 0 && !this.isGrounded) {
-      this.player.y = 852;
+    if (this.player.y >= 600 && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = 600;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();
@@ -316,8 +316,8 @@ export default class Game extends Phaser.Scene {
     
     // Keep zombie stable on ground when grounded
     if (this.isGrounded) {
-      if (this.player.y > 852) {
-        this.player.y = 852;
+      if (this.player.y > 600) {
+        this.player.y = 600;
       }
       if (body.velocity.y > 0) {
         this.player.setVelocityY(0);
