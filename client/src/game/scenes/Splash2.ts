@@ -15,7 +15,7 @@ export class Splash2 extends Phaser.Scene {
     slimeImage.setOrigin(0.5, 0.5);
     
     // Scale the image to fit nicely on screen (adjust as needed)
-    slimeImage.setScale(0.8);
+    slimeImage.setScale(0.5);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {
