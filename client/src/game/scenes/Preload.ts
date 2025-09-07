@@ -12,6 +12,9 @@ export default class Preload extends Phaser.Scene {
     this.load.image('skater_jump', 'assets/skater_jump.gif');
     this.load.image('skater_trick', 'assets/skater_trick.gif');
     
+    // Load splash screen image
+    this.load.image('slime_splash', 'assets/slime_splash.png');
+    
     const loadingText = this.make.text({
       x: 120,
       y: 80,

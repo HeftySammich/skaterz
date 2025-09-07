@@ -4,24 +4,15 @@ export class Splash2 extends Phaser.Scene {
   }
 
   create() {
-    // Second splash with development info
-    this.cameras.main.setBackgroundColor('#1f3d6e');
+    // Second splash with BUILT BY SLIME image
+    this.cameras.main.setBackgroundColor('#000000');
     
-    // Studio text (GBA screen is 240x160)
-    this.add.text(120, 65, 'REPLIT STUDIOS', {
-      fontSize: '16px',
-      color: '#ffecb3',
-      fontFamily: 'monospace',
-      align: 'center'
-    }).setOrigin(0.5);
-
-    // Presents text
-    this.add.text(120, 90, 'PRESENTS', {
-      fontSize: '10px',
-      color: '#b9c0cf',
-      fontFamily: 'monospace',
-      align: 'center'
-    }).setOrigin(0.5);
+    // Add the BUILT BY SLIME image, centered and scaled for 640x960 resolution
+    const slimeImage = this.add.image(320, 480, 'slime_splash');
+    slimeImage.setOrigin(0.5, 0.5);
+    
+    // Scale the image to fit nicely on screen (adjust as needed)
+    slimeImage.setScale(1.2);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {
