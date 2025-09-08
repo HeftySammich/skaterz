@@ -322,17 +322,12 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    // Create as a static sprite sitting directly on the ground
-    const obstacle = this.physics.add.staticSprite(x, 600, type); // Static = won't fall
-    obstacle.setScale(0.25); // Small size
-    obstacle.setDepth(15); // High depth to be visible
+    // Create as a static sprite positioned on the ground
+    const obstacle = this.physics.add.staticSprite(x, 580, type);
+    obstacle.setScale(0.25);
+    obstacle.setDepth(15);
     
-    // Position the bottom of the obstacle at ground level
-    const body = obstacle.body as Phaser.Physics.Arcade.StaticBody;
-    obstacle.y = 600 - (obstacle.height * obstacle.scaleY) / 2; // Bottom touches ground
-    body.updateFromGameObject(); // Update physics body position
-    
-    console.log(`Created static obstacle: ${type} at (${x}, ${obstacle.y}) sitting on ground`);
+    console.log(`Created static obstacle: ${type} at (${x}, 580) on ground`);
     
     this.obstacles.add(obstacle);
     
