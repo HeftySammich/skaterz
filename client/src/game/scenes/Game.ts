@@ -18,7 +18,7 @@ export default class Game extends Phaser.Scene {
   private jumpDebounce = false;
   
   // Obstacle system
-  private obstacles!: Phaser.Physics.Arcade.Group;
+  private obstacles!: Phaser.GameObjects.Group;
   private obstacleTypes = ['obstacle_cone', 'obstacle_trash', 'obstacle_crash', 'obstacle_zombie', 'obstacle_skulls'];
   private lastObstacleX = 0;
   private gameStartTime = 0;
@@ -225,15 +225,8 @@ export default class Game extends Phaser.Scene {
   }
 
   createObstacleSystem() {
-    // Create obstacle group
-    this.obstacles = this.physics.add.group();
-
-    // Collision with obstacles - game over
-    this.physics.add.overlap(this.player, this.obstacles, () => {
-      this.gameOver();
-    });
-
-    // No need for ground collision since obstacles are static and won't fall
+    // Create obstacle group - regular group, no physics
+    this.obstacles = this.add.group();
 
     // Create score display
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
@@ -322,14 +315,11 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    // Create as simple image sitting on ground - NO PHYSICS at all
+    // Create as simple image sitting on ground - NO PHYSICS
     const obstacle = this.add.image(x, 600, type);
     obstacle.setScale(0.25);
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
-    
-    // Add physics after it's positioned correctly
-    this.physics.add.existing(obstacle, true); // true = static body
     
     console.log(`Created ground obstacle: ${type} at (${x}, 600) sitting on ground`);
     
@@ -481,8 +471,15 @@ export default class Game extends Phaser.Scene {
       this.scoreText.setText(`Score: ${this.score}`);
     }
     
-    // Clean up off-screen obstacles safely
+    // Manual collision detection with obstacles
     this.obstacles.children.entries.forEach((obstacle: any) => {
+      // Check collision with player
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, obstacle.x, obstacle.y);
+      if (distance < 50) { // Hit obstacle
+        this.gameOver();
+      }
+      
+      // Clean up off-screen obstacles
       if (obstacle.x < this.cameras.main.scrollX - 200) {
         this.obstacles.remove(obstacle);
         obstacle.destroy();
