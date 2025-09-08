@@ -19,6 +19,9 @@ export default class Preload extends Phaser.Scene {
     this.load.image('obstacle_zombie', 'assets/obstacle_zombie.png');
     this.load.image('obstacle_skulls', 'assets/obstacle_skulls.png');
     
+    // Load city background
+    this.load.image('city_background', 'assets/city_background.png');
+    
     // Load splash screen image
     this.load.image('slime_splash', 'assets/slime_splash.png');
     

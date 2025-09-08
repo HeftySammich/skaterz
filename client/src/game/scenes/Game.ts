@@ -108,29 +108,14 @@ export default class Game extends Phaser.Scene {
       const ctx = bgCanvas.getContext('2d')!;
       ctx.imageSmoothingEnabled = false;
       
-      // Simple gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, 960);
-      gradient.addColorStop(0, '#274b8c');
-      gradient.addColorStop(0.6, '#646c7a');
-      gradient.addColorStop(1, '#2d303b');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 2880, 960);
-      
-      // Street area
-      ctx.fillStyle = '#4a4a4a';
-      ctx.fillRect(0, 720, 2880, 240);
-      
-      // Lane markings
-      ctx.fillStyle = '#e2e28e';
-      for (let x = 0; x < 2880; x += 360) {
-        ctx.fillRect(x, 810, 180, 18);
-      }
+      // Use the city background image instead of gradient
+      // The city background will be loaded and used directly
       
       if (!scene.textures.exists('seamless_bg')) {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, 0, 12000, 960, 'seamless_bg')
+      const background = scene.add.tileSprite(0, 0, 12000, 960, 'city_background')
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDepth(1);
@@ -138,7 +123,7 @@ export default class Game extends Phaser.Scene {
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
       
-      // Create multiple ground segments for reliable collision at street level
+      // Create multiple ground segments for reliable collision at street level (where the road is)
       for (let x = -12000; x <= 24000; x += 2400) {
         const groundSegment = scene.add.rectangle(x, 600, 2400, 120, 0x000000, 0);
         groundSegment.setVisible(false);
@@ -158,8 +143,8 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
-    // Create player sprite at tiny size for proper GBA scale
-    this.player = this.physics.add.sprite(320, 600, 'skater_idle');
+    // Create player sprite positioned properly on ground
+    this.player = this.physics.add.sprite(320, 590, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -317,7 +302,7 @@ export default class Game extends Phaser.Scene {
     
     // Create as simple image sitting on ground - NO PHYSICS
     const obstacle = this.add.image(x, 600, type);
-    obstacle.setScale(0.25);
+    obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     
