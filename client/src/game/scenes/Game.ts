@@ -320,12 +320,12 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    const obstacle = this.physics.add.sprite(x, 600, type); // Position directly on the floor
-    obstacle.setScale(0.6); // Make bigger so they're visible
+    const obstacle = this.physics.add.sprite(x, 580, type); // Position slightly above floor so they sit on it
+    obstacle.setScale(0.25); // Much smaller size
     obstacle.setImmovable(true);
     obstacle.setDepth(15); // Even higher depth to be visible
     
-    console.log(`Created obstacle: ${type} at (${x}, 600) with scale 0.6`);
+    console.log(`Created obstacle: ${type} at (${x}, 580) with scale 0.25`);
     
     // Set physics body size
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
