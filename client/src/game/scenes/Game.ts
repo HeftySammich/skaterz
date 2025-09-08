@@ -233,8 +233,7 @@ export default class Game extends Phaser.Scene {
       this.gameOver();
     });
 
-    // Make obstacles collide with ground so they don't fall
-    this.physics.add.collider(this.obstacles, this.world.ground);
+    // No need for ground collision since obstacles are static and won't fall
 
     // Create score display
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
@@ -323,16 +322,17 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    const obstacle = this.physics.add.sprite(x, 580, type); // Position slightly above floor so they sit on it
-    obstacle.setScale(0.25); // Much smaller size
-    obstacle.setImmovable(true);
-    obstacle.setDepth(15); // Even higher depth to be visible
+    // Create as a static sprite sitting directly on the ground
+    const obstacle = this.physics.add.staticSprite(x, 600, type); // Static = won't fall
+    obstacle.setScale(0.25); // Small size
+    obstacle.setDepth(15); // High depth to be visible
     
-    console.log(`Created obstacle: ${type} at (${x}, 580) with scale 0.25`);
+    // Position the bottom of the obstacle at ground level
+    const body = obstacle.body as Phaser.Physics.Arcade.StaticBody;
+    obstacle.y = 600 - (obstacle.height * obstacle.scaleY) / 2; // Bottom touches ground
+    body.updateFromGameObject(); // Update physics body position
     
-    // Set physics body size
-    const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    body.setSize(obstacle.width * 0.6, obstacle.height * 0.8);
+    console.log(`Created static obstacle: ${type} at (${x}, ${obstacle.y}) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
