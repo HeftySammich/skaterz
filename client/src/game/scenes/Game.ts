@@ -24,6 +24,7 @@ export default class Game extends Phaser.Scene {
   private gameStartTime = 0;
   private score = 0;
   private scoreText!: Phaser.GameObjects.Text;
+  private lastDifficulty = -1;
   
   // Physics constants
   private readonly JUMP_VELOCITY = -1680;
@@ -225,11 +226,7 @@ export default class Game extends Phaser.Scene {
 
   createObstacleSystem() {
     // Create obstacle group
-    this.obstacles = this.physics.add.group({
-      removeCallback: (obstacle: any) => {
-        obstacle.destroy();
-      }
-    });
+    this.obstacles = this.physics.add.group();
 
     // Collision with obstacles - game over
     this.physics.add.overlap(this.player, this.obstacles, () => {
@@ -287,8 +284,8 @@ export default class Game extends Phaser.Scene {
   }
 
   getDifficulty(gameTime: number): number {
-    // Difficulty increases every 10 seconds, maxes at level 10
-    return Math.min(Math.floor(gameTime / 10000), 10);
+    // Difficulty increases every 60 seconds, maxes at level 10
+    return Math.min(Math.floor(gameTime / 60000), 10);
   }
 
   chooseObstacleType(difficulty: number): string {
@@ -342,6 +339,10 @@ export default class Game extends Phaser.Scene {
   }
 
   updateSpawnRate(difficulty: number) {
+    // Don't recreate timer constantly - only when difficulty actually changes
+    if (difficulty === this.lastDifficulty) return;
+    this.lastDifficulty = difficulty;
+    
     // Remove existing timer
     this.time.removeAllEvents();
     
@@ -458,9 +459,10 @@ export default class Game extends Phaser.Scene {
       this.scoreText.setText(`Score: ${this.score}`);
     }
     
-    // Clean up off-screen obstacles
+    // Clean up off-screen obstacles safely
     this.obstacles.children.entries.forEach((obstacle: any) => {
       if (obstacle.x < this.cameras.main.scrollX - 200) {
+        this.obstacles.remove(obstacle);
         obstacle.destroy();
       }
     });
