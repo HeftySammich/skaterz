@@ -243,17 +243,22 @@ export default class Game extends Phaser.Scene {
     this.scoreText.setScrollFactor(0); // Keep fixed on screen
 
     // Start spawning obstacles
+    console.log('Setting up obstacle spawning timer');
     this.time.addEvent({
       delay: 2000, // Start after 2 seconds
       callback: this.spawnObstacle,
       callbackScope: this,
       loop: true
     });
+    
+    console.log('Obstacle system initialized');
   }
 
   spawnObstacle() {
     const gameTime = this.time.now - this.gameStartTime;
     const difficulty = this.getDifficulty(gameTime);
+    
+    console.log(`Spawning obstacle - gameTime: ${gameTime}ms, difficulty: ${difficulty}`);
     
     // Determine spawn distance based on difficulty
     const minDistance = Math.max(800 - difficulty * 50, 300); // Gets closer over time
@@ -262,8 +267,11 @@ export default class Game extends Phaser.Scene {
     
     const spawnX = this.player.x + spawnDistance;
     
+    console.log(`Spawn location: playerX=${this.player.x}, spawnX=${spawnX}, distance=${spawnDistance}`);
+    
     // Skip if too close to last obstacle
     if (spawnX - this.lastObstacleX < minDistance) {
+      console.log(`Skipping spawn - too close to last obstacle`);
       return;
     }
     
@@ -271,6 +279,8 @@ export default class Game extends Phaser.Scene {
     
     // Choose obstacle type based on difficulty
     const obstacleType = this.chooseObstacleType(difficulty);
+    
+    console.log(`Creating obstacle: ${obstacleType} at x=${spawnX}`);
     
     // Spawn single obstacle or pattern based on difficulty
     if (difficulty > 3 && Math.random() < 0.3) {
@@ -304,16 +314,26 @@ export default class Game extends Phaser.Scene {
   }
 
   createSingleObstacle(x: number, type: string) {
+    // First check if the texture exists
+    if (!this.textures.exists(type)) {
+      console.error(`Texture ${type} does not exist!`);
+      return;
+    }
+    
     const obstacle = this.physics.add.sprite(x, 500, type);
-    obstacle.setScale(0.3); // Scale down for game
+    obstacle.setScale(0.8); // Make larger so it's visible
     obstacle.setImmovable(true);
-    obstacle.setDepth(6);
+    obstacle.setDepth(10); // Higher depth to be visible above background
+    
+    console.log(`Created obstacle: ${type} at (${x}, 500) with scale 0.8`);
     
     // Set physics body size
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
     body.setSize(obstacle.width * 0.6, obstacle.height * 0.8);
     
     this.obstacles.add(obstacle);
+    
+    console.log(`Total obstacles: ${this.obstacles.children.size}`);
   }
 
   spawnObstaclePattern(x: number, type: string) {
