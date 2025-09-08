@@ -233,6 +233,9 @@ export default class Game extends Phaser.Scene {
       this.gameOver();
     });
 
+    // Make obstacles collide with ground so they don't fall
+    this.physics.add.collider(this.obstacles, this.world.ground);
+
     // Create score display
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
       fontSize: '48px',
