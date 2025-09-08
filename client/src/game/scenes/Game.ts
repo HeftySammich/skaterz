@@ -17,6 +17,14 @@ export default class Game extends Phaser.Scene {
   private maxJumps = 2; // Regular jump + trick jump
   private jumpDebounce = false;
   
+  // Obstacle system
+  private obstacles!: Phaser.Physics.Arcade.Group;
+  private obstacleTypes = ['obstacle_cone', 'obstacle_trash', 'obstacle_crash', 'obstacle_zombie', 'obstacle_skulls'];
+  private lastObstacleX = 0;
+  private gameStartTime = 0;
+  private score = 0;
+  private scoreText!: Phaser.GameObjects.Text;
+  
   // Physics constants
   private readonly JUMP_VELOCITY = -1680;
   private readonly TRICK_JUMP_VELOCITY = -1560; // Moderate second jump
@@ -39,6 +47,9 @@ export default class Game extends Phaser.Scene {
     
     // Create particle effects
     this.createParticleEffects();
+    
+    // Create obstacle system
+    this.createObstacleSystem();
     
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -67,6 +78,9 @@ export default class Game extends Phaser.Scene {
       this.scene.start('MainMenu');
     });
 
+    // Initialize game timing
+    this.gameStartTime = this.time.now;
+    
     console.log('Game scene loaded with enhanced zombie skater mechanics');
   }
 
@@ -209,6 +223,146 @@ export default class Game extends Phaser.Scene {
     this.trickParticles.setDepth(15);
   }
 
+  createObstacleSystem() {
+    // Create obstacle group
+    this.obstacles = this.physics.add.group({
+      removeCallback: (obstacle: any) => {
+        obstacle.destroy();
+      }
+    });
+
+    // Collision with obstacles - game over
+    this.physics.add.overlap(this.player, this.obstacles, () => {
+      this.gameOver();
+    });
+
+    // Create score display
+    this.scoreText = this.add.text(50, 50, 'Score: 0', {
+      fontSize: '48px',
+      color: '#ffffff',
+      fontFamily: 'monospace'
+    });
+    this.scoreText.setDepth(100);
+    this.scoreText.setScrollFactor(0); // Keep fixed on screen
+
+    // Start spawning obstacles
+    this.time.addEvent({
+      delay: 2000, // Start after 2 seconds
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    });
+  }
+
+  spawnObstacle() {
+    const gameTime = this.time.now - this.gameStartTime;
+    const difficulty = this.getDifficulty(gameTime);
+    
+    // Determine spawn distance based on difficulty
+    const minDistance = Math.max(800 - difficulty * 50, 300); // Gets closer over time
+    const maxDistance = Math.max(1500 - difficulty * 100, 600);
+    const spawnDistance = Phaser.Math.Between(minDistance, maxDistance);
+    
+    const spawnX = this.player.x + spawnDistance;
+    
+    // Skip if too close to last obstacle
+    if (spawnX - this.lastObstacleX < minDistance) {
+      return;
+    }
+    
+    this.lastObstacleX = spawnX;
+    
+    // Choose obstacle type based on difficulty
+    const obstacleType = this.chooseObstacleType(difficulty);
+    
+    // Spawn single obstacle or pattern based on difficulty
+    if (difficulty > 3 && Math.random() < 0.3) {
+      this.spawnObstaclePattern(spawnX, obstacleType);
+    } else {
+      this.createSingleObstacle(spawnX, obstacleType);
+    }
+    
+    // Update spawn rate based on difficulty
+    this.updateSpawnRate(difficulty);
+  }
+
+  getDifficulty(gameTime: number): number {
+    // Difficulty increases every 10 seconds, maxes at level 10
+    return Math.min(Math.floor(gameTime / 10000), 10);
+  }
+
+  chooseObstacleType(difficulty: number): string {
+    // Early game: mostly cones and trash
+    if (difficulty < 2) {
+      return Phaser.Utils.Array.GetRandom(['obstacle_cone', 'obstacle_trash']);
+    }
+    // Mid game: add crashes and zombies
+    else if (difficulty < 5) {
+      return Phaser.Utils.Array.GetRandom(['obstacle_cone', 'obstacle_trash', 'obstacle_crash', 'obstacle_zombie']);
+    }
+    // Late game: all obstacles including skulls
+    else {
+      return Phaser.Utils.Array.GetRandom(this.obstacleTypes);
+    }
+  }
+
+  createSingleObstacle(x: number, type: string) {
+    const obstacle = this.physics.add.sprite(x, 500, type);
+    obstacle.setScale(0.3); // Scale down for game
+    obstacle.setImmovable(true);
+    obstacle.setDepth(6);
+    
+    // Set physics body size
+    const body = obstacle.body as Phaser.Physics.Arcade.Body;
+    body.setSize(obstacle.width * 0.6, obstacle.height * 0.8);
+    
+    this.obstacles.add(obstacle);
+  }
+
+  spawnObstaclePattern(x: number, type: string) {
+    // Create obstacle patterns for higher difficulty
+    const patternType = Phaser.Math.Between(1, 3);
+    
+    switch (patternType) {
+      case 1: // Double obstacle
+        this.createSingleObstacle(x, type);
+        this.createSingleObstacle(x + 200, type);
+        break;
+      case 2: // Triple spread
+        this.createSingleObstacle(x, type);
+        this.createSingleObstacle(x + 150, type);
+        this.createSingleObstacle(x + 300, type);
+        break;
+      case 3: // Mixed types
+        this.createSingleObstacle(x, type);
+        const secondType = Phaser.Utils.Array.GetRandom(this.obstacleTypes);
+        this.createSingleObstacle(x + 250, secondType);
+        break;
+    }
+  }
+
+  updateSpawnRate(difficulty: number) {
+    // Remove existing timer
+    this.time.removeAllEvents();
+    
+    // Create new timer with adjusted delay
+    const baseDelay = 3000;
+    const difficultyReduction = difficulty * 200;
+    const newDelay = Math.max(baseDelay - difficultyReduction, 800); // Min 0.8 seconds
+    
+    this.time.addEvent({
+      delay: newDelay,
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    });
+  }
+
+  gameOver() {
+    console.log('Game Over! Final Score:', this.score);
+    this.scene.restart();
+  }
+
   handleLanding() {
     this.isGrounded = true;
     this.hasDoubleJumped = false;
@@ -296,6 +450,20 @@ export default class Game extends Phaser.Scene {
     if (this.trickActive && this.trickParticles.emitting) {
       this.trickParticles.setPosition(this.player.x, this.player.y);
     }
+    
+    // Update score based on distance
+    const currentScore = Math.floor((this.player.x - 320) / 100);
+    if (currentScore > this.score) {
+      this.score = currentScore;
+      this.scoreText.setText(`Score: ${this.score}`);
+    }
+    
+    // Clean up off-screen obstacles
+    this.obstacles.children.entries.forEach((obstacle: any) => {
+      if (obstacle.x < this.cameras.main.scrollX - 200) {
+        obstacle.destroy();
+      }
+    });
     
     // Check if player fell too far (infinite runner should never end)
     if (this.player.y > 1200) {
