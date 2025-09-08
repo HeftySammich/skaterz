@@ -322,12 +322,18 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    // Create as a static sprite positioned on the ground
-    const obstacle = this.physics.add.staticSprite(x, 580, type);
+    // Create as regular physics sprite but make it immovable
+    const obstacle = this.physics.add.sprite(x, 580, type);
     obstacle.setScale(0.25);
     obstacle.setDepth(15);
+    obstacle.setImmovable(true);
     
-    console.log(`Created static obstacle: ${type} at (${x}, 580) on ground`);
+    // Stop it from falling by setting gravity to 0 and velocity to 0
+    const body = obstacle.body as Phaser.Physics.Arcade.Body;
+    body.setGravityY(-this.physics.world.gravity.y); // Cancel world gravity
+    body.setVelocity(0, 0);
+    
+    console.log(`Created obstacle: ${type} at (${x}, 580) on ground`);
     
     this.obstacles.add(obstacle);
     
