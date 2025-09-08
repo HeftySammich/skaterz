@@ -163,8 +163,8 @@ export default class Game extends Phaser.Scene {
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Proper scale for visibility at new resolution - slightly smaller
-    this.player.setScale(0.5);
+    // Proper scale for visibility at new resolution - even smaller
+    this.player.setScale(0.4);
     
     // Physics body setup - tiny collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
@@ -260,9 +260,9 @@ export default class Game extends Phaser.Scene {
     
     console.log(`Spawning obstacle - gameTime: ${gameTime}ms, difficulty: ${difficulty}`);
     
-    // Determine spawn distance based on difficulty
-    const minDistance = Math.max(800 - difficulty * 50, 300); // Gets closer over time
-    const maxDistance = Math.max(1500 - difficulty * 100, 600);
+    // Determine spawn distance based on difficulty - spawn closer so they're visible
+    const minDistance = Math.max(400 - difficulty * 25, 150); // Much closer
+    const maxDistance = Math.max(800 - difficulty * 50, 300); // Much closer
     const spawnDistance = Phaser.Math.Between(minDistance, maxDistance);
     
     const spawnX = this.player.x + spawnDistance;
@@ -320,12 +320,12 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    const obstacle = this.physics.add.sprite(x, 570, type); // Position above ground (ground is at y=600)
-    obstacle.setScale(0.4); // Smaller size
+    const obstacle = this.physics.add.sprite(x, 550, type); // Position well above ground (ground is at y=600)
+    obstacle.setScale(0.6); // Make bigger so they're visible
     obstacle.setImmovable(true);
-    obstacle.setDepth(10); // Higher depth to be visible above background
+    obstacle.setDepth(15); // Even higher depth to be visible
     
-    console.log(`Created obstacle: ${type} at (${x}, 570) with scale 0.4`);
+    console.log(`Created obstacle: ${type} at (${x}, 550) with scale 0.6`);
     
     // Set physics body size
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
