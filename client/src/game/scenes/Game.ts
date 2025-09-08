@@ -163,8 +163,8 @@ export default class Game extends Phaser.Scene {
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
-    // Proper scale for visibility at new resolution
-    this.player.setScale(0.6);
+    // Proper scale for visibility at new resolution - slightly smaller
+    this.player.setScale(0.5);
     
     // Physics body setup - tiny collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
@@ -320,12 +320,12 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    const obstacle = this.physics.add.sprite(x, 500, type);
-    obstacle.setScale(0.8); // Make larger so it's visible
+    const obstacle = this.physics.add.sprite(x, 570, type); // Position above ground (ground is at y=600)
+    obstacle.setScale(0.4); // Smaller size
     obstacle.setImmovable(true);
     obstacle.setDepth(10); // Higher depth to be visible above background
     
-    console.log(`Created obstacle: ${type} at (${x}, 500) with scale 0.8`);
+    console.log(`Created obstacle: ${type} at (${x}, 570) with scale 0.4`);
     
     // Set physics body size
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
