@@ -7,21 +7,21 @@ export default class Preload extends Phaser.Scene {
   }
 
   preload() {
-    // Load zombie skater assets - use static frames since Phaser can't load GIFs
+    // Load zombie skater assets
     this.load.image('skater_idle', 'assets/skater_idle.png');
-    this.load.image('skater_jump', 'assets/skater_jump.gif');
-    this.load.image('skater_trick', 'assets/skater_trick.gif');
+    this.load.image('skater_jump', 'assets/skater_idle.png'); // Use same image for now
+    this.load.image('skater_trick', 'assets/skater_idle.png'); // Use same image for now
     
     // Load splash screen image
     this.load.image('slime_splash', 'assets/slime_splash.png');
     
     const loadingText = this.make.text({
-      x: 120,
-      y: 80,
+      x: 320,
+      y: 480,
       text: 'Loading zombie skater...',
       style: {
         fontFamily: 'Courier, "Courier New", monospace',
-        fontSize: '12px',
+        fontSize: '36px',
         color: '#ffffff'
       }
     });
@@ -35,6 +35,8 @@ export default class Preload extends Phaser.Scene {
     pixelGraphics.fillRect(0, 0, 4, 4);
     pixelGraphics.generateTexture('pixel', 4, 4);
     pixelGraphics.destroy();
+
+    // Images are now loaded from files instead of generated
 
     // Create skater animations
     this.anims.create({
