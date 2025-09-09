@@ -125,7 +125,7 @@ export default class Game extends Phaser.Scene {
       const floorLine = scene.add.graphics()
         .lineStyle(3, 0xffffff, 1)
         .lineTo(12000, 0)
-        .setPosition(0, 920)
+        .setPosition(0, 880)
         .setScrollFactor(0)
         .setDepth(10);
 
@@ -134,7 +134,7 @@ export default class Game extends Phaser.Scene {
       
       // Create multiple ground segments for reliable collision at street level (where the road is)
       for (let x = -12000; x <= 24000; x += 2400) {
-        const groundSegment = scene.add.rectangle(x, 920, 2400, 120, 0x000000, 0);
+        const groundSegment = scene.add.rectangle(x, 880, 2400, 120, 0x000000, 0);
         groundSegment.setVisible(false);
         scene.physics.add.existing(groundSegment, true);
         ground.add(groundSegment as any);
@@ -152,7 +152,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite positioned properly on ground
-    this.player = this.physics.add.sprite(320, 920, 'skater_idle');
+    this.player = this.physics.add.sprite(320, 880, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -169,7 +169,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=920`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=880`);
   }
 
   createParticleEffects() {
@@ -309,12 +309,12 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create as simple image sitting on ground - NO PHYSICS
-    const obstacle = this.add.image(x, 920, type);
+    const obstacle = this.add.image(x, 880, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 920) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, 880) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
@@ -489,8 +489,8 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Clean ground landing system
-    if (this.player.y >= 920 && body.velocity.y > 0 && !this.isGrounded) {
-      this.player.y = 920;
+    if (this.player.y >= 880 && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = 880;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();
@@ -498,8 +498,8 @@ export default class Game extends Phaser.Scene {
     
     // Keep zombie stable on ground when grounded
     if (this.isGrounded) {
-      if (this.player.y > 920) {
-        this.player.y = 920;
+      if (this.player.y > 880) {
+        this.player.y = 880;
       }
       if (body.velocity.y > 0) {
         this.player.setVelocityY(0);
