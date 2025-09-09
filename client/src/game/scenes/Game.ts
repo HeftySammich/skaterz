@@ -70,8 +70,11 @@ export default class Game extends Phaser.Scene {
       }
     });
 
+    // Set physics world bounds to allow street level movement
+    this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1200);
+    
     // Remove camera bounds for infinite world
-    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1200);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, 0);
     
     // ESC to return to main menu
@@ -480,7 +483,7 @@ export default class Game extends Phaser.Scene {
     });
     
     // Check if player fell too far (infinite runner should never end)
-    if (this.player.y > 1200) {
+    if (this.player.y > 1400) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
     }
