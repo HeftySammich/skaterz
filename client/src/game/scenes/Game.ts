@@ -115,11 +115,19 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.image(320, 480, 'city_background')
+      const background = scene.add.image(320, 650, 'city_background')
         .setOrigin(0.5, 0.5)
-        .setScrollFactor(0)
+        .setScrollFactor(0.2)
         .setDepth(1)
-        .setScale(0.5, 0.5); // Scale to fit entire image properly in frame
+        .setScale(1.2, 1.2); // Larger scale, moved further down to fill bottom space
+
+      // Add visible white floor line at ground level
+      const floorLine = scene.add.graphics()
+        .lineStyle(3, 0xffffff, 1)
+        .lineTo(12000, 0)
+        .setPosition(0, 600)
+        .setScrollFactor(0)
+        .setDepth(10);
 
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
@@ -133,8 +141,7 @@ export default class Game extends Phaser.Scene {
       }
 
       const update = (scrollX: number) => {
-        // Infinite scrolling background
-        background.tilePositionX = scrollX * 1.0;
+        // Background automatically scrolls with scrollFactor
       };
 
       return { ground, update };
