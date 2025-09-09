@@ -115,11 +115,11 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.image(320, 650, 'city_background')
+      const background = scene.add.image(320, 800, 'city_background')
         .setOrigin(0.5, 0.5)
-        .setScrollFactor(0.2)
+        .setScrollFactor(0.8)
         .setDepth(1)
-        .setScale(1.2, 1.2); // Larger scale, moved further down to fill bottom space
+        .setScale(2.5, 2.5); // Much larger scale, positioned to eliminate all green space
 
       // Add visible white floor line at ground level
       const floorLine = scene.add.graphics()
