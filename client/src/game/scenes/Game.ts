@@ -492,8 +492,8 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Clean ground landing system
-    if (this.player.y >= 600 && body.velocity.y > 0 && !this.isGrounded) {
-      this.player.y = 600;
+    if (this.player.y >= 850 && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = 850;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();
@@ -501,8 +501,8 @@ export default class Game extends Phaser.Scene {
     
     // Keep zombie stable on ground when grounded
     if (this.isGrounded) {
-      if (this.player.y > 600) {
-        this.player.y = 600;
+      if (this.player.y > 850) {
+        this.player.y = 850;
       }
       if (body.velocity.y > 0) {
         this.player.setVelocityY(0);
