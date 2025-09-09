@@ -322,13 +322,13 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create obstacle with physics body for collision
-    const obstacle = this.physics.add.sprite(x, 940, type);
+    const obstacle = this.physics.add.sprite(x, 850, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     obstacle.setImmovable(true); // Make obstacle static
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 940) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, 850) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
