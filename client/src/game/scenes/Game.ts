@@ -119,7 +119,7 @@ export default class Game extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setScrollFactor(0.6)
         .setDepth(1)
-        .setScale(1.5, 1.5); // Position bottom of background at bottom of screen
+        .setScale(1.1, 1.1); // Smaller scale while keeping bottom alignment
 
       // Add visible white floor line at ground level
       const floorLine = scene.add.graphics()
