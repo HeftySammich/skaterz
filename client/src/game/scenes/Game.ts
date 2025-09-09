@@ -70,6 +70,12 @@ export default class Game extends Phaser.Scene {
       }
     });
 
+    // Add collision detection for obstacles
+    this.physics.add.collider(this.player, this.obstacles, () => {
+      console.log('Player hit obstacle - game over');
+      this.gameOver();
+    });
+
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, 0);
@@ -312,11 +318,12 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    // Create as simple image sitting on ground - NO PHYSICS
-    const obstacle = this.add.image(x, 940, type);
+    // Create obstacle with physics body for collision
+    const obstacle = this.physics.add.sprite(x, 940, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
+    obstacle.setImmovable(true); // Make obstacle static
     
     console.log(`Created ground obstacle: ${type} at (${x}, 940) sitting on ground`);
     
