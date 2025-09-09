@@ -76,6 +76,9 @@ export default class Game extends Phaser.Scene {
       this.gameOver();
     });
 
+    // Make obstacles collide with ground (same as player) to prevent falling through
+    this.physics.add.collider(this.obstacles, this.world.ground);
+
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, 0);
