@@ -125,7 +125,7 @@ export default class Game extends Phaser.Scene {
       const floorLine = scene.add.graphics()
         .lineStyle(3, 0xffffff, 1)
         .lineTo(12000, 0)
-        .setPosition(0, 600)
+        .setPosition(0, 850)
         .setScrollFactor(0)
         .setDepth(10);
 
@@ -134,7 +134,7 @@ export default class Game extends Phaser.Scene {
       
       // Create multiple ground segments for reliable collision at street level (where the road is)
       for (let x = -12000; x <= 24000; x += 2400) {
-        const groundSegment = scene.add.rectangle(x, 600, 2400, 120, 0x000000, 0);
+        const groundSegment = scene.add.rectangle(x, 850, 2400, 120, 0x000000, 0);
         groundSegment.setVisible(false);
         scene.physics.add.existing(groundSegment, true);
         ground.add(groundSegment as any);
@@ -152,7 +152,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite positioned properly on ground
-    this.player = this.physics.add.sprite(320, 590, 'skater_idle');
+    this.player = this.physics.add.sprite(320, 840, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -169,7 +169,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=600`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=850`);
   }
 
   createParticleEffects() {
@@ -309,12 +309,12 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create as simple image sitting on ground - NO PHYSICS
-    const obstacle = this.add.image(x, 600, type);
+    const obstacle = this.add.image(x, 850, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 600) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, 850) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
