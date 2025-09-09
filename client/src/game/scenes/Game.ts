@@ -313,12 +313,12 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create as simple image sitting on ground - NO PHYSICS
-    const obstacle = this.add.image(x, 920, type);
+    const obstacle = this.add.image(x, 940, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 920) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, 940) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
