@@ -115,11 +115,11 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(0, -400, 12000, 960, 'city_background')
+      const background = scene.add.tileSprite(0, 0, 12000, 960, 'city_background')
         .setOrigin(0, 0)
         .setScrollFactor(0)
         .setDepth(1)
-        .setScale(1, 0.8); // Scale down to show more street, less buildings
+        .setScale(1, 1.5); // Scale to fit entire image (sky, buildings, street) in frame
 
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
