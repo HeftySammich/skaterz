@@ -115,11 +115,15 @@ export default class Game extends Phaser.Scene {
         scene.textures.addCanvas('seamless_bg', bgCanvas);
       }
       
-      const background = scene.add.tileSprite(320, 960, 1280, 960, 'city_background')
-        .setOrigin(0.5, 1)
-        .setScrollFactor(0.6)
-        .setDepth(1)
-        .setScale(1.1, 1.1); // Smaller scale while keeping bottom alignment
+      // Create multiple background images for seamless repetition
+      const backgroundWidth = 1280 * 1.1; // Account for scale
+      for (let i = -2; i <= 2; i++) {
+        scene.add.image(320 + (i * backgroundWidth), 960, 'city_background')
+          .setOrigin(0.5, 1)
+          .setScrollFactor(0.6)
+          .setDepth(1)
+          .setScale(1.1, 1.1);
+      }
 
       // Add visible white floor line at ground level
       const floorLine = scene.add.graphics()
@@ -141,8 +145,7 @@ export default class Game extends Phaser.Scene {
       }
 
       const update = (scrollX: number) => {
-        // Make background tile horizontally with parallax effect (0.6 scroll factor)
-        background.tilePositionX = scrollX * 0.6;
+        // Background automatically scrolls with scrollFactor
       };
 
       return { ground, update };
