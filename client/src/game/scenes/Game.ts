@@ -70,11 +70,8 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Set physics world bounds to allow street level movement
-    this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1200);
-    
     // Remove camera bounds for infinite world
-    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 1200);
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, 0);
     
     // ESC to return to main menu
@@ -483,7 +480,7 @@ export default class Game extends Phaser.Scene {
     });
     
     // Check if player fell too far (infinite runner should never end)
-    if (this.player.y > 1400) {
+    if (this.player.y > 1200) {
       console.log('Player fell - restarting scene');
       this.scene.restart();
     }
@@ -492,8 +489,8 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Clean ground landing system
-    if (this.player.y >= 600 && body.velocity.y > 0 && !this.isGrounded) {
-      this.player.y = 600;
+    if (this.player.y >= 850 && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = 850;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();
@@ -501,8 +498,8 @@ export default class Game extends Phaser.Scene {
     
     // Keep zombie stable on ground when grounded
     if (this.isGrounded) {
-      if (this.player.y > 600) {
-        this.player.y = 600;
+      if (this.player.y > 850) {
+        this.player.y = 850;
       }
       if (body.velocity.y > 0) {
         this.player.setVelocityY(0);
