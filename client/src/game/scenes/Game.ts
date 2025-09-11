@@ -477,10 +477,10 @@ export default class Game extends Phaser.Scene {
     console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Blocked:${playerBody.blocked.down}`);
     
     // Force movement by directly updating position since velocity isn't working
-    this.player.x += 8; // Move 8 pixels per frame (480 pixels/sec at 60fps)
+    this.player.x += 6; // Move 6 pixels per frame (360 pixels/sec at 60fps)
     
     // Still set velocity for physics calculations
-    this.player.setVelocityX(480);
+    this.player.setVelocityX(360);
     
     // Log if velocity is being blocked
     if (Math.abs(playerBody.velocity.x) < 100) {
@@ -536,8 +536,9 @@ export default class Game extends Phaser.Scene {
     // Get physics body for ground checks
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
-    // Clean ground landing system - prevent floating
-    if (this.player.y >= PLAYER_GROUND_Y - 5 && body.velocity.y >= 0 && !this.isGrounded) {
+    // Smooth ground landing system - let physics handle the landing naturally
+    if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
+      // Only snap if we're exactly at or below ground level
       this.player.y = PLAYER_GROUND_Y;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
@@ -545,7 +546,7 @@ export default class Game extends Phaser.Scene {
     }
     
     // Force player down if they're floating above ground when they should be grounded
-    if (this.isGrounded && this.player.y < PLAYER_GROUND_Y - 5) {
+    if (this.isGrounded && this.player.y < PLAYER_GROUND_Y - 1) {
       console.log('[FIX] Correcting floating player position');
       this.player.y = PLAYER_GROUND_Y;
     }
