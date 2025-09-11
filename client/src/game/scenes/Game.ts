@@ -32,8 +32,8 @@ export default class Game extends Phaser.Scene {
   private lastDifficulty = -1;
   
   // Physics constants
-  private readonly JUMP_VELOCITY = -1200;  // Reduced from -1680
-  private readonly TRICK_JUMP_VELOCITY = -1100; // Reduced from -1560
+  private readonly JUMP_VELOCITY = -1400;  // Increased jump height
+  private readonly TRICK_JUMP_VELOCITY = -1500; // Higher double jump
   private readonly GRAVITY = 4800; // Less floaty, more responsive
   private readonly FLOAT_GRAVITY = 3600; // Less float during tricks
 
