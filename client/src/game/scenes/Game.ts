@@ -79,13 +79,15 @@ export default class Game extends Phaser.Scene {
     });
 
     // Add collision detection for obstacles using overlap for guaranteed detection
-    this.physics.add.overlap(this.player, this.obstacles, () => {
+    this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
       if (!this.gameOverTriggered) {
-        console.log('Player hit obstacle - game over');
+        console.log(`COLLISION! Player hit obstacle at player(${player.x},${player.y}) obstacle(${obstacle.x},${obstacle.y})`);
         this.gameOverTriggered = true;
         this.gameOver();
       }
     }, undefined, this);
+    
+    console.log('Collision detection set up between player and obstacles');
 
     // Make obstacles collide with ground (same as player) to prevent falling through
     this.physics.add.collider(this.obstacles, this.world.ground);
@@ -344,14 +346,15 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.setAllowGravity(false); // Properly disable world gravity
     obstacle.setPushable(false); // Can't be pushed by player
     
-    // Set physics body size to match the scaled visual size
+    // Set physics body size MUCH BIGGER than visual for easier collision
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    // Get the actual display size after scaling
-    const displayWidth = obstacle.width * 0.15;
-    const displayHeight = obstacle.height * 0.15;
-    // Set the physics body to match the visual size
+    // Make hitbox 3x bigger than the visual size for easier collision
+    const displayWidth = obstacle.width * 0.45; // 3x bigger than 0.15 scale
+    const displayHeight = obstacle.height * 0.45; // 3x bigger
+    // Set the physics body to be much larger
     body.setSize(displayWidth, displayHeight);
-    body.setOffset((obstacle.width - displayWidth) / 2, obstacle.height - displayHeight);
+    // Center the larger hitbox on the obstacle
+    body.setOffset((obstacle.width - displayWidth) / 2, obstacle.height - displayHeight - 50); // Offset up to account for height difference
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     
@@ -473,8 +476,8 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
-    // Continuous movement forward
-    this.player.setVelocityX(720);
+    // Continuous movement forward - increased speed
+    this.player.setVelocityX(960);
     
     // Debug player physics every few frames
     if (this.time.now % 500 < 16) { // Every ~500ms
