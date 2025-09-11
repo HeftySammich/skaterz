@@ -89,7 +89,8 @@ export default class Game extends Phaser.Scene {
 
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -200, 0);
+    // Follow player directly without smoothing to keep obstacles and background in sync
+    this.cameras.main.startFollow(this.player, true, 1.0, 1.0, -200, 0);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -492,9 +493,13 @@ export default class Game extends Phaser.Scene {
     
     // Manual collision detection with obstacles
     this.obstacles.children.entries.forEach((obstacle: any) => {
-      // Check collision with player
-      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, obstacle.x, obstacle.y);
-      if (distance < 50) { // Hit obstacle
+      // Check collision with player - only check horizontal distance since they're at different heights
+      const horizontalDistance = Math.abs(this.player.x - obstacle.x);
+      const verticalOverlap = Math.abs(this.player.y - obstacle.y) < 150; // Check if vertically close enough
+      
+      if (horizontalDistance < 40 && verticalOverlap && !this.gameOverTriggered) { // Hit obstacle
+        console.log(`Collision detected! Horizontal distance: ${horizontalDistance}, Player Y: ${this.player.y}, Obstacle Y: ${obstacle.y}`);
+        this.gameOverTriggered = true;
         this.gameOver();
       }
       
