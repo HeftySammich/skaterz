@@ -537,21 +537,21 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Smooth ground landing system - let physics handle the landing naturally
-    if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
-      // Only snap if we're exactly at or below ground level
-      this.player.y = PLAYER_GROUND_Y;
-      this.player.setVelocityY(0);
-      console.log('Landing on ground');
-      this.handleLanding();
+    if (this.player.y >= PLAYER_GROUND_Y - 2 && body.velocity.y > 0 && !this.isGrounded) {
+      // Check if we're very close to ground and moving slowly enough to land
+      if (this.player.y >= PLAYER_GROUND_Y || body.velocity.y < 100) {
+        // Gently place on ground without harsh snap
+        this.player.y = Math.min(this.player.y + body.velocity.y * 0.016, PLAYER_GROUND_Y);
+        if (this.player.y >= PLAYER_GROUND_Y) {
+          this.player.y = PLAYER_GROUND_Y;
+          this.player.setVelocityY(0);
+          console.log('Landing on ground');
+          this.handleLanding();
+        }
+      }
     }
     
-    // Force player down if they're floating above ground when they should be grounded
-    if (this.isGrounded && this.player.y < PLAYER_GROUND_Y - 1) {
-      console.log('[FIX] Correcting floating player position');
-      this.player.y = PLAYER_GROUND_Y;
-    }
-    
-    // Keep zombie stable on ground when grounded
+    // Keep zombie stable on ground when grounded (but don't snap harshly)
     if (this.isGrounded) {
       if (this.player.y > PLAYER_GROUND_Y) {
         this.player.y = PLAYER_GROUND_Y;
