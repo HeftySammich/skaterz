@@ -185,9 +185,11 @@ export default class Game extends Phaser.Scene {
     // Proper scale for visibility at new resolution - even smaller
     this.player.setScale(0.4);
     
-    // Physics body setup - tiny collision box
+    // Physics body setup - full body collision box
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setSize(72, 96);
+    // Set hitbox to cover the entire player body and extend down
+    body.setSize(this.player.width, this.player.height + 100);
+    body.setOffset(0, 0);
     body.setMaxVelocity(2400, 3600);
     body.setBounce(0); // No bouncing
     body.setOffset(0, 0); // Make sure offset is clean
@@ -343,18 +345,15 @@ export default class Game extends Phaser.Scene {
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     obstacle.setImmovable(true); // Make obstacle static
-    obstacle.body!.setAllowGravity(false); // Properly disable world gravity
+    obstacle.body!.allowGravity = false; // Fix: use property not method
     obstacle.setPushable(false); // Can't be pushed by player
     
-    // Set physics body size MUCH BIGGER than visual for easier collision
+    // Set physics body to be much taller to account for height difference
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    // Make hitbox 3x bigger than the visual size for easier collision
-    const displayWidth = obstacle.width * 0.45; // 3x bigger than 0.15 scale
-    const displayHeight = obstacle.height * 0.45; // 3x bigger
-    // Set the physics body to be much larger
-    body.setSize(displayWidth, displayHeight);
-    // Center the larger hitbox on the obstacle
-    body.setOffset((obstacle.width - displayWidth) / 2, obstacle.height - displayHeight - 50); // Offset up to account for height difference
+    // Make hitbox taller to reach up to player level
+    body.setSize(obstacle.width, obstacle.height + 200);
+    // Offset up to bridge the gap between player and obstacle
+    body.setOffset(0, -200);
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     console.log(`Total obstacles: ${this.obstacles.children.size}`);
