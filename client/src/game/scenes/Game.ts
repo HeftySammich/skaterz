@@ -104,6 +104,22 @@ export default class Game extends Phaser.Scene {
     // Initialize game timing
     this.gameStartTime = this.time.now;
     
+    // Add position tracking every second for debugging
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        const body = this.player.body as Phaser.Physics.Arcade.Body;
+        console.log('=== POSITION TRACKER (1 SEC) ===');
+        console.log(`Position: X=${Math.round(this.player.x)}, Y=${Math.round(this.player.y)}`);
+        console.log(`Velocity: X=${Math.round(body.velocity.x)}, Y=${Math.round(body.velocity.y)}`);
+        console.log(`State: Grounded=${this.isGrounded}, JumpCount=${this.jumpCount}`);
+        console.log(`Physics: Gravity=${this.physics.world.gravity.y}, Touching.down=${body.touching.down}`);
+        console.log(`Stamina: ${Math.round(this.stamina)}/${this.maxStamina}`);
+        console.log('================================');
+      },
+      loop: true
+    });
+    
     console.log('Game scene loaded with enhanced zombie skater mechanics');
   }
 
@@ -589,8 +605,17 @@ export default class Game extends Phaser.Scene {
     
     // Land when player reaches or passes ground position
     if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
+      console.log(`*** LANDING DETECTED ***`);
+      console.log(`Before landing: Y=${this.player.y}, VelY=${body.velocity.y}`);
       // Immediately handle landing to prevent bounce
       this.handleLanding();
+      console.log(`After landing: Y=${this.player.y}, VelY=${body.velocity.y}`);
+      console.log(`************************`);
+    }
+    
+    // Track near-ground behavior
+    if (!this.isGrounded && this.player.y > PLAYER_GROUND_Y - 50 && this.player.y < PLAYER_GROUND_Y + 10) {
+      console.log(`[NEAR GROUND] Y=${Math.round(this.player.y)}, VelY=${Math.round(body.velocity.y)}, Distance to ground=${Math.round(PLAYER_GROUND_Y - this.player.y)}`);
     }
     
     // Keep zombie stable on ground when grounded (but don't snap harshly)
