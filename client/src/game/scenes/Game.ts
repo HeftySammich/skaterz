@@ -603,6 +603,13 @@ export default class Game extends Phaser.Scene {
     // Get physics body for ground checks
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
+    // Disable gravity when on ground to prevent constant downward force
+    if (this.isGrounded) {
+      body.allowGravity = false;
+    } else {
+      body.allowGravity = true;
+    }
+    
     // Land when player reaches or passes ground position
     if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
       console.log(`*** LANDING DETECTED ***`);
@@ -618,14 +625,14 @@ export default class Game extends Phaser.Scene {
       console.log(`[NEAR GROUND] Y=${Math.round(this.player.y)}, VelY=${Math.round(body.velocity.y)}, Distance to ground=${Math.round(PLAYER_GROUND_Y - this.player.y)}`);
     }
     
-    // Keep zombie stable on ground when grounded (but don't snap harshly)
+    // Keep zombie stable on ground when grounded - fix the bounce
     if (this.isGrounded) {
-      if (this.player.y > PLAYER_GROUND_Y) {
-        this.player.y = PLAYER_GROUND_Y;
-      }
-      if (body.velocity.y > 0) {
-        this.player.setVelocityY(0);
-      }
+      // Force position to exact ground level
+      this.player.y = PLAYER_GROUND_Y;
+      // Always zero out Y velocity when grounded to prevent bouncing
+      this.player.setVelocityY(0);
+      // Clear any residual physics velocity
+      body.velocity.y = 0;
     }
   }
 }
