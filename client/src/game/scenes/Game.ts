@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 // All visual asset imports removed - clean slate for new assets
 
+// Define ground level constant for consistent positioning
+const GROUND_Y = 956;
+
 export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -21,6 +24,7 @@ export default class Game extends Phaser.Scene {
   private obstacles!: Phaser.GameObjects.Group;
   private obstacleTypes = ['obstacle_cone', 'obstacle_trash', 'obstacle_crash', 'obstacle_zombie', 'obstacle_skulls'];
   private lastObstacleX = 0;
+  private gameOverTriggered = false;
   private gameStartTime = 0;
   private score = 0;
   private scoreText!: Phaser.GameObjects.Text;
@@ -70,11 +74,14 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // Add collision detection for obstacles
-    this.physics.add.collider(this.player, this.obstacles, () => {
-      console.log('Player hit obstacle - game over');
-      this.gameOver();
-    });
+    // Add collision detection for obstacles using overlap for guaranteed detection
+    this.physics.add.overlap(this.player, this.obstacles, () => {
+      if (!this.gameOverTriggered) {
+        console.log('Player hit obstacle - game over');
+        this.gameOverTriggered = true;
+        this.gameOver();
+      }
+    }, undefined, this);
 
     // Make obstacles collide with ground (same as player) to prevent falling through
     this.physics.add.collider(this.obstacles, this.world.ground);
@@ -107,7 +114,6 @@ export default class Game extends Phaser.Scene {
 
   loadSeamlessWorld() {
     // Inline the seamless world creation to avoid import issues
-    const GROUND_Y = 960;
     
     const createSeamlessWorld = (scene: Phaser.Scene) => {
       // Create placeholder background
@@ -138,7 +144,7 @@ export default class Game extends Phaser.Scene {
       const floorLine = scene.add.graphics()
         .lineStyle(3, 0xffffff, 1)
         .lineTo(12000, 0)
-        .setPosition(0, 850)
+        .setPosition(0, GROUND_Y)
         .setScrollFactor(0)
         .setDepth(10);
 
@@ -147,7 +153,7 @@ export default class Game extends Phaser.Scene {
       
       // Create multiple ground segments for reliable collision at street level (where the road is)
       for (let x = -12000; x <= 24000; x += 2400) {
-        const groundSegment = scene.add.rectangle(x, 850, 2400, 120, 0x000000, 0);
+        const groundSegment = scene.add.rectangle(x, GROUND_Y, 2400, 120, 0x000000, 0);
         groundSegment.setVisible(false);
         scene.physics.add.existing(groundSegment, true);
         ground.add(groundSegment as any);
@@ -165,7 +171,7 @@ export default class Game extends Phaser.Scene {
 
   createPlayer() {
     // Create player sprite positioned properly on ground
-    this.player = this.physics.add.sprite(320, 850, 'skater_idle');
+    this.player = this.physics.add.sprite(320, GROUND_Y, 'skater_idle');
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -182,7 +188,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=850`);
+    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=${GROUND_Y}`);
   }
 
   createParticleEffects() {
@@ -325,7 +331,7 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create obstacle with physics body for collision
-    const obstacle = this.physics.add.sprite(x, 940, type);
+    const obstacle = this.physics.add.sprite(x, GROUND_Y, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
@@ -333,7 +339,7 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.setAllowGravity(false); // Properly disable world gravity
     obstacle.setPushable(false); // Can't be pushed by player
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 940) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, ${GROUND_Y}) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
@@ -508,8 +514,8 @@ export default class Game extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
     // Clean ground landing system
-    if (this.player.y >= 850 && body.velocity.y > 0 && !this.isGrounded) {
-      this.player.y = 850;
+    if (this.player.y >= GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
+      this.player.y = GROUND_Y;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();
@@ -517,8 +523,8 @@ export default class Game extends Phaser.Scene {
     
     // Keep zombie stable on ground when grounded
     if (this.isGrounded) {
-      if (this.player.y > 850) {
-        this.player.y = 850;
+      if (this.player.y > GROUND_Y) {
+        this.player.y = GROUND_Y;
       }
       if (body.velocity.y > 0) {
         this.player.setVelocityY(0);
