@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 // All visual asset imports removed - clean slate for new assets
 
 // Define ground level constants - skater runs higher than obstacles sit
-const PLAYER_GROUND_Y = 850;  // Original skater position
+const PLAYER_GROUND_Y = 930;  // Player runs on the street level (slightly above obstacles for visibility)
 const OBSTACLE_GROUND_Y = 956;  // Where obstacles sit on the street
 
 export default class Game extends Phaser.Scene {
@@ -348,12 +348,12 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.allowGravity = false; // Fix: use property not method
     obstacle.setPushable(false); // Can't be pushed by player
     
-    // Set physics body to bridge height gap between player and obstacle
+    // Set physics body to bridge small height gap between player and obstacle
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    // Make hitbox taller but not too tall to avoid invisible floor issue
-    body.setSize(obstacle.width * 0.8, obstacle.height + 110);
-    // Offset up to bridge the gap between player at 850 and obstacle at 956 (106px gap)
-    body.setOffset(obstacle.width * 0.1, -110);
+    // Make hitbox slightly taller to reach player level
+    body.setSize(obstacle.width * 0.8, obstacle.height + 30);
+    // Small offset up to bridge the gap between player at 930 and obstacle at 956 (26px gap)
+    body.setOffset(obstacle.width * 0.1, -30);
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     console.log(`Total obstacles: ${this.obstacles.children.size}`);
