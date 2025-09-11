@@ -348,12 +348,12 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.allowGravity = false; // Fix: use property not method
     obstacle.setPushable(false); // Can't be pushed by player
     
-    // Set physics body to be taller to bridge height gap between player and obstacle
+    // Set physics body to bridge height gap between player and obstacle
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    // Make hitbox taller to reach up to player level (106px gap + buffer)
-    body.setSize(obstacle.width * 0.8, obstacle.height + 150);
-    // Offset up to bridge the gap between player at 850 and obstacle at 956
-    body.setOffset(obstacle.width * 0.1, -150);
+    // Make hitbox taller but not too tall to avoid invisible floor issue
+    body.setSize(obstacle.width * 0.8, obstacle.height + 110);
+    // Offset up to bridge the gap between player at 850 and obstacle at 956 (106px gap)
+    body.setOffset(obstacle.width * 0.1, -110);
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     console.log(`Total obstacles: ${this.obstacles.children.size}`);
@@ -476,13 +476,15 @@ export default class Game extends Phaser.Scene {
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
     console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Blocked:${playerBody.blocked.down}`);
     
-    // Continuous movement forward - increased speed
+    // Force movement by directly updating position since velocity isn't working
+    this.player.x += 16; // Move 16 pixels per frame (960 pixels/sec at 60fps)
+    
+    // Still set velocity for physics calculations
     this.player.setVelocityX(960);
     
-    // Ensure player is actually moving by updating X position if velocity isn't working
+    // Log if velocity is being blocked
     if (Math.abs(playerBody.velocity.x) < 100) {
-      console.log('[WARNING] Player velocity too low, forcing movement');
-      this.player.x += 960 * 0.016; // Manual movement fallback (60fps)
+      console.log('[WARNING] Player velocity blocked, using position-based movement');
     }
     
     // Debug collision and obstacle info
@@ -534,12 +536,18 @@ export default class Game extends Phaser.Scene {
     // Get physics body for ground checks
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
-    // Clean ground landing system
-    if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
+    // Clean ground landing system - prevent floating
+    if (this.player.y >= PLAYER_GROUND_Y - 5 && body.velocity.y >= 0 && !this.isGrounded) {
       this.player.y = PLAYER_GROUND_Y;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
       this.handleLanding();
+    }
+    
+    // Force player down if they're floating above ground when they should be grounded
+    if (this.isGrounded && this.player.y < PLAYER_GROUND_Y - 5) {
+      console.log('[FIX] Correcting floating player position');
+      this.player.y = PLAYER_GROUND_Y;
     }
     
     // Keep zombie stable on ground when grounded
