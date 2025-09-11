@@ -142,7 +142,7 @@ export default class Game extends Phaser.Scene {
       for (let i = -10; i <= 30; i++) {
         scene.add.image(320 + (i * backgroundWidth), 960, 'city_background')
           .setOrigin(0.5, 1)
-          .setScrollFactor(0.6)
+          .setScrollFactor(1.0)
           .setDepth(1)
           .setScale(1.1, 1.1);
       }
