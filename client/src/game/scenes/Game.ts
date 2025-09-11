@@ -403,10 +403,11 @@ export default class Game extends Phaser.Scene {
     this.physics.world.gravity.y = this.GRAVITY;
     this.player.setTexture('skater_idle');
     
-    // Clear any upward velocity to prevent bouncing
-    if (this.player.body!.velocity.y < 0) {
-      this.player.setVelocityY(0);
-    }
+    // Clear ALL vertical velocity to prevent bouncing
+    this.player.setVelocityY(0);
+    
+    // Ensure player is exactly at ground level
+    this.player.y = PLAYER_GROUND_Y;
     
     console.log('Player landed');
   }
@@ -524,10 +525,7 @@ export default class Game extends Phaser.Scene {
     
     // Land when player reaches or passes ground position
     if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
-      // Force player to ground level
-      this.player.y = PLAYER_GROUND_Y;
-      this.player.setVelocityY(0);
-      console.log('Landing on ground');
+      // Immediately handle landing to prevent bounce
       this.handleLanding();
     }
     
