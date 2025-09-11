@@ -610,28 +610,35 @@ export default class Game extends Phaser.Scene {
       body.allowGravity = true;
     }
     
-    // Land when player reaches or passes ground position
-    if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
-      console.log(`*** LANDING DETECTED ***`);
-      console.log(`Before landing: Y=${this.player.y}, VelY=${body.velocity.y}`);
-      // Immediately handle landing to prevent bounce
-      this.handleLanding();
-      console.log(`After landing: Y=${this.player.y}, VelY=${body.velocity.y}`);
-      console.log(`************************`);
+    // Predict if player will land this frame and prevent overshooting
+    if (!this.isGrounded && body.velocity.y > 0) {
+      const nextY = this.player.y + (body.velocity.y * this.game.loop.delta / 1000);
+      
+      // If next position would be at or below ground, land NOW
+      if (nextY >= PLAYER_GROUND_Y) {
+        console.log(`*** SMOOTH LANDING ***`);
+        console.log(`Predicted landing: currentY=${this.player.y}, nextY=${nextY}, VelY=${body.velocity.y}`);
+        
+        // Set to exact ground position before overshooting
+        this.player.y = PLAYER_GROUND_Y;
+        this.handleLanding();
+        
+        console.log(`After landing: Y=${this.player.y}, VelY=${body.velocity.y}`);
+        console.log(`*********************`);
+      }
     }
     
-    // Track near-ground behavior
+    // Track near-ground behavior for debugging
     if (!this.isGrounded && this.player.y > PLAYER_GROUND_Y - 50 && this.player.y < PLAYER_GROUND_Y + 10) {
       console.log(`[NEAR GROUND] Y=${Math.round(this.player.y)}, VelY=${Math.round(body.velocity.y)}, Distance to ground=${Math.round(PLAYER_GROUND_Y - this.player.y)}`);
     }
     
-    // Keep zombie stable on ground when grounded - fix the bounce
+    // Keep zombie absolutely stable on ground when grounded
     if (this.isGrounded) {
-      // Force position to exact ground level
+      // Lock to exact ground position
       this.player.y = PLAYER_GROUND_Y;
-      // Always zero out Y velocity when grounded to prevent bouncing
+      // Zero all Y velocity
       this.player.setVelocityY(0);
-      // Clear any residual physics velocity
       body.velocity.y = 0;
     }
   }
