@@ -185,11 +185,11 @@ export default class Game extends Phaser.Scene {
     // Proper scale for visibility at new resolution - even smaller
     this.player.setScale(0.4);
     
-    // Physics body setup - full body collision box
+    // Physics body setup - normal sized collision box (not extended)
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    // Set hitbox to cover the entire player body and extend down
-    body.setSize(this.player.width, this.player.height + 100);
-    body.setOffset(0, 0);
+    // Set hitbox to match player visual without extension
+    body.setSize(this.player.width * 0.8, this.player.height * 0.9);
+    body.setOffset(this.player.width * 0.1, this.player.height * 0.05);
     body.setMaxVelocity(2400, 3600);
     body.setBounce(0); // No bouncing
     body.setOffset(0, 0); // Make sure offset is clean
@@ -348,12 +348,12 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.allowGravity = false; // Fix: use property not method
     obstacle.setPushable(false); // Can't be pushed by player
     
-    // Set physics body to be much taller to account for height difference
+    // Set physics body to be taller to bridge height gap between player and obstacle
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    // Make hitbox taller to reach up to player level
-    body.setSize(obstacle.width, obstacle.height + 200);
-    // Offset up to bridge the gap between player and obstacle
-    body.setOffset(0, -200);
+    // Make hitbox taller to reach up to player level (106px gap + buffer)
+    body.setSize(obstacle.width * 0.8, obstacle.height + 150);
+    // Offset up to bridge the gap between player at 850 and obstacle at 956
+    body.setOffset(obstacle.width * 0.1, -150);
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     console.log(`Total obstacles: ${this.obstacles.children.size}`);
@@ -472,13 +472,28 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
+    // Debug logging for movement issues
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+    console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Blocked:${playerBody.blocked.down}`);
+    
     // Continuous movement forward - increased speed
     this.player.setVelocityX(960);
     
-    // Debug player physics every few frames
-    if (this.time.now % 500 < 16) { // Every ~500ms
-      const body = this.player.body as Phaser.Physics.Arcade.Body;
-      console.log(`Player: y=${Math.round(this.player.y)}, velocity.y=${Math.round(body.velocity.y)}, grounded=${this.isGrounded}`);
+    // Ensure player is actually moving by updating X position if velocity isn't working
+    if (Math.abs(playerBody.velocity.x) < 100) {
+      console.log('[WARNING] Player velocity too low, forcing movement');
+      this.player.x += 960 * 0.016; // Manual movement fallback (60fps)
+    }
+    
+    // Debug collision and obstacle info
+    if (this.time.now % 1000 < 16) { // Every second
+      console.log(`[OBSTACLES] Count: ${this.obstacles.children.size}, Camera X: ${Math.round(this.cameras.main.scrollX)}`);
+      this.obstacles.children.entries.forEach((obs: any, idx: number) => {
+        if (idx === 0) { // Log first obstacle only
+          const obsBody = obs.body as Phaser.Physics.Arcade.Body;
+          console.log(`[OBSTACLE] X:${Math.round(obs.x)}, Y:${Math.round(obs.y)}, Width:${obsBody.width}, Height:${obsBody.height}`);
+        }
+      });
     }
     
     // Handle jumping with simple state check
