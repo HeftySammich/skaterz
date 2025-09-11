@@ -337,8 +337,8 @@ export default class Game extends Phaser.Scene {
       return;
     }
     
-    // Create obstacle with physics body for collision
-    const obstacle = this.physics.add.sprite(x, OBSTACLE_GROUND_Y, type);
+    // Create obstacle through the physics group - this is the fix!
+    const obstacle = this.obstacles.create(x, OBSTACLE_GROUND_Y, type) as Phaser.Physics.Arcade.Sprite;
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
@@ -357,9 +357,6 @@ export default class Game extends Phaser.Scene {
     body.setOffset((obstacle.width - displayWidth) / 2, obstacle.height - displayHeight - 50); // Offset up to account for height difference
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
-    
-    this.obstacles.add(obstacle);
-    
     console.log(`Total obstacles: ${this.obstacles.children.size}`);
   }
 
