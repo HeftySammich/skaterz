@@ -81,7 +81,7 @@ export default class Game extends Phaser.Scene {
 
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -100, 0);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -200, 0);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -325,7 +325,7 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create obstacle with physics body for collision
-    const obstacle = this.physics.add.sprite(x, 851, type);
+    const obstacle = this.physics.add.sprite(x, 885, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
@@ -333,7 +333,7 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.setAllowGravity(false); // Properly disable world gravity
     obstacle.setPushable(false); // Can't be pushed by player
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 851) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, 885) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
