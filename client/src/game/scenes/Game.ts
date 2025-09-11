@@ -477,10 +477,10 @@ export default class Game extends Phaser.Scene {
     console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Blocked:${playerBody.blocked.down}`);
     
     // Force movement by directly updating position since velocity isn't working
-    this.player.x += 12; // Move 12 pixels per frame (720 pixels/sec at 60fps)
+    this.player.x += 8; // Move 8 pixels per frame (480 pixels/sec at 60fps)
     
     // Still set velocity for physics calculations
-    this.player.setVelocityX(720);
+    this.player.setVelocityX(480);
     
     // Log if velocity is being blocked
     if (Math.abs(playerBody.velocity.x) < 100) {
