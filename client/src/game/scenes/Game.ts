@@ -31,6 +31,14 @@ export default class Game extends Phaser.Scene {
   private scoreText!: Phaser.GameObjects.Text;
   private lastDifficulty = -1;
   
+  // Stamina system
+  private stamina = 100;  // Max stamina
+  private maxStamina = 100;
+  private staminaBar!: Phaser.GameObjects.Graphics;
+  private staminaBarBg!: Phaser.GameObjects.Graphics;
+  private staminaCost = 33.33;  // Cost per jump (one third)
+  private staminaRegen = 0.5;  // Regeneration per frame
+  
   // Physics constants
   private readonly JUMP_VELOCITY = -1600;  // Higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1350; // Lower double jump
@@ -246,6 +254,27 @@ export default class Game extends Phaser.Scene {
     });
     this.scoreText.setDepth(100);
     this.scoreText.setScrollFactor(0); // Keep fixed on screen
+    
+    // Create stamina bar
+    this.staminaBarBg = this.add.graphics();
+    this.staminaBarBg.fillStyle(0x000000, 0.5);
+    this.staminaBarBg.fillRect(50, 110, 204, 24);
+    this.staminaBarBg.setDepth(100);
+    this.staminaBarBg.setScrollFactor(0);
+    
+    this.staminaBar = this.add.graphics();
+    this.staminaBar.setDepth(101);
+    this.staminaBar.setScrollFactor(0);
+    this.updateStaminaBar();
+    
+    // Add stamina label
+    this.add.text(50, 88, 'STAMINA', {
+      fontSize: '20px',
+      fontFamily: 'monospace',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setDepth(100).setScrollFactor(0)
 
     // Start spawning obstacles
     console.log('Setting up obstacle spawning timer');
@@ -413,15 +442,19 @@ export default class Game extends Phaser.Scene {
   }
 
   performJump() {
-    console.log(`Jump attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}`);
+    console.log(`Jump attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, stamina=${this.stamina}`);
     
-    if (this.isGrounded) {
+    if (this.isGrounded && this.stamina >= this.staminaCost) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
       this.player.setTexture('skater_jump');
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
+      
+      // Consume stamina
+      this.stamina = Math.max(0, this.stamina - this.staminaCost);
+      this.updateStaminaBar();
       
       // Trigger jump particles
       this.dustParticles.setPosition(this.player.x, this.player.y + 48);
@@ -430,13 +463,17 @@ export default class Game extends Phaser.Scene {
       this.jumpParticles.explode(5);
       
       console.log('First jump performed');
-    } else if (this.jumpCount === 1 && !this.hasDoubleJumped) {
-      // Second jump - trick jump
+    } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
+      // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
       this.player.setTexture('skater_trick');
       this.hasDoubleJumped = true;
       this.trickActive = true;
       this.jumpCount = 2;
+      
+      // Consume stamina
+      this.stamina = Math.max(0, this.stamina - this.staminaCost);
+      this.updateStaminaBar();
       
       // Trigger trick particles - continuous golden trail
       this.trickParticles.setPosition(this.player.x, this.player.y);
@@ -454,14 +491,41 @@ export default class Game extends Phaser.Scene {
       
       console.log('Double jump performed');
     } else {
-      console.log('Jump blocked - already used both jumps');
+      if (this.stamina < this.staminaCost) {
+        console.log('Jump blocked - not enough stamina');
+      } else {
+        console.log('Jump blocked - already used both jumps');
+      }
     }
+  }
+  
+  updateStaminaBar() {
+    this.staminaBar.clear();
+    
+    // Choose color based on stamina level
+    let color = 0x00ff00;  // Green
+    if (this.stamina < 33.33) {
+      color = 0xff0000;  // Red
+    } else if (this.stamina < 66.66) {
+      color = 0xffaa00;  // Orange
+    }
+    
+    // Draw stamina bar
+    this.staminaBar.fillStyle(color, 1);
+    const barWidth = (this.stamina / this.maxStamina) * 200;
+    this.staminaBar.fillRect(52, 112, barWidth, 20);
   }
 
   update() {
     // Debug logging for movement issues
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
-    console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Blocked:${playerBody.blocked.down}`);
+    console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Stamina:${Math.round(this.stamina)}`);
+    
+    // Regenerate stamina slowly
+    if (this.stamina < this.maxStamina) {
+      this.stamina = Math.min(this.maxStamina, this.stamina + this.staminaRegen);
+      this.updateStaminaBar();
+    }
     
     // Force movement by directly updating position since velocity isn't working
     this.player.x += 6; // Move 6 pixels per frame (360 pixels/sec at 60fps)
