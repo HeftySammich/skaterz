@@ -325,7 +325,7 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create obstacle with physics body for collision
-    const obstacle = this.physics.add.sprite(x, 930, type);
+    const obstacle = this.physics.add.sprite(x, 940, type);
     obstacle.setScale(0.15); // Even smaller
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
@@ -333,7 +333,7 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.setAllowGravity(false); // Properly disable world gravity
     obstacle.setPushable(false); // Can't be pushed by player
     
-    console.log(`Created ground obstacle: ${type} at (${x}, 930) sitting on ground`);
+    console.log(`Created ground obstacle: ${type} at (${x}, 940) sitting on ground`);
     
     this.obstacles.add(obstacle);
     
