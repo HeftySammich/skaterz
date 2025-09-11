@@ -42,6 +42,9 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
+    // Reset game over flag
+    this.gameOverTriggered = false;
+    
     // Create seamless background world
     this.world = this.createSeamlessWorld();
     
@@ -90,7 +93,7 @@ export default class Game extends Phaser.Scene {
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
     // Follow player directly without smoothing to keep obstacles and background in sync
-    this.cameras.main.startFollow(this.player, true, 1.0, 1.0, -200, 0);
+    this.cameras.main.startFollow(this.player, true, 1.0, 1.0, -100, 0);
     
     // ESC to return to main menu
     this.input.keyboard!.on('keydown-ESC', () => {
@@ -341,6 +344,15 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.setAllowGravity(false); // Properly disable world gravity
     obstacle.setPushable(false); // Can't be pushed by player
     
+    // Set physics body size to match the scaled visual size
+    const body = obstacle.body as Phaser.Physics.Arcade.Body;
+    // Get the actual display size after scaling
+    const displayWidth = obstacle.width * 0.15;
+    const displayHeight = obstacle.height * 0.15;
+    // Set the physics body to match the visual size
+    body.setSize(displayWidth, displayHeight);
+    body.setOffset((obstacle.width - displayWidth) / 2, obstacle.height - displayHeight);
+    
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     
     this.obstacles.add(obstacle);
@@ -491,19 +503,8 @@ export default class Game extends Phaser.Scene {
       this.scoreText.setText(`Score: ${this.score}`);
     }
     
-    // Manual collision detection with obstacles
+    // Clean up off-screen obstacles
     this.obstacles.children.entries.forEach((obstacle: any) => {
-      // Check collision with player - only check horizontal distance since they're at different heights
-      const horizontalDistance = Math.abs(this.player.x - obstacle.x);
-      const verticalOverlap = Math.abs(this.player.y - obstacle.y) < 150; // Check if vertically close enough
-      
-      if (horizontalDistance < 40 && verticalOverlap && !this.gameOverTriggered) { // Hit obstacle
-        console.log(`Collision detected! Horizontal distance: ${horizontalDistance}, Player Y: ${this.player.y}, Obstacle Y: ${obstacle.y}`);
-        this.gameOverTriggered = true;
-        this.gameOver();
-      }
-      
-      // Clean up off-screen obstacles
       if (obstacle.x < this.cameras.main.scrollX - 200) {
         this.obstacles.remove(obstacle);
         obstacle.destroy();
