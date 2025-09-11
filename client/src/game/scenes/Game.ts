@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 // All visual asset imports removed - clean slate for new assets
 
 // Define ground level constants - skater runs higher than obstacles sit
-const PLAYER_GROUND_Y = 930;  // Player runs on the street level (slightly above obstacles for visibility)
+const PLAYER_GROUND_Y = 850;  // Original skater position
 const OBSTACLE_GROUND_Y = 956;  // Where obstacles sit on the street
 
 export default class Game extends Phaser.Scene {
@@ -68,15 +68,7 @@ export default class Game extends Phaser.Scene {
       this.performJump();
     });
     
-    // Physics collisions with proper overlap detection
-    this.physics.add.collider(this.player, this.world.ground, () => {
-      // Process landing if not already grounded and player is actually touching ground
-      const body = this.player.body as Phaser.Physics.Arcade.Body;
-      if (!this.isGrounded && body.touching.down) {
-        console.log(`Collision detected: velocity.y=${body.velocity.y}, playerY=${this.player.y}, touching.down=${body.touching.down}`);
-        this.handleLanding();
-      }
-    });
+    // No ground collision - handle landing through position checks only to avoid invisible floors
 
     // Add collision detection for obstacles using overlap for guaranteed detection
     this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
@@ -89,8 +81,7 @@ export default class Game extends Phaser.Scene {
     
     console.log('Collision detection set up between player and obstacles');
 
-    // Make obstacles collide with ground (same as player) to prevent falling through
-    this.physics.add.collider(this.obstacles, this.world.ground);
+    // No ground collision for obstacles - they're positioned at ground level
 
     // Remove camera bounds for infinite world
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, 960);
@@ -158,13 +149,8 @@ export default class Game extends Phaser.Scene {
       // Physics ground - infinite collision surface at street level
       const ground = scene.physics.add.staticGroup();
       
-      // Create multiple ground segments for reliable collision at street level (where the road is)
-      for (let x = -12000; x <= 24000; x += 2400) {
-        const groundSegment = scene.add.rectangle(x, PLAYER_GROUND_Y, 2400, 120, 0x000000, 0);
-        groundSegment.setVisible(false);
-        scene.physics.add.existing(groundSegment, true);
-        ground.add(groundSegment as any);
-      }
+      // Don't create invisible ground segments - handle landing through position checks only
+      // This prevents the player from landing on invisible floors
 
       const update = (scrollX: number) => {
         // Background automatically scrolls with scrollFactor
@@ -348,12 +334,12 @@ export default class Game extends Phaser.Scene {
     obstacle.body!.allowGravity = false; // Fix: use property not method
     obstacle.setPushable(false); // Can't be pushed by player
     
-    // Set physics body to bridge small height gap between player and obstacle
+    // Set physics body to bridge height gap between player and obstacle
     const body = obstacle.body as Phaser.Physics.Arcade.Body;
-    // Make hitbox slightly taller to reach player level
-    body.setSize(obstacle.width * 0.8, obstacle.height + 30);
-    // Small offset up to bridge the gap between player at 930 and obstacle at 956 (26px gap)
-    body.setOffset(obstacle.width * 0.1, -30);
+    // Make hitbox taller to reach up to player level
+    body.setSize(obstacle.width * 0.8, obstacle.height + 110);
+    // Offset up to bridge the gap between player at 850 and obstacle at 956 (106px gap)
+    body.setOffset(obstacle.width * 0.1, -110);
     
     console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
     console.log(`Total obstacles: ${this.obstacles.children.size}`);
@@ -536,9 +522,9 @@ export default class Game extends Phaser.Scene {
     // Get physics body for ground checks
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     
-    // Let player fall naturally until they reach the actual ground
+    // Land when player reaches or passes ground position
     if (this.player.y >= PLAYER_GROUND_Y && body.velocity.y > 0 && !this.isGrounded) {
-      // Only stop when actually at ground level
+      // Force player to ground level
       this.player.y = PLAYER_GROUND_Y;
       this.player.setVelocityY(0);
       console.log('Landing on ground');
