@@ -1,26 +1,80 @@
 # Dependencies
-node_modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Build outputs
-dist
-server/public
+dist/
+build/
+server/public/
+.next/
+out/
 
 # Environment files (CRITICAL - keeps secrets safe)
 .env
 .env.local
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
 # OS files
 .DS_Store
+Thumbs.db
+Desktop.ini
 
 # Temporary files
 vite.config.ts.*
 *.tar.gz
+tmp/
+temp/
 
 # IDE files
 .vscode/
+!.vscode/extensions.json
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # Logs
 *.log
 npm-debug.log*
+logs/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+.stylelintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Replit compatibility (keep these files)
+.replit
+replit.nix
+.upm/
+
+# Replit agent state (exclude these)
+.local/
+.config/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime
+pids/
+*.pid
+*.seed
+*.pid.lock

@@ -7,11 +7,19 @@ import glsl from "vite-plugin-glsl";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Conditionally import Replit plugin only in Replit environment
+const plugins = [react(), glsl()];
+if (process.env.REPLIT_DB_URL || process.env.REPL_ID) {
+  try {
+    const runtimeErrorOverlay = require("@replit/vite-plugin-runtime-error-modal");
+    plugins.push(runtimeErrorOverlay());
+  } catch (e) {
+    console.log("Replit plugin not available, skipping...");
+  }
+}
+
 export default defineConfig({
-  plugins: [
-    react(),
-    glsl(), // Add GLSL shader support
-  ],
+  plugins,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
