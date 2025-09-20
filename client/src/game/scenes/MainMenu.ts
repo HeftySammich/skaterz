@@ -21,8 +21,8 @@ export class MainMenu extends Phaser.Scene {
     const targetButtonWidth = cam.width * 0.4;
     
     // Add button images - positioned responsively below the SKATERZ title
-    const playButton = this.add.image(cam.centerX, cam.height * 0.68, 'play_button').setOrigin(0.5);
-    const optionsButton = this.add.image(cam.centerX, cam.height * 0.78, 'options_button').setOrigin(0.5);
+    const playButton = this.add.image(cam.centerX, cam.height * 0.70, 'play_button').setOrigin(0.5);
+    const optionsButton = this.add.image(cam.centerX, cam.height * 0.80, 'options_button').setOrigin(0.5);
 
     // Calculate base scales for buttons to fit target size
     const playBaseScale = Math.min(targetButtonWidth / playButton.width, 0.8);
@@ -49,15 +49,6 @@ export class MainMenu extends Phaser.Scene {
         this.confirmSelection();
       });
 
-    // Controls hint at bottom
-    this.add.text(cam.centerX, cam.height - 50, 'ARROW KEYS + ENTER', {
-      fontSize: '20px',
-      color: '#ffffff',
-      fontFamily: 'monospace',
-      align: 'center',
-      backgroundColor: '#000000',
-      padding: { x: 8, y: 4 }
-    }).setOrigin(0.5);
 
     // Set up input (create keys once)
     this.cursors = this.input.keyboard!.createCursorKeys();
