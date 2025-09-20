@@ -25,6 +25,11 @@ export default class Preload extends Phaser.Scene {
     // Load splash screen image
     this.load.image('slime_splash', 'assets/slime_splash.png');
     
+    // Load menu assets
+    this.load.image('menu_background', 'assets/menu_background.png');
+    this.load.image('play_button', 'assets/play_button.png');
+    this.load.image('options_button', 'assets/options_button.png');
+    
     const loadingText = this.make.text({
       x: 320,
       y: 480,
