@@ -544,10 +544,10 @@ export default class Game extends Phaser.Scene {
     }
     
     // Force movement by directly updating position since velocity isn't working
-    this.player.x += 5; // Move 5 pixels per frame (300 pixels/sec at 60fps) - slightly slower for better obstacle timing
+    this.player.x += 5.5; // Move 5.5 pixels per frame (330 pixels/sec at 60fps) - balanced speed for obstacle timing
     
     // Still set velocity for physics calculations
-    this.player.setVelocityX(300);
+    this.player.setVelocityX(330);
     
     // Log if velocity is being blocked
     if (Math.abs(playerBody.velocity.x) < 100) {
