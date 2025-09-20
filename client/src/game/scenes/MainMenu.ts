@@ -8,12 +8,12 @@ export class MainMenu extends Phaser.Scene {
   }
 
   create() {
-    // Add menu background image
+    // Add menu background image (contains SKATERZ title)
     this.add.image(320, 480, 'menu_background').setOrigin(0.5);
     
-    // Add button images
-    const playButton = this.add.image(320, 400, 'play_button').setOrigin(0.5);
-    const optionsButton = this.add.image(320, 500, 'options_button').setOrigin(0.5);
+    // Add button images - smaller and positioned below the SKATERZ title
+    const playButton = this.add.image(320, 650, 'play_button').setOrigin(0.5).setScale(0.6);
+    const optionsButton = this.add.image(320, 720, 'options_button').setOrigin(0.5).setScale(0.6);
 
     this.menuItems = [playButton, optionsButton];
 
@@ -30,13 +30,13 @@ export class MainMenu extends Phaser.Scene {
     // Set up input
     this.cursors = this.input.keyboard!.createCursorKeys();
     
-    // Touch/click support (adjusted for button positions)
+    // Touch/click support (adjusted for new button positions)
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const y = pointer.y;
-      if (y >= 360 && y <= 440) {
+      if (y >= 620 && y <= 680) { // Play button area
         this.selectItem(0);
         this.confirmSelection();
-      } else if (y >= 460 && y <= 540) {
+      } else if (y >= 690 && y <= 750) { // Options button area
         this.selectItem(1);
         this.confirmSelection();
       }
