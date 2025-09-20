@@ -1,6 +1,6 @@
 export class MainMenu extends Phaser.Scene {
   private selectedIndex = 0;
-  private menuItems: Phaser.GameObjects.Text[] = [];
+  private menuItems: Phaser.GameObjects.Image[] = [];
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 
   constructor() {
@@ -8,46 +8,29 @@ export class MainMenu extends Phaser.Scene {
   }
 
   create() {
-    // Menu background
-    this.cameras.main.setBackgroundColor('#162b4d');
+    // Add menu background image
+    this.add.image(320, 480, 'menu_background').setOrigin(0.5);
     
-    // Title (scaled for 640x960)
-    this.add.text(320, 200, 'ZOMBIE SKATER', {
-      fontSize: '60px',
-      color: '#ffecb3',
-      fontFamily: 'monospace',
-      align: 'center'
-    }).setOrigin(0.5);
+    // Add button images
+    const playButton = this.add.image(320, 400, 'play_button').setOrigin(0.5);
+    const optionsButton = this.add.image(320, 500, 'options_button').setOrigin(0.5);
 
-    // Menu options
-    const startGame = this.add.text(320, 400, 'START GAME', {
-      fontSize: '42px',
-      color: '#b9c0cf',
-      fontFamily: 'monospace',
-      align: 'center'
-    }).setOrigin(0.5);
-
-    const options = this.add.text(320, 500, 'OPTIONS', {
-      fontSize: '42px',
-      color: '#b9c0cf',
-      fontFamily: 'monospace',
-      align: 'center'
-    }).setOrigin(0.5);
-
-    this.menuItems = [startGame, options];
+    this.menuItems = [playButton, optionsButton];
 
     // Controls hint
-    this.add.text(320, 700, 'ARROW KEYS + ENTER', {
+    this.add.text(320, 750, 'ARROW KEYS + ENTER', {
       fontSize: '24px',
-      color: '#646c7a',
+      color: '#ffffff',
       fontFamily: 'monospace',
-      align: 'center'
+      align: 'center',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
     }).setOrigin(0.5);
 
     // Set up input
     this.cursors = this.input.keyboard!.createCursorKeys();
     
-    // Touch/click support (adjusted for 640x960 resolution)
+    // Touch/click support (adjusted for button positions)
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const y = pointer.y;
       if (y >= 360 && y <= 440) {
@@ -85,11 +68,13 @@ export class MainMenu extends Phaser.Scene {
   private updateSelection() {
     this.menuItems.forEach((item, index) => {
       if (index === this.selectedIndex) {
-        item.setColor('#ffecb3');
+        // Highlight selected button with scale and tint
         item.setScale(1.1);
+        item.setTint(0xffff88); // Light yellow tint
       } else {
-        item.setColor('#b9c0cf');
+        // Normal button appearance
         item.setScale(1.0);
+        item.clearTint();
       }
     });
   }
