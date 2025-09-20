@@ -21,8 +21,8 @@ export class MainMenu extends Phaser.Scene {
     const targetButtonWidth = cam.width * 0.4;
     
     // Add button images - positioned responsively below the SKATERZ title
-    const playButton = this.add.image(cam.centerX, cam.height * 0.78, 'play_button').setOrigin(0.5);
-    const optionsButton = this.add.image(cam.centerX, cam.height * 0.88, 'options_button').setOrigin(0.5);
+    const playButton = this.add.image(cam.centerX, cam.height * 0.82, 'play_button').setOrigin(0.5);
+    const optionsButton = this.add.image(cam.centerX, cam.height * 0.92, 'options_button').setOrigin(0.5);
 
     // Calculate base scales for buttons to fit target size
     const playBaseScale = Math.min(targetButtonWidth / playButton.width, 0.8);
@@ -81,9 +81,9 @@ export class MainMenu extends Phaser.Scene {
     this.menuItems.forEach((item, index) => {
       const baseScale = this.buttonBaseScales[index];
       if (index === this.selectedIndex) {
-        // Highlight selected button with slight scale increase and tint
-        item.setScale(baseScale * 1.1);
-        item.setTint(0xffff88); // Light yellow tint
+        // Highlight selected button with more visible scale increase and tint
+        item.setScale(baseScale * 1.2);
+        item.setTint(0xffff00); // Bright yellow tint for better visibility
       } else {
         // Normal button appearance with base scale
         item.setScale(baseScale);
