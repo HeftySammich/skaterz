@@ -30,6 +30,9 @@ export default class Preload extends Phaser.Scene {
     this.load.image('play_button', 'assets/play_button.png');
     this.load.image('options_button', 'assets/options_button.png');
     
+    // Load menu music
+    this.load.audio('menu_music', 'assets/menu_music.m4a');
+    
     const loadingText = this.make.text({
       x: 320,
       y: 480,

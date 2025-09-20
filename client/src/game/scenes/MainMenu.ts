@@ -4,6 +4,7 @@ export class MainMenu extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private enterKey!: Phaser.Input.Keyboard.Key;
   private buttonBaseScales: number[] = [];
+  private menuMusic!: Phaser.Sound.BaseSound;
 
   constructor() {
     super({ key: 'MainMenu' });
@@ -11,6 +12,10 @@ export class MainMenu extends Phaser.Scene {
 
   create() {
     const cam = this.cameras.main;
+    
+    // Start menu music
+    this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+    this.menuMusic.play();
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
@@ -94,10 +99,12 @@ export class MainMenu extends Phaser.Scene {
 
   private confirmSelection() {
     if (this.selectedIndex === 0) {
-      // Start game
+      // Stop music and start game
+      this.menuMusic.stop();
       this.scene.start('Game');
     } else if (this.selectedIndex === 1) {
-      // Options (placeholder for now)
+      // Stop music and go to options (placeholder for now)
+      this.menuMusic.stop();
       this.scene.start('OptionsMenu');
     }
   }
