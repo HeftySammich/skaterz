@@ -21,8 +21,8 @@ export class MainMenu extends Phaser.Scene {
     const targetButtonWidth = cam.width * 0.4;
     
     // Add button images - positioned responsively below the SKATERZ title
-    const playButton = this.add.image(cam.centerX, cam.height * 0.70, 'play_button').setOrigin(0.5);
-    const optionsButton = this.add.image(cam.centerX, cam.height * 0.80, 'options_button').setOrigin(0.5);
+    const playButton = this.add.image(cam.centerX, cam.height * 0.78, 'play_button').setOrigin(0.5);
+    const optionsButton = this.add.image(cam.centerX, cam.height * 0.88, 'options_button').setOrigin(0.5);
 
     // Calculate base scales for buttons to fit target size
     const playBaseScale = Math.min(targetButtonWidth / playButton.width, 0.8);
