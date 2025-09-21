@@ -30,6 +30,7 @@ export default class Game extends Phaser.Scene {
   private score = 0;
   private scoreText!: Phaser.GameObjects.Text;
   private lastDifficulty = -1;
+  private obstacleTimer: Phaser.Time.TimerEvent | null = null;
   
   // Enemy system
   private enemies!: Phaser.GameObjects.Group;
@@ -515,7 +516,7 @@ export default class Game extends Phaser.Scene {
 
     // Start spawning obstacles
     console.log('Setting up obstacle spawning timer');
-    this.time.addEvent({
+    this.obstacleTimer = this.time.addEvent({
       delay: 2000, // Start after 2 seconds
       callback: this.spawnObstacle,
       callbackScope: this,
@@ -675,15 +676,17 @@ export default class Game extends Phaser.Scene {
     if (difficulty === this.lastDifficulty) return;
     this.lastDifficulty = difficulty;
     
-    // Remove existing timer
-    this.time.removeAllEvents();
+    // Remove existing obstacle timer only
+    if (this.obstacleTimer) {
+      this.obstacleTimer.remove();
+    }
     
     // Create new timer with adjusted delay
     const baseDelay = 3000;
     const difficultyReduction = difficulty * 200;
     const newDelay = Math.max(baseDelay - difficultyReduction, 800); // Min 0.8 seconds
     
-    this.time.addEvent({
+    this.obstacleTimer = this.time.addEvent({
       delay: newDelay,
       callback: this.spawnObstacle,
       callbackScope: this,
