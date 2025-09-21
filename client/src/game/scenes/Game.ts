@@ -298,7 +298,7 @@ export default class Game extends Phaser.Scene {
     
     // Start spawning enemies
     this.time.addEvent({
-      delay: 3500, // Spawn enemies less frequently than obstacles
+      delay: 2500, // Spawn enemies more frequently
       callback: this.spawnEnemy,
       callbackScope: this,
       loop: true
@@ -311,8 +311,8 @@ export default class Game extends Phaser.Scene {
     const gameTime = this.time.now - this.gameStartTime;
     const difficulty = this.getDifficulty(gameTime);
     
-    // Don't spawn enemies in the first 5 seconds
-    if (gameTime < 5000) return;
+    // Don't spawn enemies in the first 3 seconds
+    if (gameTime < 3000) return;
     
     // Spawn distance ahead of player (further out to account for warning time)
     const warningTime = 2000; // 2 seconds warning
@@ -347,14 +347,16 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create arrow indicator on right side of screen
-    const arrowX = this.player.x + 600; // Fixed position on right side of screen (relative to player)
-    const arrow = this.arrowIndicators.create(arrowX, enemyY, 'arrow_indicator') as Phaser.GameObjects.Sprite;
+    // Since arrow uses scrollFactor(0), we need viewport coordinates, not world coordinates
+    const arrow = this.arrowIndicators.create(590, enemyY, 'arrow_indicator') as Phaser.GameObjects.Sprite;
     arrow.setScale(0.15);
     arrow.setDepth(102); // Above UI
     arrow.setScrollFactor(0); // Keep fixed on screen
     
-    // Position arrow on right side of viewport
+    // Position arrow on right side of viewport with correct Y coordinate relative to viewport
+    // Convert world Y to viewport Y (since we're using scrollFactor 0)
     arrow.x = 590; // Near right edge of 640px screen
+    arrow.y = enemyY; // This is already the correct Y position in world coords
     
     // Flash the arrow for visibility
     this.tweens.add({
@@ -367,15 +369,15 @@ export default class Game extends Phaser.Scene {
     
     // Spawn enemy after warning delay
     this.time.delayedCall(warningTime, () => {
-      // Remove arrow indicator
-      arrow.destroy();
-      
       // Create enemy
       const enemy = this.enemies.create(spawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
       enemy.setScale(0.1); // Much smaller enemies
       enemy.setDepth(14);
       enemy.setImmovable(true);
       enemy.setPushable(false);
+      
+      // Store reference to arrow on enemy so we can remove it when enemy appears
+      (enemy as any).arrow = arrow;
       
       // Set hitbox for enemy
       const body = enemy.body as Phaser.Physics.Arcade.Body;
@@ -394,10 +396,10 @@ export default class Game extends Phaser.Scene {
         ease: 'Sine.easeInOut'
       });
       
-      console.log(`Spawned ${enemyType} at (${spawnX}, ${enemyY}) after warning`);
+      console.log(`[ENEMY] Spawned ${enemyType} at (${spawnX}, ${enemyY}) after warning`);
     });
     
-    console.log(`Arrow indicator shown at height ${enemyY}`);
+    console.log(`[ARROW] Indicator shown at Y=${enemyY}, enemy will spawn at X=${spawnX} in 2 seconds`);
   }
   
   stompEnemy(enemy: Phaser.GameObjects.Sprite) {
@@ -785,9 +787,20 @@ export default class Game extends Phaser.Scene {
       }
     });
     
-    // Clean up off-screen enemies
+    // Clean up off-screen enemies and manage arrow indicators
     this.enemies.children.entries.forEach((enemy: any) => {
+      // Remove arrow when enemy is on screen (visible)
+      if (enemy.arrow && enemy.x < this.player.x + 640) {
+        enemy.arrow.destroy();
+        enemy.arrow = null;
+      }
+      
+      // Clean up off-screen enemies
       if (enemy.x < this.cameras.main.scrollX - 200) {
+        // Also remove arrow if still exists
+        if (enemy.arrow) {
+          enemy.arrow.destroy();
+        }
         this.enemies.remove(enemy);
         enemy.destroy();
       }
