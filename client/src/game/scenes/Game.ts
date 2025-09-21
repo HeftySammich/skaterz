@@ -297,22 +297,28 @@ export default class Game extends Phaser.Scene {
     this.arrowIndicators = this.add.group();
     
     // Start spawning enemies
-    this.time.addEvent({
+    const enemyTimer = this.time.addEvent({
       delay: 2500, // Spawn enemies more frequently
       callback: this.spawnEnemy,
       callbackScope: this,
       loop: true
     });
     
-    console.log('Enemy system initialized');
+    console.log('Enemy system initialized with timer:', enemyTimer);
+    console.log(`Timer delay: ${enemyTimer.delay}, loop: ${enemyTimer.loop}`);
   }
   
   spawnEnemy() {
     const gameTime = this.time.now - this.gameStartTime;
     const difficulty = this.getDifficulty(gameTime);
     
+    console.log(`[DEBUG ENEMY SPAWN] Called at gameTime=${gameTime}ms`);
+    
     // Don't spawn enemies in the first 3 seconds
-    if (gameTime < 3000) return;
+    if (gameTime < 3000) {
+      console.log(`[DEBUG ENEMY SPAWN] Too early, waiting...`);
+      return;
+    }
     
     // Spawn distance ahead of player (further out to account for warning time)
     const warningTime = 2000; // 2 seconds warning
@@ -358,6 +364,11 @@ export default class Game extends Phaser.Scene {
     arrow.x = 590; // Near right edge of 640px screen
     arrow.y = enemyY; // This is already the correct Y position in world coords
     
+    // DEBUG: Log arrow creation details
+    console.log(`[DEBUG ARROW] Created arrow at viewport position (${arrow.x}, ${arrow.y})`);
+    console.log(`[DEBUG ARROW] Enemy will spawn at world Y=${enemyY}`);
+    console.log(`[DEBUG ARROW] Arrow properties: scale=${arrow.scale}, depth=${arrow.depth}, scrollFactor=${arrow.scrollFactorX},${arrow.scrollFactorY}`);
+    
     // Flash the arrow for visibility
     this.tweens.add({
       targets: arrow,
@@ -375,6 +386,12 @@ export default class Game extends Phaser.Scene {
       enemy.setDepth(14);
       enemy.setImmovable(true);
       enemy.setPushable(false);
+      
+      // DEBUG: Log enemy creation details
+      console.log(`[DEBUG ENEMY] Created ${enemyType} at world position (${spawnX}, ${enemyY})`);
+      console.log(`[DEBUG ENEMY] Enemy properties: scale=${enemy.scale}, depth=${enemy.depth}, visible=${enemy.visible}`);
+      console.log(`[DEBUG ENEMY] Enemy texture: ${enemy.texture.key}, frame: ${enemy.frame.name}`);
+      console.log(`[DEBUG ENEMY] Enemy dimensions: width=${enemy.width}, height=${enemy.height}`);
       
       // Store reference to arrow on enemy so we can remove it when enemy appears
       (enemy as any).arrow = arrow;
@@ -788,9 +805,20 @@ export default class Game extends Phaser.Scene {
     });
     
     // Clean up off-screen enemies and manage arrow indicators
-    this.enemies.children.entries.forEach((enemy: any) => {
+    this.enemies.children.entries.forEach((enemy: any, index: number) => {
+      // Debug tracking for first enemy
+      if (index === 0 && this.time.now % 1000 < 16) { // Log once per second
+        console.log(`[DEBUG ENEMY TRACKING] Enemy at world position (${Math.round(enemy.x)}, ${Math.round(enemy.y)})`);
+        console.log(`[DEBUG ENEMY TRACKING] Player at (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`);
+        console.log(`[DEBUG ENEMY TRACKING] Distance from player: ${Math.round(enemy.x - this.player.x)}px`);
+        console.log(`[DEBUG ENEMY TRACKING] Enemy visible: ${enemy.visible}, alpha: ${enemy.alpha}`);
+        const screenX = enemy.x - this.cameras.main.scrollX;
+        console.log(`[DEBUG ENEMY TRACKING] Enemy screen position: ${Math.round(screenX)}px from left edge`);
+      }
+      
       // Remove arrow when enemy is on screen (visible)
       if (enemy.arrow && enemy.x < this.player.x + 640) {
+        console.log(`[DEBUG ARROW] Destroying arrow as enemy is on screen at X=${enemy.x}`);
         enemy.arrow.destroy();
         enemy.arrow = null;
       }
