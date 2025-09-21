@@ -330,15 +330,15 @@ export default class Game extends Phaser.Scene {
     let enemyY;
     const randomChoice = Math.random();
     
-    if (randomChoice < 0.4) {
-      // Low enemy - reachable with first jump
-      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(180, 250);
-    } else if (randomChoice < 0.8) {
-      // Medium enemy - requires good first jump timing
-      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(280, 380);
+    if (randomChoice < 0.5) {
+      // Low enemy - easily reachable with first jump
+      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(120, 180);
+    } else if (randomChoice < 0.85) {
+      // Medium enemy - comfortable first jump height
+      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(200, 260);
     } else {
-      // High enemy - requires double jump
-      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(420, 480);
+      // High enemy - requires double jump but not too high
+      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(320, 400);
     }
     
     // Create enemy
@@ -351,6 +351,9 @@ export default class Game extends Phaser.Scene {
     // Set hitbox for enemy
     const body = enemy.body as Phaser.Physics.Arcade.Body;
     body.setSize(enemy.width * 0.7, enemy.height * 0.7);
+    
+    // Set slow horizontal movement speed (enemies move backwards relative to player)
+    body.setVelocityX(-150); // Slow movement speed
     
     // Add floating animation
     this.tweens.add({
@@ -747,6 +750,14 @@ export default class Game extends Phaser.Scene {
       if (obstacle.x < this.cameras.main.scrollX - 200) {
         this.obstacles.remove(obstacle);
         obstacle.destroy();
+      }
+    });
+    
+    // Clean up off-screen enemies
+    this.enemies.children.entries.forEach((enemy: any) => {
+      if (enemy.x < this.cameras.main.scrollX - 200) {
+        this.enemies.remove(enemy);
+        enemy.destroy();
       }
     });
     
