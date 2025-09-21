@@ -582,11 +582,17 @@ export default class Game extends Phaser.Scene {
       // Remove arrow
       arrow.destroy();
       
+      // Recalculate spawn position based on current player position
+      // The obstacle should appear just off-screen when the delay ends
+      const adjustedSpawnX = this.player.x + 700; // Spawn just ahead of visible area
+      
+      console.log(`[DEBUG OBSTACLE] Spawning at adjusted position: ${adjustedSpawnX} (was ${spawnX})`);
+      
       // Spawn single obstacle or pattern based on difficulty
       if (difficulty > 3 && Math.random() < 0.3) {
-        this.spawnObstaclePattern(spawnX, obstacleType);
+        this.spawnObstaclePattern(adjustedSpawnX, obstacleType);
       } else {
-        this.createSingleObstacle(spawnX, obstacleType);
+        this.createSingleObstacle(adjustedSpawnX, obstacleType);
       }
     });
     
@@ -643,6 +649,8 @@ export default class Game extends Phaser.Scene {
   spawnObstaclePattern(x: number, type: string) {
     // Create obstacle patterns for higher difficulty
     const patternType = Phaser.Math.Between(1, 3);
+    
+    console.log(`[DEBUG OBSTACLE] Creating pattern type ${patternType} at x=${x}`);
     
     switch (patternType) {
       case 1: // Double obstacle
