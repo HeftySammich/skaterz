@@ -75,8 +75,22 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
-    // Reset game over flag
+    // Reset all game state variables
+    console.log('[DEBUG GAME INIT] Starting game scene...');
     this.gameOverTriggered = false;
+    this.health = 100; // Reset to full health
+    this.stamina = 100; // Reset to full stamina
+    this.invulnerable = false; // Reset invulnerability
+    this.score = 0; // Reset score
+    this.lastObstacleX = 0;
+    this.lastEnemyX = 0;
+    this.isGrounded = true;
+    this.jumpCount = 0;
+    this.hasDoubleJumped = false;
+    this.trickActive = false;
+    this.backgroundTiles = []; // Clear background tiles
+    
+    console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
     
     // Create seamless background world
     this.world = this.createSeamlessWorld();
@@ -111,27 +125,35 @@ export default class Game extends Phaser.Scene {
 
     // Add collision detection for obstacles using overlap for guaranteed detection
     this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
+      console.log(`[DEBUG COLLISION] Obstacle collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}, Health: ${this.health}`);
       if (!this.invulnerable && !this.gameOverTriggered) {
-        console.log(`COLLISION! Player hit obstacle at player(${player.x},${player.y}) obstacle(${obstacle.x},${obstacle.y})`);
+        console.log(`[DEBUG COLLISION] Taking damage from obstacle...`);
         this.takeDamage(25); // Take 25 damage from obstacles
         this.obstacles.remove(obstacle); // Remove from physics group first
         obstacle.destroy(); // Then destroy the sprite
+      } else {
+        console.log(`[DEBUG COLLISION] Damage blocked - Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}`);
       }
     }, undefined, this);
     
     // Add collision detection for enemies - stomp them from above
     this.physics.add.overlap(this.player, this.enemies, (player: any, enemy: any) => {
       const playerBody = player.body as Phaser.Physics.Arcade.Body;
+      console.log(`[DEBUG COLLISION] Enemy collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}`);
       
       // Check if player is falling and above the enemy (stomping)
       if (playerBody.velocity.y > 0 && player.y < enemy.y - 20) {
+        console.log(`[DEBUG COLLISION] Stomping enemy!`);
         this.stompEnemy(enemy);
         this.bouncePlayer();
-      } else if (!this.invulnerable) {
+      } else if (!this.invulnerable && !this.gameOverTriggered) {
         // Hit enemy from side or below - take damage
-        console.log(`Hit enemy from side/below!`);
+        console.log(`[DEBUG COLLISION] Taking damage from enemy...`);
         this.takeDamage(35); // Take 35 damage from enemies
-        enemy.destroy(); // Remove enemy after hit
+        this.enemies.remove(enemy); // Remove from physics group first
+        enemy.destroy(); // Then destroy enemy
+      } else {
+        console.log(`[DEBUG COLLISION] Enemy damage blocked - Invulnerable: ${this.invulnerable}`);
       }
     }, undefined, this);
     
@@ -177,12 +199,7 @@ export default class Game extends Phaser.Scene {
   }
 
   createSeamlessWorld() {
-    // Import and use the seamless background system
-    import('../../world/seamlessBackground').then(module => {
-      return module.createSeamlessWorld(this);
-    });
-    
-    // For now, return a simple world until import resolves
+    // Create the seamless world directly
     const { createSeamlessWorld } = this.loadSeamlessWorld();
     return createSeamlessWorld(this);
   }
@@ -191,7 +208,7 @@ export default class Game extends Phaser.Scene {
     // Inline the seamless world creation to avoid import issues
     
     const createSeamlessWorld = (scene: any) => {
-      // Create initial background tiles
+      // Create initial background tiles directly without placeholder
       const startX = 320;
       for (let i = -2; i <= 5; i++) {
         const tile = scene.add.image(startX + (i * this.backgroundWidth), 960, 'city_background')
@@ -296,6 +313,8 @@ export default class Game extends Phaser.Scene {
   }
 
   createEnemySystem() {
+    console.log('[DEBUG ENEMY SYSTEM] Creating enemy system...');
+    
     // Create physics groups for enemies and explosions
     this.enemies = this.physics.add.group({
       allowGravity: false,
@@ -310,16 +329,19 @@ export default class Game extends Phaser.Scene {
     // Create group for arrow indicators
     this.arrowIndicators = this.add.group();
     
-    // Start spawning enemies
-    const enemyTimer = this.time.addEvent({
-      delay: 2500, // Spawn enemies more frequently
-      callback: this.spawnEnemy,
-      callbackScope: this,
-      loop: true
+    // Start spawning enemies with a delay to give player time
+    this.time.delayedCall(5000, () => {
+      console.log('[DEBUG ENEMY SYSTEM] Starting enemy spawning...');
+      const enemyTimer = this.time.addEvent({
+        delay: 2500, // Spawn enemies more frequently
+        callback: this.spawnEnemy,
+        callbackScope: this,
+        loop: true
+      });
+      console.log('[DEBUG ENEMY SYSTEM] Enemy timer created with delay: 2500ms');
     });
     
-    console.log('Enemy system initialized');
-    console.log('Enemy timer set with delay: 2500ms, loop: true');
+    console.log('[DEBUG ENEMY SYSTEM] Enemy system initialized (spawning starts in 5s)');
   }
   
   spawnEnemy() {
@@ -729,8 +751,16 @@ export default class Game extends Phaser.Scene {
   }
 
   gameOver() {
-    console.log('Game Over! Final Score:', this.score);
-    this.scene.restart();
+    const survivalTime = this.time.now - this.gameStartTime;
+    console.log(`[DEBUG GAME OVER] Final Score: ${this.score}, Survival Time: ${survivalTime}ms`);
+    console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Invulnerable: ${this.invulnerable}`);
+    
+    // Stop all timers to prevent them from running after game over
+    if (this.obstacleTimer) this.obstacleTimer.remove();
+    if (this.sandwichTimer) this.sandwichTimer.remove();
+    
+    // Transition to GameOver scene with score and time
+    this.scene.start('GameOver', { score: this.score, time: survivalTime });
   }
 
   handleLanding() {
@@ -845,9 +875,15 @@ export default class Game extends Phaser.Scene {
   }
   
   takeDamage(amount: number) {
-    if (this.invulnerable) return;
+    console.log(`[DEBUG DAMAGE] takeDamage called with amount: ${amount}, Current health: ${this.health}, Invulnerable: ${this.invulnerable}`);
+    if (this.invulnerable) {
+      console.log(`[DEBUG DAMAGE] Damage blocked - player is invulnerable`);
+      return;
+    }
     
-    this.health = Math.max(0, this.health - amount);
+    const newHealth = Math.max(0, this.health - amount);
+    console.log(`[DEBUG DAMAGE] Taking ${amount} damage: ${this.health} -> ${newHealth}`);
+    this.health = newHealth;
     this.updateHealthBar();
     
     // Flash the player red
