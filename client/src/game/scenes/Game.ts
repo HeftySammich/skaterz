@@ -305,8 +305,8 @@ export default class Game extends Phaser.Scene {
       loop: true
     });
     
-    console.log('Enemy system initialized with timer:', enemyTimer);
-    console.log(`Timer delay: ${enemyTimer.delay}, loop: ${enemyTimer.loop}`);
+    console.log('Enemy system initialized');
+    console.log('Enemy timer set with delay: 2500ms, loop: true');
   }
   
   spawnEnemy() {
