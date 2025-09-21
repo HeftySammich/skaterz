@@ -31,6 +31,12 @@ export default class Game extends Phaser.Scene {
   private scoreText!: Phaser.GameObjects.Text;
   private lastDifficulty = -1;
   
+  // Enemy system
+  private enemies!: Phaser.GameObjects.Group;
+  private explosions!: Phaser.GameObjects.Group;
+  private lastEnemyX = 0;
+  private bounceVelocity = -800; // Bounce when landing on enemy
+  
   // Stamina system
   private stamina = 100;  // Max stamina
   private maxStamina = 100;
@@ -68,6 +74,9 @@ export default class Game extends Phaser.Scene {
     // Create obstacle system
     this.createObstacleSystem();
     
+    // Create enemy system
+    this.createEnemySystem();
+    
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     
@@ -87,7 +96,23 @@ export default class Game extends Phaser.Scene {
       }
     }, undefined, this);
     
-    console.log('Collision detection set up between player and obstacles');
+    // Add collision detection for enemies - stomp them from above
+    this.physics.add.overlap(this.player, this.enemies, (player: any, enemy: any) => {
+      const playerBody = player.body as Phaser.Physics.Arcade.Body;
+      
+      // Check if player is falling and above the enemy (stomping)
+      if (playerBody.velocity.y > 0 && player.y < enemy.y - 20) {
+        this.stompEnemy(enemy);
+        this.bouncePlayer();
+      } else if (!this.gameOverTriggered) {
+        // Hit enemy from side or below - game over
+        console.log(`Hit enemy from side/below!`);
+        this.gameOverTriggered = true;
+        this.gameOver();
+      }
+    }, undefined, this);
+    
+    console.log('Collision detection set up between player and obstacles/enemies');
 
     // No ground collision for obstacles - they're positioned at ground level
 
@@ -255,6 +280,138 @@ export default class Game extends Phaser.Scene {
     this.trickParticles.setDepth(15);
   }
 
+  createEnemySystem() {
+    // Create physics groups for enemies and explosions
+    this.enemies = this.physics.add.group({
+      allowGravity: false,
+      immovable: true
+    });
+    
+    this.explosions = this.physics.add.group({
+      allowGravity: false,
+      immovable: true
+    });
+    
+    // Start spawning enemies
+    this.time.addEvent({
+      delay: 3500, // Spawn enemies less frequently than obstacles
+      callback: this.spawnEnemy,
+      callbackScope: this,
+      loop: true
+    });
+    
+    console.log('Enemy system initialized');
+  }
+  
+  spawnEnemy() {
+    const gameTime = this.time.now - this.gameStartTime;
+    const difficulty = this.getDifficulty(gameTime);
+    
+    // Don't spawn enemies in the first 5 seconds
+    if (gameTime < 5000) return;
+    
+    // Spawn distance ahead of player
+    const spawnDistance = Phaser.Math.Between(600, 1000);
+    const spawnX = this.player.x + spawnDistance;
+    
+    // Skip if too close to last enemy
+    if (spawnX - this.lastEnemyX < 400) {
+      return;
+    }
+    
+    this.lastEnemyX = spawnX;
+    
+    // Choose enemy type
+    const enemyType = Math.random() < 0.5 ? 'enemy_eyeball' : 'enemy_robot';
+    
+    // Determine height based on difficulty and randomness
+    // First jump height: ~583 pixels (850 - 267)
+    // Double jump height: ~330 pixels (850 - 520)
+    let enemyY;
+    const randomChoice = Math.random();
+    
+    if (randomChoice < 0.4) {
+      // Low enemy - reachable with first jump
+      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(180, 250);
+    } else if (randomChoice < 0.8) {
+      // Medium enemy - requires good first jump timing
+      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(280, 380);
+    } else {
+      // High enemy - requires double jump
+      enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(420, 480);
+    }
+    
+    // Create enemy
+    const enemy = this.enemies.create(spawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
+    enemy.setScale(0.2);
+    enemy.setDepth(14);
+    enemy.setImmovable(true);
+    enemy.setPushable(false);
+    
+    // Set hitbox for enemy
+    const body = enemy.body as Phaser.Physics.Arcade.Body;
+    body.setSize(enemy.width * 0.7, enemy.height * 0.7);
+    
+    // Add floating animation
+    this.tweens.add({
+      targets: enemy,
+      y: enemyY - 20,
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    console.log(`Spawned ${enemyType} at (${spawnX}, ${enemyY})`);
+  }
+  
+  stompEnemy(enemy: Phaser.GameObjects.Sprite) {
+    // Create explosion at enemy position
+    const explosion = this.explosions.create(enemy.x, enemy.y, 'explosion') as Phaser.Physics.Arcade.Sprite;
+    explosion.setScale(0.3);
+    explosion.setDepth(15);
+    
+    // Animate explosion
+    this.tweens.add({
+      targets: explosion,
+      scale: 0.5,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => {
+        explosion.destroy();
+      }
+    });
+    
+    // Remove enemy
+    enemy.destroy();
+    
+    // Add score
+    this.score += 50;
+    this.scoreText.setText('Score: ' + this.score);
+    
+    // Play particle effect
+    this.jumpParticles.setPosition(enemy.x, enemy.y);
+    this.jumpParticles.explode(10);
+    
+    console.log('Enemy stomped!');
+  }
+  
+  bouncePlayer() {
+    // Give player a bounce
+    const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+    playerBody.setVelocityY(this.bounceVelocity);
+    
+    // Reset jump count to allow another jump
+    this.jumpCount = 1;
+    this.hasDoubleJumped = false;
+    
+    // Restore stamina as reward
+    this.stamina = Math.min(this.maxStamina, this.stamina + 20);
+    this.updateStaminaBar();
+    
+    console.log('Player bounced off enemy!');
+  }
+
   createObstacleSystem() {
     // Create physics group for obstacles with gravity disabled
     this.obstacles = this.physics.add.group({ 
@@ -376,7 +533,6 @@ export default class Game extends Phaser.Scene {
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     obstacle.setImmovable(true); // Make obstacle static
-    obstacle.body!.allowGravity = false; // Fix: use property not method
     obstacle.setPushable(false); // Can't be pushed by player
     
     // Set physics body to bridge height gap between player and obstacle
