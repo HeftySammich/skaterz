@@ -343,7 +343,7 @@ export default class Game extends Phaser.Scene {
     
     // Create enemy
     const enemy = this.enemies.create(spawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
-    enemy.setScale(0.2);
+    enemy.setScale(0.1); // Much smaller enemies
     enemy.setDepth(14);
     enemy.setImmovable(true);
     enemy.setPushable(false);
@@ -352,8 +352,8 @@ export default class Game extends Phaser.Scene {
     const body = enemy.body as Phaser.Physics.Arcade.Body;
     body.setSize(enemy.width * 0.7, enemy.height * 0.7);
     
-    // Set slow horizontal movement speed (enemies move backwards relative to player)
-    body.setVelocityX(-150); // Slow movement speed
+    // Set very slow horizontal movement speed (enemies move backwards relative to player)
+    body.setVelocityX(-50); // Very slow movement speed
     
     // Add floating animation
     this.tweens.add({
