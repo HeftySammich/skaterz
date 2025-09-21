@@ -34,6 +34,7 @@ export default class Game extends Phaser.Scene {
   // Enemy system
   private enemies!: Phaser.GameObjects.Group;
   private explosions!: Phaser.GameObjects.Group;
+  private arrowIndicators!: Phaser.GameObjects.Group;
   private lastEnemyX = 0;
   private bounceVelocity = -800; // Bounce when landing on enemy
   
@@ -292,6 +293,9 @@ export default class Game extends Phaser.Scene {
       immovable: true
     });
     
+    // Create group for arrow indicators
+    this.arrowIndicators = this.add.group();
+    
     // Start spawning enemies
     this.time.addEvent({
       delay: 3500, // Spawn enemies less frequently than obstacles
@@ -310,8 +314,11 @@ export default class Game extends Phaser.Scene {
     // Don't spawn enemies in the first 5 seconds
     if (gameTime < 5000) return;
     
-    // Spawn distance ahead of player
-    const spawnDistance = Phaser.Math.Between(600, 1000);
+    // Spawn distance ahead of player (further out to account for warning time)
+    const warningTime = 2000; // 2 seconds warning
+    const playerSpeed = 5.5; // pixels per frame
+    const warningDistance = (playerSpeed * 60 * warningTime) / 1000; // Distance player travels in warning time
+    const spawnDistance = Phaser.Math.Between(600, 1000) + warningDistance;
     const spawnX = this.player.x + spawnDistance;
     
     // Skip if too close to last enemy
@@ -325,8 +332,6 @@ export default class Game extends Phaser.Scene {
     const enemyType = Math.random() < 0.5 ? 'enemy_eyeball' : 'enemy_robot';
     
     // Determine height based on difficulty and randomness
-    // First jump height: ~583 pixels (850 - 267)
-    // Double jump height: ~330 pixels (850 - 520)
     let enemyY;
     const randomChoice = Math.random();
     
@@ -341,31 +346,58 @@ export default class Game extends Phaser.Scene {
       enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(320, 400);
     }
     
-    // Create enemy
-    const enemy = this.enemies.create(spawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
-    enemy.setScale(0.1); // Much smaller enemies
-    enemy.setDepth(14);
-    enemy.setImmovable(true);
-    enemy.setPushable(false);
+    // Create arrow indicator on right side of screen
+    const arrowX = this.player.x + 600; // Fixed position on right side of screen (relative to player)
+    const arrow = this.arrowIndicators.create(arrowX, enemyY, 'arrow_indicator') as Phaser.GameObjects.Sprite;
+    arrow.setScale(0.15);
+    arrow.setDepth(102); // Above UI
+    arrow.setScrollFactor(0); // Keep fixed on screen
     
-    // Set hitbox for enemy
-    const body = enemy.body as Phaser.Physics.Arcade.Body;
-    body.setSize(enemy.width * 0.7, enemy.height * 0.7);
+    // Position arrow on right side of viewport
+    arrow.x = 590; // Near right edge of 640px screen
     
-    // Set very slow horizontal movement speed (enemies move backwards relative to player)
-    body.setVelocityX(-50); // Very slow movement speed
-    
-    // Add floating animation
+    // Flash the arrow for visibility
     this.tweens.add({
-      targets: enemy,
-      y: enemyY - 20,
-      duration: 1500,
+      targets: arrow,
+      alpha: { from: 1, to: 0.5 },
+      duration: 400,
       yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
+      repeat: -1
     });
     
-    console.log(`Spawned ${enemyType} at (${spawnX}, ${enemyY})`);
+    // Spawn enemy after warning delay
+    this.time.delayedCall(warningTime, () => {
+      // Remove arrow indicator
+      arrow.destroy();
+      
+      // Create enemy
+      const enemy = this.enemies.create(spawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
+      enemy.setScale(0.1); // Much smaller enemies
+      enemy.setDepth(14);
+      enemy.setImmovable(true);
+      enemy.setPushable(false);
+      
+      // Set hitbox for enemy
+      const body = enemy.body as Phaser.Physics.Arcade.Body;
+      body.setSize(enemy.width * 0.7, enemy.height * 0.7);
+      
+      // Set very slow horizontal movement speed (enemies move backwards relative to player)
+      body.setVelocityX(-50); // Very slow movement speed
+      
+      // Add floating animation
+      this.tweens.add({
+        targets: enemy,
+        y: enemyY - 20,
+        duration: 1500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+      
+      console.log(`Spawned ${enemyType} at (${spawnX}, ${enemyY}) after warning`);
+    });
+    
+    console.log(`Arrow indicator shown at height ${enemyY}`);
   }
   
   stompEnemy(enemy: Phaser.GameObjects.Sprite) {

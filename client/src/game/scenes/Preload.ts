@@ -23,6 +23,7 @@ export default class Preload extends Phaser.Scene {
     this.load.image('enemy_eyeball', 'assets/enemy_eyeball.png');
     this.load.image('enemy_robot', 'assets/enemy_robot.png');
     this.load.image('explosion', 'assets/explosion.png');
+    this.load.image('arrow_indicator', 'assets/arrow_indicator.png');
     
     // Load city background
     this.load.image('city_background', 'assets/city_background.png');
