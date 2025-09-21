@@ -47,6 +47,19 @@ export default class Game extends Phaser.Scene {
   private staminaCost = 33.33;  // Cost per jump (one third)
   private staminaRegen = 0.5;  // Regeneration per frame
   
+  // Health system
+  private health = 100;
+  private maxHealth = 100;
+  private healthBar!: Phaser.GameObjects.Graphics;
+  private healthBarBg!: Phaser.GameObjects.Graphics;
+  private healthText!: Phaser.GameObjects.Text;
+  private invulnerable = false;
+  private invulnerableTime = 1500; // 1.5 seconds of invulnerability after hit
+  
+  // Sandwiches (health pickups)
+  private sandwiches!: Phaser.GameObjects.Group;
+  private sandwichTimer!: Phaser.Time.TimerEvent;
+  
   // Physics constants
   private readonly JUMP_VELOCITY = -1600;  // Higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1350; // Lower double jump
@@ -79,6 +92,9 @@ export default class Game extends Phaser.Scene {
     // Create enemy system
     this.createEnemySystem();
     
+    // Create sandwich system (health pickups)
+    this.createSandwichSystem();
+    
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     
@@ -91,10 +107,10 @@ export default class Game extends Phaser.Scene {
 
     // Add collision detection for obstacles using overlap for guaranteed detection
     this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
-      if (!this.gameOverTriggered) {
+      if (!this.invulnerable) {
         console.log(`COLLISION! Player hit obstacle at player(${player.x},${player.y}) obstacle(${obstacle.x},${obstacle.y})`);
-        this.gameOverTriggered = true;
-        this.gameOver();
+        this.takeDamage(25); // Take 25 damage from obstacles
+        obstacle.destroy(); // Remove obstacle after hit
       }
     }, undefined, this);
     
@@ -106,12 +122,17 @@ export default class Game extends Phaser.Scene {
       if (playerBody.velocity.y > 0 && player.y < enemy.y - 20) {
         this.stompEnemy(enemy);
         this.bouncePlayer();
-      } else if (!this.gameOverTriggered) {
-        // Hit enemy from side or below - game over
+      } else if (!this.invulnerable) {
+        // Hit enemy from side or below - take damage
         console.log(`Hit enemy from side/below!`);
-        this.gameOverTriggered = true;
-        this.gameOver();
+        this.takeDamage(35); // Take 35 damage from enemies
+        enemy.destroy(); // Remove enemy after hit
       }
+    }, undefined, this);
+    
+    // Add collision detection for sandwiches (health pickups)
+    this.physics.add.overlap(this.player, this.sandwiches, (player: any, sandwich: any) => {
+      this.collectSandwich(sandwich);
     }, undefined, this);
     
     console.log('Collision detection set up between player and obstacles/enemies');
@@ -513,6 +534,27 @@ export default class Game extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setDepth(100).setScrollFactor(0)
+    
+    // Create health bar
+    this.healthBarBg = this.add.graphics();
+    this.healthBarBg.fillStyle(0x000000, 0.5);
+    this.healthBarBg.fillRect(50, 170, 204, 24);
+    this.healthBarBg.setDepth(100);
+    this.healthBarBg.setScrollFactor(0);
+    
+    this.healthBar = this.add.graphics();
+    this.healthBar.setDepth(101);
+    this.healthBar.setScrollFactor(0);
+    this.updateHealthBar();
+    
+    // Add health label
+    this.healthText = this.add.text(50, 148, 'HEALTH', {
+      fontSize: '20px',
+      fontFamily: 'monospace',
+      color: '#ff4444',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setDepth(100).setScrollFactor(0);
 
     // Start spawning obstacles
     console.log('Setting up obstacle spawning timer');
@@ -792,6 +834,124 @@ export default class Game extends Phaser.Scene {
     const barWidth = (this.stamina / this.maxStamina) * 200;
     this.staminaBar.fillRect(52, 112, barWidth, 20);
   }
+  
+  updateHealthBar() {
+    this.healthBar.clear();
+    
+    // Choose color based on health level
+    let color = 0x00ff00;  // Green
+    if (this.health < 30) {
+      color = 0xff0000;  // Red
+    } else if (this.health < 60) {
+      color = 0xffaa00;  // Orange
+    }
+    
+    // Draw health bar
+    this.healthBar.fillStyle(color, 1);
+    const healthPercent = this.health / this.maxHealth;
+    this.healthBar.fillRect(52, 172, 200 * healthPercent, 20);
+  }
+  
+  takeDamage(amount: number) {
+    if (this.invulnerable) return;
+    
+    this.health = Math.max(0, this.health - amount);
+    this.updateHealthBar();
+    
+    // Flash the player red
+    this.player.setTint(0xff0000);
+    
+    // Make invulnerable for a short time
+    this.invulnerable = true;
+    
+    // Flash effect
+    let flashCount = 0;
+    const flashTimer = this.time.addEvent({
+      delay: 150,
+      callback: () => {
+        flashCount++;
+        if (flashCount % 2 === 0) {
+          this.player.setTint(0xffffff);
+        } else {
+          this.player.setTint(0xff8888);
+        }
+        
+        if (flashCount >= 8) {
+          this.player.clearTint();
+          this.invulnerable = false;
+          flashTimer.remove();
+        }
+      },
+      loop: true
+    });
+    
+    // Check if dead
+    if (this.health <= 0) {
+      this.gameOverTriggered = true;
+      this.gameOver();
+    }
+  }
+  
+  createSandwichSystem() {
+    // Create physics group for sandwiches
+    this.sandwiches = this.physics.add.group({
+      allowGravity: false,
+      immovable: true
+    });
+    
+    // Start spawning sandwiches
+    this.sandwichTimer = this.time.addEvent({
+      delay: 8000, // Spawn every 8 seconds
+      callback: this.spawnSandwich,
+      callbackScope: this,
+      loop: true
+    });
+    
+    // Spawn first sandwich soon after start
+    this.time.delayedCall(3000, () => {
+      this.spawnSandwich();
+    });
+  }
+  
+  spawnSandwich() {
+    const spawnX = this.player.x + Phaser.Math.Between(800, 1200);
+    const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
+    
+    const sandwich = this.sandwiches.create(spawnX, spawnY, 'sandwich');
+    sandwich.setScale(0.08); // Scale down the sandwich
+    sandwich.setDepth(10);
+    
+    // Add floating animation
+    this.tweens.add({
+      targets: sandwich,
+      y: spawnY - 20,
+      duration: 1500,
+      ease: 'Sine.inOut',
+      yoyo: true,
+      repeat: -1
+    });
+    
+    console.log(`Sandwich spawned at (${spawnX}, ${spawnY})`);
+  }
+  
+  collectSandwich(sandwich: any) {
+    // Heal player
+    this.health = Math.min(this.maxHealth, this.health + 40);
+    this.updateHealthBar();
+    
+    // Add score
+    this.score += 25;
+    this.scoreText.setText('Score: ' + this.score);
+    
+    // Play particle effect at sandwich location
+    this.jumpParticles.setPosition(sandwich.x, sandwich.y);
+    this.jumpParticles.explode(15);
+    
+    // Remove sandwich
+    sandwich.destroy();
+    
+    console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}`);
+  }
 
   update() {
     // Debug logging for movement issues
@@ -852,6 +1012,14 @@ export default class Game extends Phaser.Scene {
       if (obstacle.x < this.cameras.main.scrollX - 200) {
         this.obstacles.remove(obstacle);
         obstacle.destroy();
+      }
+    });
+    
+    // Clean up off-screen sandwiches
+    this.sandwiches.children.entries.forEach((sandwich: any) => {
+      if (sandwich.x < this.cameras.main.scrollX - 200) {
+        this.sandwiches.remove(sandwich);
+        sandwich.destroy();
       }
     });
     
