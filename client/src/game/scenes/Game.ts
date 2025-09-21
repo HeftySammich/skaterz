@@ -380,18 +380,28 @@ export default class Game extends Phaser.Scene {
     
     // Spawn enemy after warning delay
     this.time.delayedCall(warningTime, () => {
+      // Calculate spawn position to be just off-screen when accounting for player movement
+      const adjustedSpawnX = this.player.x + 660; // Spawn just off the right edge of screen
+      
       // Create enemy
-      const enemy = this.enemies.create(spawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
-      enemy.setScale(0.1); // Much smaller enemies
+      const enemy = this.enemies.create(adjustedSpawnX, enemyY, enemyType) as Phaser.Physics.Arcade.Sprite;
+      enemy.setScale(0.15); // Slightly bigger for visibility
       enemy.setDepth(14);
       enemy.setImmovable(true);
       enemy.setPushable(false);
+      enemy.setVisible(true); // Ensure visible
+      enemy.setAlpha(1); // Full opacity
       
       // DEBUG: Log enemy creation details
-      console.log(`[DEBUG ENEMY] Created ${enemyType} at world position (${spawnX}, ${enemyY})`);
-      console.log(`[DEBUG ENEMY] Enemy properties: scale=${enemy.scale}, depth=${enemy.depth}, visible=${enemy.visible}`);
+      console.log(`[DEBUG ENEMY] Created ${enemyType} at world position (${adjustedSpawnX}, ${enemyY})`);
+      console.log(`[DEBUG ENEMY] Player position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`);
+      console.log(`[DEBUG ENEMY] Distance from player: ${adjustedSpawnX - this.player.x}px`);
+      console.log(`[DEBUG ENEMY] Enemy properties: scale=${enemy.scale}, depth=${enemy.depth}, visible=${enemy.visible}, alpha=${enemy.alpha}`);
       console.log(`[DEBUG ENEMY] Enemy texture: ${enemy.texture.key}, frame: ${enemy.frame.name}`);
       console.log(`[DEBUG ENEMY] Enemy dimensions: width=${enemy.width}, height=${enemy.height}`);
+      console.log(`[DEBUG ENEMY] Camera scrollX: ${this.cameras.main.scrollX}`);
+      const screenX = adjustedSpawnX - this.cameras.main.scrollX;
+      console.log(`[DEBUG ENEMY] Enemy screen position: ${Math.round(screenX)}px from left edge`);
       
       // Store reference to arrow on enemy so we can remove it when enemy appears
       (enemy as any).arrow = arrow;
@@ -401,7 +411,7 @@ export default class Game extends Phaser.Scene {
       body.setSize(enemy.width * 0.7, enemy.height * 0.7);
       
       // Set very slow horizontal movement speed (enemies move backwards relative to player)
-      body.setVelocityX(-50); // Very slow movement speed
+      body.setVelocityX(-80); // Slightly faster to be visible on screen longer
       
       // Add floating animation
       this.tweens.add({
@@ -521,9 +531,14 @@ export default class Game extends Phaser.Scene {
     
     console.log(`Spawning obstacle - gameTime: ${gameTime}ms, difficulty: ${difficulty}`);
     
+    // Add warning time for arrow indicator
+    const warningTime = 1500; // 1.5 seconds warning for obstacles
+    const playerSpeed = 5.5; // pixels per frame
+    const warningDistance = (playerSpeed * 60 * warningTime) / 1000;
+    
     // Determine spawn distance based on difficulty - spawn closer so they're visible
-    const minDistance = Math.max(400 - difficulty * 25, 150); // Much closer
-    const maxDistance = Math.max(800 - difficulty * 50, 300); // Much closer
+    const minDistance = Math.max(400 - difficulty * 25, 150) + warningDistance; 
+    const maxDistance = Math.max(800 - difficulty * 50, 300) + warningDistance;
     const spawnDistance = Phaser.Math.Between(minDistance, maxDistance);
     
     const spawnX = this.player.x + spawnDistance;
@@ -543,12 +558,37 @@ export default class Game extends Phaser.Scene {
     
     console.log(`Creating obstacle: ${obstacleType} at x=${spawnX}`);
     
-    // Spawn single obstacle or pattern based on difficulty
-    if (difficulty > 3 && Math.random() < 0.3) {
-      this.spawnObstaclePattern(spawnX, obstacleType);
-    } else {
-      this.createSingleObstacle(spawnX, obstacleType);
-    }
+    // Create arrow indicator for ground obstacle
+    const arrow = this.arrowIndicators.create(590, OBSTACLE_GROUND_Y - 50, 'arrow_indicator') as Phaser.GameObjects.Sprite;
+    arrow.setScale(0.15);
+    arrow.setDepth(102); // Above UI
+    arrow.setScrollFactor(0); // Keep fixed on screen
+    arrow.x = 590; // Near right edge of 640px screen
+    arrow.y = OBSTACLE_GROUND_Y - 50; // Position arrow slightly above ground obstacle
+    
+    // Flash the arrow for visibility
+    this.tweens.add({
+      targets: arrow,
+      alpha: { from: 1, to: 0.5 },
+      duration: 400,
+      yoyo: true,
+      repeat: -1
+    });
+    
+    console.log(`[DEBUG ARROW] Created arrow for obstacle at viewport Y=${arrow.y}`);
+    
+    // Spawn obstacle after warning delay
+    this.time.delayedCall(warningTime, () => {
+      // Remove arrow
+      arrow.destroy();
+      
+      // Spawn single obstacle or pattern based on difficulty
+      if (difficulty > 3 && Math.random() < 0.3) {
+        this.spawnObstaclePattern(spawnX, obstacleType);
+      } else {
+        this.createSingleObstacle(spawnX, obstacleType);
+      }
+    });
     
     // Update spawn rate based on difficulty
     this.updateSpawnRate(difficulty);
