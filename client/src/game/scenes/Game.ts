@@ -60,6 +60,10 @@ export default class Game extends Phaser.Scene {
   private sandwiches!: Phaser.GameObjects.Group;
   private sandwichTimer!: Phaser.Time.TimerEvent;
   
+  // Background tiles for infinite scrolling
+  private backgroundTiles: Phaser.GameObjects.Image[] = [];
+  private backgroundWidth = 1408; // 1280 * 1.1
+  
   // Physics constants
   private readonly JUMP_VELOCITY = -1600;  // Higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1350; // Lower double jump
@@ -107,10 +111,11 @@ export default class Game extends Phaser.Scene {
 
     // Add collision detection for obstacles using overlap for guaranteed detection
     this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
-      if (!this.invulnerable) {
+      if (!this.invulnerable && !this.gameOverTriggered) {
         console.log(`COLLISION! Player hit obstacle at player(${player.x},${player.y}) obstacle(${obstacle.x},${obstacle.y})`);
         this.takeDamage(25); // Take 25 damage from obstacles
-        obstacle.destroy(); // Remove obstacle after hit
+        this.obstacles.remove(obstacle); // Remove from physics group first
+        obstacle.destroy(); // Then destroy the sprite
       }
     }, undefined, this);
     
@@ -185,29 +190,16 @@ export default class Game extends Phaser.Scene {
   loadSeamlessWorld() {
     // Inline the seamless world creation to avoid import issues
     
-    const createSeamlessWorld = (scene: Phaser.Scene) => {
-      // Create placeholder background
-      const bgCanvas = document.createElement('canvas');
-      bgCanvas.width = 2880;
-      bgCanvas.height = 960;
-      const ctx = bgCanvas.getContext('2d')!;
-      ctx.imageSmoothingEnabled = false;
-      
-      // Use the city background image instead of gradient
-      // The city background will be loaded and used directly
-      
-      if (!scene.textures.exists('seamless_bg')) {
-        scene.textures.addCanvas('seamless_bg', bgCanvas);
-      }
-      
-      // Create multiple background images for seamless repetition
-      const backgroundWidth = 1280 * 1.1; // Account for scale
-      for (let i = -10; i <= 30; i++) {
-        scene.add.image(320 + (i * backgroundWidth), 960, 'city_background')
+    const createSeamlessWorld = (scene: any) => {
+      // Create initial background tiles
+      const startX = 320;
+      for (let i = -2; i <= 5; i++) {
+        const tile = scene.add.image(startX + (i * this.backgroundWidth), 960, 'city_background')
           .setOrigin(0.5, 1)
           .setScrollFactor(1.0)
           .setDepth(1)
           .setScale(1.1, 1.1);
+        this.backgroundTiles.push(tile);
       }
 
       // Add visible white floor line at ground level
@@ -225,7 +217,7 @@ export default class Game extends Phaser.Scene {
       // This prevents the player from landing on invisible floors
 
       const update = (scrollX: number) => {
-        // Background automatically scrolls with scrollFactor
+        // Managed in main update now
       };
 
       return { ground, update };
@@ -918,7 +910,7 @@ export default class Game extends Phaser.Scene {
     const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
     
     const sandwich = this.sandwiches.create(spawnX, spawnY, 'sandwich');
-    sandwich.setScale(0.08); // Scale down the sandwich
+    sandwich.setScale(0.12); // Scale down the sandwich
     sandwich.setDepth(10);
     
     // Add floating animation
@@ -952,11 +944,47 @@ export default class Game extends Phaser.Scene {
     
     console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}`);
   }
+  
+  updateBackgroundTiles() {
+    if (this.backgroundTiles.length === 0) return;
+    
+    const cameraX = this.cameras.main.scrollX;
+    const screenWidth = 640;
+    
+    // Find the leftmost and rightmost tiles
+    let leftmostTile = this.backgroundTiles[0];
+    let rightmostTile = this.backgroundTiles[this.backgroundTiles.length - 1];
+    
+    // Remove tiles that are too far behind
+    while (this.backgroundTiles.length > 0 && this.backgroundTiles[0].x < cameraX - screenWidth) {
+      const tileToRemove = this.backgroundTiles.shift();
+      if (tileToRemove) tileToRemove.destroy();
+    }
+    
+    // Add new tiles ahead if needed
+    if (this.backgroundTiles.length > 0) {
+      rightmostTile = this.backgroundTiles[this.backgroundTiles.length - 1];
+      
+      while (rightmostTile.x < cameraX + screenWidth * 2) {
+        const newX = rightmostTile.x + this.backgroundWidth;
+        const newTile = this.add.image(newX, 960, 'city_background')
+          .setOrigin(0.5, 1)
+          .setScrollFactor(1.0)
+          .setDepth(1)
+          .setScale(1.1, 1.1);
+        this.backgroundTiles.push(newTile);
+        rightmostTile = newTile;
+      }
+    }
+  }
 
   update() {
     // Debug logging for movement issues
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
     console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Stamina:${Math.round(this.stamina)}`);
+    
+    // Manage infinite background scrolling
+    this.updateBackgroundTiles();
     
     // Regenerate stamina slowly
     if (this.stamina < this.maxStamina) {
