@@ -560,7 +560,7 @@ export default class Game extends Phaser.Scene {
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
       fontSize: '48px',
       color: '#ffffff',
-      fontFamily: 'monospace'
+      fontFamily: '"Courier New", "Monaco", "Menlo", monospace'
     });
     this.scoreText.setDepth(100);
     this.scoreText.setScrollFactor(0); // Keep fixed on screen
@@ -592,7 +592,7 @@ export default class Game extends Phaser.Scene {
     // Add health label
     this.healthText = this.add.text(50, 88, 'HEALTH', {
       fontSize: '20px',
-      fontFamily: 'monospace',
+      fontFamily: '"Courier New", "Monaco", "Menlo", monospace',
       color: '#ff4444',
       stroke: '#000000',
       strokeThickness: 4
@@ -601,7 +601,7 @@ export default class Game extends Phaser.Scene {
     // Add stamina label (now below health)
     this.add.text(50, 148, 'STAMINA', {
       fontSize: '20px',
-      fontFamily: 'monospace',
+      fontFamily: '"Courier New", "Monaco", "Menlo", monospace',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
@@ -615,7 +615,7 @@ export default class Game extends Phaser.Scene {
     
     this.starText = this.add.text(570, 50, '0', {
       fontSize: '28px',
-      fontFamily: 'monospace',
+      fontFamily: '"Courier New", "Monaco", "Menlo", monospace',
       color: '#ffff00',
       stroke: '#000000',
       strokeThickness: 4
@@ -1023,21 +1023,7 @@ export default class Game extends Phaser.Scene {
     sandwich.setScale(0.12); // Scale down the sandwich
     sandwich.setDepth(10);
     
-    // Minimal PostFX glow effect for maximum performance
-    const glow = sandwich.postFX.addGlow(0xffff00, 1, 0, false, 0.05, 4);
-    
-    // Very subtle glow animation to prevent any stuttering
-    this.tweens.add({
-      targets: glow,
-      outerStrength: 2,
-      duration: 3000, // Even slower for smoothness
-      ease: 'Sine.inOut',
-      yoyo: true,
-      repeat: -1
-    });
-    
-    // Store glow reference on sandwich for cleanup
-    (sandwich as any).glowFX = glow;
+    // No glow effect - removed completely for better performance
     
     // Add floating animation
     this.tweens.add({
@@ -1065,10 +1051,7 @@ export default class Game extends Phaser.Scene {
     this.jumpParticles.setPosition(sandwich.x, sandwich.y);
     this.jumpParticles.explode(15);
     
-    // Remove sandwich and its glow effect
-    if ((sandwich as any).glowFX) {
-      sandwich.postFX.remove((sandwich as any).glowFX);
-    }
+    // Remove sandwich
     sandwich.destroy();
     
     console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}`);
@@ -1265,9 +1248,6 @@ export default class Game extends Phaser.Scene {
     // Clean up off-screen sandwiches
     this.sandwiches.children.entries.forEach((sandwich: any) => {
       if (sandwich.x < this.cameras.main.scrollX - 200) {
-        if (sandwich.glowFX) {
-          sandwich.postFX.remove(sandwich.glowFX);
-        }
         this.sandwiches.remove(sandwich);
         sandwich.destroy();
       }
