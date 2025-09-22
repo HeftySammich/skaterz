@@ -58,6 +58,13 @@ export default class Game extends Phaser.Scene {
   
   // Sandwiches (health pickups)
   private sandwiches!: Phaser.GameObjects.Group;
+  
+  // Star collection system
+  private stars = 0;
+  private starIcon!: Phaser.GameObjects.Image;
+  private starText!: Phaser.GameObjects.Text;
+  private starPickups!: Phaser.Physics.Arcade.Group;
+  private lastStarPatternX = 0;
   private sandwichTimer!: Phaser.Time.TimerEvent;
   
   // Background tiles for infinite scrolling
@@ -112,6 +119,9 @@ export default class Game extends Phaser.Scene {
     
     // Create sandwich system (health pickups)
     this.createSandwichSystem();
+    
+    // Create star collection system
+    this.createStarSystem();
     
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -519,6 +529,23 @@ export default class Game extends Phaser.Scene {
     this.jumpParticles.setPosition(this.player.x, this.player.y);
     this.jumpParticles.explode(15);
     
+    // Award stars for stomping enemies (90% chance of 1 star, 10% chance of 10 stars)
+    const starReward = Math.random() < 0.9 ? 1 : 10;
+    this.collectStars(starReward);
+    
+    // Visual feedback for star collection
+    const starBurst = this.add.image(this.player.x, this.player.y - 50, starReward === 1 ? 'star_single' : 'star_ten');
+    starBurst.setScale(0.1);
+    starBurst.setDepth(16);
+    this.tweens.add({
+      targets: starBurst,
+      y: starBurst.y - 100,
+      alpha: 0,
+      scale: 0.15,
+      duration: 800,
+      onComplete: () => starBurst.destroy()
+    });
+    
     console.log('Player bounced high off enemy!');
   }
 
@@ -579,6 +606,23 @@ export default class Game extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setDepth(100).setScrollFactor(0)
+    
+    // Create star counter UI in top right
+    this.starIcon = this.add.image(540, 50, 'star_icon');
+    this.starIcon.setScale(0.08);
+    this.starIcon.setDepth(100);
+    this.starIcon.setScrollFactor(0);
+    
+    this.starText = this.add.text(570, 50, '0', {
+      fontSize: '28px',
+      fontFamily: 'monospace',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 4
+    });
+    this.starText.setDepth(100);
+    this.starText.setScrollFactor(0);
+    this.starText.setOrigin(0, 0.5);
 
     // Start spawning obstacles
     console.log('Setting up obstacle spawning timer');
@@ -979,14 +1023,14 @@ export default class Game extends Phaser.Scene {
     sandwich.setScale(0.12); // Scale down the sandwich
     sandwich.setDepth(10);
     
-    // Add optimized PostFX glow effect with lower quality for better performance
-    const glow = sandwich.postFX.addGlow(0xffff00, 2, 0, false, 0.1, 8);
+    // Minimal PostFX glow effect for maximum performance
+    const glow = sandwich.postFX.addGlow(0xffff00, 1, 0, false, 0.05, 4);
     
-    // Slower, less intensive glow animation to reduce stuttering
+    // Very subtle glow animation to prevent any stuttering
     this.tweens.add({
       targets: glow,
-      outerStrength: 4,
-      duration: 2000, // Slower animation
+      outerStrength: 2,
+      duration: 3000, // Even slower for smoothness
       ease: 'Sine.inOut',
       yoyo: true,
       repeat: -1
@@ -1028,6 +1072,94 @@ export default class Game extends Phaser.Scene {
     sandwich.destroy();
     
     console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}`);
+  }
+  
+  createStarSystem() {
+    // Create physics group for star pickups
+    this.starPickups = this.physics.add.group({
+      allowGravity: false
+    });
+    
+    // Start spawning star patterns
+    this.time.addEvent({
+      delay: 30000, // Spawn star patterns every 30 seconds  
+      callback: this.spawnStarPattern,
+      callbackScope: this,
+      loop: true
+    });
+    
+    // First star pattern after 20 seconds
+    this.time.delayedCall(20000, () => {
+      this.spawnStarPattern();
+    });
+    
+    // Add collision for star collection
+    this.physics.add.overlap(this.player, this.starPickups, (player: any, star: any) => {
+      const value = (star as any).value || 1;
+      this.collectStars(value);
+      star.destroy();
+    }, undefined, this);
+  }
+  
+  spawnStarPattern() {
+    const baseX = this.player.x + Phaser.Math.Between(800, 1200);
+    const baseY = Phaser.Math.Between(600, 750); // Can be ground or air level
+    
+    // Spawn a line of 3-5 single stars
+    const starCount = Phaser.Math.Between(3, 5);
+    for (let i = 0; i < starCount; i++) {
+      const star = this.starPickups.create(baseX + (i * 80), baseY, 'star_single');
+      star.setScale(0.08);
+      star.setDepth(9);
+      (star as any).value = 1;
+      
+      // Add subtle floating animation
+      this.tweens.add({
+        targets: star,
+        y: star.y - 10,
+        duration: 1000,
+        ease: 'Sine.inOut',
+        yoyo: true,
+        repeat: -1
+      });
+    }
+    
+    // 30% chance to add a 10-star at the end of the line
+    if (Math.random() < 0.3) {
+      const bigStar = this.starPickups.create(baseX + (starCount * 80), baseY, 'star_ten');
+      bigStar.setScale(0.1);
+      bigStar.setDepth(9);
+      (bigStar as any).value = 10;
+      
+      // Add more prominent animation for the big star
+      this.tweens.add({
+        targets: bigStar,
+        y: bigStar.y - 15,
+        scale: 0.12,
+        duration: 800,
+        ease: 'Sine.inOut',
+        yoyo: true,
+        repeat: -1
+      });
+    }
+    
+    console.log(`Star pattern spawned at (${baseX}, ${baseY})`);
+  }
+  
+  collectStars(amount: number) {
+    this.stars += amount;
+    this.starText.setText(this.stars.toString());
+    
+    // Add a little scale pop animation to the star counter
+    this.tweens.add({
+      targets: [this.starIcon, this.starText],
+      scale: 1.2,
+      duration: 200,
+      ease: 'Back.out',
+      yoyo: true
+    });
+    
+    console.log(`Collected ${amount} stars! Total: ${this.stars}`);
   }
   
   updateBackgroundTiles() {
@@ -1138,6 +1270,14 @@ export default class Game extends Phaser.Scene {
         }
         this.sandwiches.remove(sandwich);
         sandwich.destroy();
+      }
+    });
+    
+    // Clean up off-screen stars
+    this.starPickups.children.entries.forEach((star: any) => {
+      if (star.x < this.cameras.main.scrollX - 200) {
+        this.starPickups.remove(star);
+        star.destroy();
       }
     });
     
