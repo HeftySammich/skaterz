@@ -37,7 +37,7 @@ export default class Game extends Phaser.Scene {
   private explosions!: Phaser.GameObjects.Group;
   private arrowIndicators!: Phaser.GameObjects.Group;
   private lastEnemyX = 0;
-  private bounceVelocity = -800; // Bounce when landing on enemy
+  private bounceVelocity = -1200; // Stronger bounce when landing on enemy
   
   // Stamina system
   private stamina = 100;  // Max stamina
@@ -497,19 +497,30 @@ export default class Game extends Phaser.Scene {
   }
   
   bouncePlayer() {
-    // Give player a bounce
+    // Give player a strong, satisfying bounce
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
     playerBody.setVelocityY(this.bounceVelocity);
     
+    // Add a little forward boost for extra momentum
+    const currentVelX = playerBody.velocity.x;
+    playerBody.setVelocityX(Math.min(currentVelX + 80, 450));
+    
     // Reset jump count to allow another jump
-    this.jumpCount = 1;
+    this.jumpCount = 0;
     this.hasDoubleJumped = false;
     
-    // Restore stamina as reward
-    this.stamina = Math.min(this.maxStamina, this.stamina + 20);
+    // Restore more stamina as reward for successful stomp
+    this.stamina = Math.min(this.maxStamina, this.stamina + 35);
     this.updateStaminaBar();
     
-    console.log('Player bounced off enemy!');
+    // Add a visual effect - slight camera shake for impact
+    this.cameras.main.shake(120, 0.008);
+    
+    // Create extra particles for impact
+    this.jumpParticles.setPosition(this.player.x, this.player.y);
+    this.jumpParticles.explode(15);
+    
+    console.log('Player bounced high off enemy!');
   }
 
   createObstacleSystem() {
@@ -528,10 +539,10 @@ export default class Game extends Phaser.Scene {
     this.scoreText.setDepth(100);
     this.scoreText.setScrollFactor(0); // Keep fixed on screen
     
-    // Create stamina bar
+    // Create stamina bar (now below health)
     this.staminaBarBg = this.add.graphics();
     this.staminaBarBg.fillStyle(0x000000, 0.5);
-    this.staminaBarBg.fillRect(50, 110, 204, 24);
+    this.staminaBarBg.fillRect(50, 170, 204, 24);
     this.staminaBarBg.setDepth(100);
     this.staminaBarBg.setScrollFactor(0);
     
@@ -540,19 +551,10 @@ export default class Game extends Phaser.Scene {
     this.staminaBar.setScrollFactor(0);
     this.updateStaminaBar();
     
-    // Add stamina label
-    this.add.text(50, 88, 'STAMINA', {
-      fontSize: '20px',
-      fontFamily: 'monospace',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 4
-    }).setDepth(100).setScrollFactor(0)
-    
-    // Create health bar
+    // Create health bar (now above stamina)
     this.healthBarBg = this.add.graphics();
     this.healthBarBg.fillStyle(0x000000, 0.5);
-    this.healthBarBg.fillRect(50, 170, 204, 24);
+    this.healthBarBg.fillRect(50, 110, 204, 24);
     this.healthBarBg.setDepth(100);
     this.healthBarBg.setScrollFactor(0);
     
@@ -562,13 +564,22 @@ export default class Game extends Phaser.Scene {
     this.updateHealthBar();
     
     // Add health label
-    this.healthText = this.add.text(50, 148, 'HEALTH', {
+    this.healthText = this.add.text(50, 88, 'HEALTH', {
       fontSize: '20px',
       fontFamily: 'monospace',
       color: '#ff4444',
       stroke: '#000000',
       strokeThickness: 4
     }).setDepth(100).setScrollFactor(0);
+    
+    // Add stamina label (now below health)
+    this.add.text(50, 148, 'STAMINA', {
+      fontSize: '20px',
+      fontFamily: 'monospace',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setDepth(100).setScrollFactor(0)
 
     // Start spawning obstacles
     console.log('Setting up obstacle spawning timer');
@@ -658,23 +669,43 @@ export default class Game extends Phaser.Scene {
   }
 
   getDifficulty(gameTime: number): number {
-    // Difficulty increases every 60 seconds, maxes at level 10
-    return Math.min(Math.floor(gameTime / 60000), 10);
+    // Difficulty increases every 30 seconds, maxes at level 10
+    const level = Math.min(Math.floor(gameTime / 30000), 10);
+    console.log(`[DIFFICULTY] Level ${level} at ${Math.floor(gameTime/1000)}s`);
+    return level;
   }
 
   chooseObstacleType(difficulty: number): string {
-    // Early game: mostly cones and trash
-    if (difficulty < 2) {
-      return Phaser.Utils.Array.GetRandom(['obstacle_cone', 'obstacle_trash']);
+    // Pattern-based obstacle selection for better gameplay flow
+    const patterns = [
+      // Level 0-1: Easy obstacles only
+      ['obstacle_cone', 'obstacle_trash'],
+      // Level 2-3: Add crashes
+      ['obstacle_cone', 'obstacle_trash', 'obstacle_crash'],
+      // Level 4-5: Add zombies for variety
+      ['obstacle_trash', 'obstacle_crash', 'obstacle_zombie'],
+      // Level 6-7: Mix of harder obstacles
+      ['obstacle_crash', 'obstacle_zombie', 'obstacle_skull'],
+      // Level 8+: All obstacles with focus on danger
+      this.obstacleTypes
+    ];
+    
+    // Select pattern based on difficulty level
+    const patternIndex = Math.min(Math.floor(difficulty / 2), patterns.length - 1);
+    const availableTypes = patterns[patternIndex];
+    
+    // Add some structure to spawning - not pure random
+    if (difficulty >= 3 && Math.random() < 0.3) {
+      // 30% chance to spawn harder obstacle at higher difficulties
+      const harderTypes = availableTypes.filter(type => 
+        type.includes('zombie') || type.includes('skull') || type.includes('crash')
+      );
+      if (harderTypes.length > 0) {
+        return Phaser.Utils.Array.GetRandom(harderTypes);
+      }
     }
-    // Mid game: add crashes and zombies
-    else if (difficulty < 5) {
-      return Phaser.Utils.Array.GetRandom(['obstacle_cone', 'obstacle_trash', 'obstacle_crash', 'obstacle_zombie']);
-    }
-    // Late game: all obstacles including skulls
-    else {
-      return Phaser.Utils.Array.GetRandom(this.obstacleTypes);
-    }
+    
+    return Phaser.Utils.Array.GetRandom(availableTypes);
   }
 
   createSingleObstacle(x: number, type: string) {
@@ -851,10 +882,10 @@ export default class Game extends Phaser.Scene {
       color = 0xffaa00;  // Orange
     }
     
-    // Draw stamina bar
+    // Draw stamina bar (now at y=172)
     this.staminaBar.fillStyle(color, 1);
     const barWidth = (this.stamina / this.maxStamina) * 200;
-    this.staminaBar.fillRect(52, 112, barWidth, 20);
+    this.staminaBar.fillRect(52, 172, barWidth, 20);
   }
   
   updateHealthBar() {
@@ -868,10 +899,10 @@ export default class Game extends Phaser.Scene {
       color = 0xffaa00;  // Orange
     }
     
-    // Draw health bar
+    // Draw health bar (now at y=112)
     this.healthBar.fillStyle(color, 1);
     const healthPercent = this.health / this.maxHealth;
-    this.healthBar.fillRect(52, 172, 200 * healthPercent, 20);
+    this.healthBar.fillRect(52, 112, 200 * healthPercent, 20);
   }
   
   takeDamage(amount: number) {
@@ -927,16 +958,16 @@ export default class Game extends Phaser.Scene {
       immovable: true
     });
     
-    // Start spawning sandwiches
+    // Start spawning sandwiches much less frequently
     this.sandwichTimer = this.time.addEvent({
-      delay: 8000, // Spawn every 8 seconds
+      delay: 20000, // Spawn every 20 seconds (much rarer)
       callback: this.spawnSandwich,
       callbackScope: this,
       loop: true
     });
     
-    // Spawn first sandwich soon after start
-    this.time.delayedCall(3000, () => {
+    // Spawn first sandwich after 15 seconds
+    this.time.delayedCall(15000, () => {
       this.spawnSandwich();
     });
   }
@@ -949,6 +980,31 @@ export default class Game extends Phaser.Scene {
     sandwich.setScale(0.12); // Scale down the sandwich
     sandwich.setDepth(10);
     
+    // Add glow effect
+    const glowGraphics = this.add.graphics();
+    glowGraphics.setDepth(9);
+    
+    // Create glow animation
+    this.tweens.add({
+      targets: { radius: 30, alpha: 0.6 },
+      radius: 50,
+      alpha: 0.2,
+      duration: 1000,
+      ease: 'Sine.inOut',
+      yoyo: true,
+      repeat: -1,
+      onUpdate: function(tween) {
+        const value = tween.getValue();
+        const target = tween.targets[0] as any;
+        glowGraphics.clear();
+        glowGraphics.fillStyle(0xffff00, target.alpha);
+        glowGraphics.fillCircle(sandwich.x, sandwich.y, target.radius);
+      }
+    });
+    
+    // Store glow reference on sandwich for cleanup
+    (sandwich as any).glowGraphics = glowGraphics;
+    
     // Add floating animation
     this.tweens.add({
       targets: sandwich,
@@ -956,7 +1012,13 @@ export default class Game extends Phaser.Scene {
       duration: 1500,
       ease: 'Sine.inOut',
       yoyo: true,
-      repeat: -1
+      repeat: -1,
+      onUpdate: () => {
+        // Update glow position with sandwich
+        glowGraphics.clear();
+        glowGraphics.fillStyle(0xffff00, 0.3);
+        glowGraphics.fillCircle(sandwich.x, sandwich.y, 40);
+      }
     });
     
     console.log(`Sandwich spawned at (${spawnX}, ${spawnY})`);
@@ -975,7 +1037,10 @@ export default class Game extends Phaser.Scene {
     this.jumpParticles.setPosition(sandwich.x, sandwich.y);
     this.jumpParticles.explode(15);
     
-    // Remove sandwich
+    // Remove sandwich and its glow effect
+    if ((sandwich as any).glowGraphics) {
+      (sandwich as any).glowGraphics.destroy();
+    }
     sandwich.destroy();
     
     console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}`);
@@ -1082,6 +1147,9 @@ export default class Game extends Phaser.Scene {
     // Clean up off-screen sandwiches
     this.sandwiches.children.entries.forEach((sandwich: any) => {
       if (sandwich.x < this.cameras.main.scrollX - 200) {
+        if (sandwich.glowGraphics) {
+          sandwich.glowGraphics.destroy();
+        }
         this.sandwiches.remove(sandwich);
         sandwich.destroy();
       }
