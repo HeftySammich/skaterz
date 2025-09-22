@@ -979,30 +979,21 @@ export default class Game extends Phaser.Scene {
     sandwich.setScale(0.12); // Scale down the sandwich
     sandwich.setDepth(10);
     
-    // Add glow effect
-    const glowGraphics = this.add.graphics();
-    glowGraphics.setDepth(9);
+    // Add PostFX glow effect (Phaser 3.90 feature)
+    const glow = sandwich.postFX.addGlow(0xffff00, 4, 0, false, 0.1, 24);
     
-    // Create glow animation
+    // Animate the glow intensity
     this.tweens.add({
-      targets: { radius: 30, alpha: 0.6 },
-      radius: 50,
-      alpha: 0.2,
+      targets: glow,
+      outerStrength: 8,
       duration: 1000,
       ease: 'Sine.inOut',
       yoyo: true,
-      repeat: -1,
-      onUpdate: function(tween) {
-        const value = tween.getValue();
-        const target = tween.targets[0] as any;
-        glowGraphics.clear();
-        glowGraphics.fillStyle(0xffff00, target.alpha);
-        glowGraphics.fillCircle(sandwich.x, sandwich.y, target.radius);
-      }
+      repeat: -1
     });
     
     // Store glow reference on sandwich for cleanup
-    (sandwich as any).glowGraphics = glowGraphics;
+    (sandwich as any).glowFX = glow;
     
     // Add floating animation
     this.tweens.add({
@@ -1011,13 +1002,7 @@ export default class Game extends Phaser.Scene {
       duration: 1500,
       ease: 'Sine.inOut',
       yoyo: true,
-      repeat: -1,
-      onUpdate: () => {
-        // Update glow position with sandwich
-        glowGraphics.clear();
-        glowGraphics.fillStyle(0xffff00, 0.3);
-        glowGraphics.fillCircle(sandwich.x, sandwich.y, 40);
-      }
+      repeat: -1
     });
     
     console.log(`Sandwich spawned at (${spawnX}, ${spawnY})`);
@@ -1037,8 +1022,8 @@ export default class Game extends Phaser.Scene {
     this.jumpParticles.explode(15);
     
     // Remove sandwich and its glow effect
-    if ((sandwich as any).glowGraphics) {
-      (sandwich as any).glowGraphics.destroy();
+    if ((sandwich as any).glowFX) {
+      sandwich.postFX.remove((sandwich as any).glowFX);
     }
     sandwich.destroy();
     
@@ -1146,8 +1131,8 @@ export default class Game extends Phaser.Scene {
     // Clean up off-screen sandwiches
     this.sandwiches.children.entries.forEach((sandwich: any) => {
       if (sandwich.x < this.cameras.main.scrollX - 200) {
-        if (sandwich.glowGraphics) {
-          sandwich.glowGraphics.destroy();
+        if (sandwich.glowFX) {
+          sandwich.postFX.remove(sandwich.glowFX);
         }
         this.sandwiches.remove(sandwich);
         sandwich.destroy();
