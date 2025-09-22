@@ -979,14 +979,14 @@ export default class Game extends Phaser.Scene {
     sandwich.setScale(0.12); // Scale down the sandwich
     sandwich.setDepth(10);
     
-    // Add PostFX glow effect (Phaser 3.90 feature)
-    const glow = sandwich.postFX.addGlow(0xffff00, 4, 0, false, 0.1, 24);
+    // Add optimized PostFX glow effect with lower quality for better performance
+    const glow = sandwich.postFX.addGlow(0xffff00, 2, 0, false, 0.1, 8);
     
-    // Animate the glow intensity
+    // Slower, less intensive glow animation to reduce stuttering
     this.tweens.add({
       targets: glow,
-      outerStrength: 8,
-      duration: 1000,
+      outerStrength: 4,
+      duration: 2000, // Slower animation
       ease: 'Sine.inOut',
       yoyo: true,
       repeat: -1
@@ -1064,9 +1064,11 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
-    // Debug logging for movement issues
+    // Throttled debug logging to prevent stuttering (only log every 5 seconds)
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
-    console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Stamina:${Math.round(this.stamina)}`);
+    if (Math.floor(this.time.now / 1000) % 5 === 0 && this.time.now % 1000 < 16) {
+      console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Stamina:${Math.round(this.stamina)}`);
+    }
     
     // Manage infinite background scrolling
     this.updateBackgroundTiles();
