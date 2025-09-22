@@ -513,8 +513,7 @@ export default class Game extends Phaser.Scene {
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
     this.updateStaminaBar();
     
-    // Add a visual effect - slight camera shake for impact
-    this.cameras.main.shake(120, 0.008);
+    // Camera shake removed for smoother gameplay
     
     // Create extra particles for impact
     this.jumpParticles.setPosition(this.player.x, this.player.y);
@@ -1094,10 +1093,10 @@ export default class Game extends Phaser.Scene {
     }
     
     // Force movement by directly updating position since velocity isn't working
-    this.player.x += 5.5; // Move 5.5 pixels per frame (330 pixels/sec at 60fps) - balanced speed for obstacle timing
+    this.player.x += 6.3; // Move 6.3 pixels per frame (380 pixels/sec at 60fps) - faster gameplay
     
     // Still set velocity for physics calculations
-    this.player.setVelocityX(330);
+    this.player.setVelocityX(380);
     
     // Log if velocity is being blocked
     if (Math.abs(playerBody.velocity.x) < 100) {
