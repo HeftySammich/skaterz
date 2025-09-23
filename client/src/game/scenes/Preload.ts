@@ -36,6 +36,10 @@ export default class Preload extends Phaser.Scene {
     // Load city background
     this.load.image('city_background', 'assets/city_background.png');
     
+    // Load parallax background layers
+    this.load.image('bg_parallax_far', 'assets/bg_parallax_far.png');  // Farthest back (red gradient)
+    this.load.image('bg_parallax_mid', 'assets/bg_parallax_mid.png');  // Middle layer (city silhouette)
+    
     // Load splash screen image
     this.load.image('slime_splash', 'assets/slime_splash.png');
     
