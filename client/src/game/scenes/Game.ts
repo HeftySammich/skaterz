@@ -45,6 +45,7 @@ export default class Game extends Phaser.Scene {
   private lastSandwichY = 0;
   private lastSandwichSpawnTime = 0;
   private bounceVelocity = -1200; // Stronger bounce when landing on enemy
+  private speedMultiplier = 1.0; // Speed multiplier that increases over time
   
   // Stamina system
   private stamina = 100;  // Max stamina
@@ -104,6 +105,7 @@ export default class Game extends Phaser.Scene {
     this.lastEnemySpawnTime = 0;
     this.lastSandwichY = 0;
     this.lastSandwichSpawnTime = 0;
+    this.speedMultiplier = 1.0; // Reset speed multiplier
     this.isGrounded = true;
     this.jumpCount = 0;
     this.hasDoubleJumped = false;
@@ -211,19 +213,19 @@ export default class Game extends Phaser.Scene {
     
     // Tutorial text
     const line1 = this.add.text(0, -35, 'TAP TO JUMP', {
-      fontSize: '20px',
+      fontSize: '24px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#00ff00'
     }).setOrigin(0.5);
     
     const line2 = this.add.text(0, 0, 'TAP AGAIN FOR DOUBLE JUMP', {
-      fontSize: '20px',
+      fontSize: '24px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#00ffff'
     }).setOrigin(0.5);
     
     const line3 = this.add.text(0, 35, 'SWIPE UP FOR TRICK', {
-      fontSize: '20px',
+      fontSize: '24px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00'
     }).setOrigin(0.5);
@@ -419,6 +421,10 @@ export default class Game extends Phaser.Scene {
         const gameTime = this.time.now - this.gameStartTime;
         const difficulty = this.getDifficulty(gameTime);
         this.updateEnemySpawnRate(difficulty);
+        
+        // Increase speed slightly every 30 seconds
+        this.speedMultiplier += 0.1; // 10% faster each 30 seconds
+        console.log(`[SPEED INCREASE] Speed multiplier now ${this.speedMultiplier.toFixed(1)}x at difficulty ${difficulty}`);
       },
       callbackScope: this,
       loop: true
@@ -642,7 +648,7 @@ export default class Game extends Phaser.Scene {
 
     // Create score display
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
-      fontSize: '20px',
+      fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
     });
@@ -675,7 +681,7 @@ export default class Game extends Phaser.Scene {
     
     // Add health label
     this.healthText = this.add.text(50, 88, 'HEALTH', {
-      fontSize: '14px',
+      fontSize: '18px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ff4444',
       stroke: '#000000',
@@ -684,7 +690,7 @@ export default class Game extends Phaser.Scene {
     
     // Add stamina label (now below health)
     this.add.text(50, 148, 'STAMINA', {
-      fontSize: '14px',
+      fontSize: '18px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffffff',
       stroke: '#000000',
@@ -698,7 +704,7 @@ export default class Game extends Phaser.Scene {
     this.starIcon.setScrollFactor(0);
     
     this.starText = this.add.text(590, 50, '0', {
-      fontSize: '18px',
+      fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
       stroke: '#000000',
@@ -1411,10 +1417,13 @@ export default class Game extends Phaser.Scene {
     }
     
     // Force movement by directly updating position since velocity isn't working
-    this.player.x += 6.3; // Move 6.3 pixels per frame (380 pixels/sec at 60fps) - faster gameplay
+    // Apply speed multiplier for progressive difficulty
+    const baseSpeed = 6.3; // Base movement speed
+    const currentSpeed = baseSpeed * this.speedMultiplier;
+    this.player.x += currentSpeed; // Move with increasing speed over time
     
     // Still set velocity for physics calculations
-    this.player.setVelocityX(380);
+    this.player.setVelocityX(380 * this.speedMultiplier);
     
     // Log if velocity is being blocked
     if (Math.abs(playerBody.velocity.x) < 100) {
