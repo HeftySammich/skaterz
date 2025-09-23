@@ -1,8 +1,14 @@
 export class OptionsMenu extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private menuMusic: Phaser.Sound.BaseSound | null = null;
 
   constructor() {
     super({ key: 'OptionsMenu' });
+  }
+
+  init(data: { menuMusic?: Phaser.Sound.BaseSound }) {
+    // Receive menu music from MainMenu to keep it playing
+    this.menuMusic = data.menuMusic || null;
   }
 
   create() {
@@ -11,32 +17,32 @@ export class OptionsMenu extends Phaser.Scene {
     
     // Title (GBA screen is 240x160)
     this.add.text(120, 35, 'OPTIONS', {
-      fontSize: '18px',
+      fontSize: '12px',
       color: '#ffecb3',
-      fontFamily: 'monospace',
+      fontFamily: '"Press Start 2P", monospace',
       align: 'center'
     }).setOrigin(0.5);
 
     // Placeholder content
     this.add.text(120, 70, 'OPTIONS MENU', {
-      fontSize: '12px',
+      fontSize: '8px',
       color: '#b9c0cf',
-      fontFamily: 'monospace',
+      fontFamily: '"Press Start 2P", monospace',
       align: 'center'
     }).setOrigin(0.5);
 
     this.add.text(120, 90, '(COMING SOON)', {
-      fontSize: '10px',
+      fontSize: '6px',
       color: '#646c7a',
-      fontFamily: 'monospace',
+      fontFamily: '"Press Start 2P", monospace',
       align: 'center'
     }).setOrigin(0.5);
 
     // Back instruction
     const backText = this.add.text(120, 125, 'PRESS ESC TO GO BACK', {
-      fontSize: '9px',
+      fontSize: '6px',
       color: '#e2e28e',
-      fontFamily: 'monospace',
+      fontFamily: '"Press Start 2P", monospace',
       align: 'center'
     }).setOrigin(0.5);
 
@@ -45,14 +51,14 @@ export class OptionsMenu extends Phaser.Scene {
     
     // Touch/click to go back
     this.input.on('pointerdown', () => {
-      this.scene.start('MainMenu');
+      this.scene.start('MainMenu', { menuMusic: this.menuMusic });
     });
   }
 
   update() {
     // ESC to go back
     if (Phaser.Input.Keyboard.JustDown(this.input.keyboard!.addKey('ESC'))) {
-      this.scene.start('MainMenu');
+      this.scene.start('MainMenu', { menuMusic: this.menuMusic });
     }
   }
 }

@@ -21,8 +21,8 @@ export default class GameOver extends Phaser.Scene {
 
     // Game Over text
     const gameOverText = this.add.text(320, 250, 'GAME OVER', {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '72px',
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '32px',
       color: '#ff0000',
       stroke: '#ffffff',
       strokeThickness: 6
@@ -30,8 +30,8 @@ export default class GameOver extends Phaser.Scene {
 
     // Final score
     const finalScoreText = this.add.text(320, 380, `FINAL SCORE: ${Math.floor(this.finalScore)}`, {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '48px',
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '20px',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
@@ -43,8 +43,8 @@ export default class GameOver extends Phaser.Scene {
     const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     
     this.add.text(320, 480, `TIME SURVIVED: ${timeText}`, {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '36px',
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
@@ -56,8 +56,8 @@ export default class GameOver extends Phaser.Scene {
     if (this.finalScore > highScore) {
       this.setHighScore(this.finalScore);
       highScoreText = this.add.text(320, 580, 'NEW HIGH SCORE!', {
-        fontFamily: 'Courier, "Courier New", monospace',
-        fontSize: '40px',
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '18px',
         color: '#ffff00',
         stroke: '#000000',
         strokeThickness: 4
@@ -74,8 +74,8 @@ export default class GameOver extends Phaser.Scene {
       });
     } else {
       highScoreText = this.add.text(320, 580, `HIGH SCORE: ${Math.floor(highScore)}`, {
-        fontFamily: 'Courier, "Courier New", monospace',
-        fontSize: '32px',
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '14px',
         color: '#ffffff',
         stroke: '#000000',
         strokeThickness: 3
@@ -84,16 +84,16 @@ export default class GameOver extends Phaser.Scene {
 
     // Restart instructions
     const restartText = this.add.text(320, 720, 'PRESS SPACE TO RESTART', {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '32px',
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '14px',
       color: '#00ff00',
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
     
     this.add.text(320, 800, 'PRESS ESC FOR MAIN MENU', {
-      fontFamily: 'Courier, "Courier New", monospace',
-      fontSize: '32px',
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '14px',
       color: '#00ff00',
       stroke: '#000000',
       strokeThickness: 3

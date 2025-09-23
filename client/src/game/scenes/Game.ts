@@ -217,6 +217,12 @@ export default class Game extends Phaser.Scene {
     // Inline the seamless world creation to avoid import issues
     
     const createSeamlessWorld = (scene: any) => {
+      // Add red sky background first (behind everything else)
+      const redSkyBg = scene.add.tileSprite(0, 0, scene.cameras.main.width * 2, scene.cameras.main.height, 'red_sky_bg')
+        .setOrigin(0, 0)
+        .setScrollFactor(0.3) // Slow parallax for sky
+        .setDepth(0); // Behind everything
+      
       // Create initial background tiles directly without placeholder
       const startX = 320;
       for (let i = -2; i <= 5; i++) {
@@ -557,9 +563,9 @@ export default class Game extends Phaser.Scene {
 
     // Create score display
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
-      fontSize: '48px',
+      fontSize: '16px',
       color: '#ffffff',
-      fontFamily: '"Courier New", "Monaco", "Menlo", monospace'
+      fontFamily: '"Press Start 2P", monospace'
     });
     this.scoreText.setDepth(100);
     this.scoreText.setScrollFactor(0); // Keep fixed on screen
@@ -590,8 +596,8 @@ export default class Game extends Phaser.Scene {
     
     // Add health label
     this.healthText = this.add.text(50, 88, 'HEALTH', {
-      fontSize: '20px',
-      fontFamily: '"Courier New", "Monaco", "Menlo", monospace',
+      fontSize: '10px',
+      fontFamily: '"Press Start 2P", monospace',
       color: '#ff4444',
       stroke: '#000000',
       strokeThickness: 4
@@ -599,8 +605,8 @@ export default class Game extends Phaser.Scene {
     
     // Add stamina label (now below health)
     this.add.text(50, 148, 'STAMINA', {
-      fontSize: '20px',
-      fontFamily: '"Courier New", "Monaco", "Menlo", monospace',
+      fontSize: '10px',
+      fontFamily: '"Press Start 2P", monospace',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
@@ -613,8 +619,8 @@ export default class Game extends Phaser.Scene {
     this.starIcon.setScrollFactor(0);
     
     this.starText = this.add.text(570, 50, '0', {
-      fontSize: '28px',
-      fontFamily: '"Courier New", "Monaco", "Menlo", monospace',
+      fontSize: '14px',
+      fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
       stroke: '#000000',
       strokeThickness: 4

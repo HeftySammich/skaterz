@@ -10,12 +10,21 @@ export class MainMenu extends Phaser.Scene {
     super({ key: 'MainMenu' });
   }
 
+  init(data: { menuMusic?: Phaser.Sound.BaseSound }) {
+    // Receive menu music back from other scenes to keep it playing
+    if (data.menuMusic) {
+      this.menuMusic = data.menuMusic;
+    }
+  }
+
   create() {
     const cam = this.cameras.main;
     
-    // Start menu music
-    this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-    this.menuMusic.play();
+    // Start menu music only if not already playing
+    if (!this.menuMusic || !this.menuMusic.isPlaying) {
+      this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+      this.menuMusic.play();
+    }
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
@@ -99,13 +108,11 @@ export class MainMenu extends Phaser.Scene {
 
   private confirmSelection() {
     if (this.selectedIndex === 0) {
-      // Stop music and start game
-      this.menuMusic.stop();
-      this.scene.start('Game');
+      // Go to character select, keep music playing
+      this.scene.start('CharacterSelect', { menuMusic: this.menuMusic });
     } else if (this.selectedIndex === 1) {
-      // Stop music and go to options (placeholder for now)
-      this.menuMusic.stop();
-      this.scene.start('OptionsMenu');
+      // Go to options, keep music playing
+      this.scene.start('OptionsMenu', { menuMusic: this.menuMusic });
     }
   }
 }

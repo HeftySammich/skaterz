@@ -7,6 +7,10 @@ export default class Preload extends Phaser.Scene {
   }
 
   preload() {
+    // Load new character select and background images
+    this.load.image('kev_character', 'assets/kev_character.png');
+    this.load.image('red_sky_bg', 'assets/red_sky_bg.png');
+    
     // Load zombie skater assets
     this.load.image('skater_idle', 'assets/skater_idle.png');
     this.load.image('skater_jump', 'assets/skater_idle.png'); // Use same image for now
@@ -54,8 +58,8 @@ export default class Preload extends Phaser.Scene {
       y: 480,
       text: 'Loading zombie skater...',
       style: {
-        fontFamily: 'Courier, "Courier New", monospace',
-        fontSize: '36px',
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '24px',
         color: '#ffffff'
       }
     });
