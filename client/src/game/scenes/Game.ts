@@ -69,7 +69,7 @@ export default class Game extends Phaser.Scene {
   
   // Background tiles for infinite scrolling
   private backgroundTiles: Phaser.GameObjects.Image[] = [];
-  private backgroundWidth = 1280; // Original width without scaling
+  private backgroundWidth = 3072; // Actual width of the image (includes gaps)
   
   // Parallax background layers
   private farBackground!: Phaser.GameObjects.TileSprite;  // Farthest back (red gradient)
