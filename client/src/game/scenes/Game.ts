@@ -607,8 +607,8 @@ export default class Game extends Phaser.Scene {
       strokeThickness: 4
     }).setDepth(100).setScrollFactor(0)
     
-    // Create star counter UI in top right
-    this.starIcon = this.add.image(540, 50, 'star_icon');
+    // Create star counter UI in top right with new icon
+    this.starIcon = this.add.image(540, 50, 'star_counter_icon');
     this.starIcon.setScale(0.08);
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
@@ -1019,23 +1019,43 @@ export default class Game extends Phaser.Scene {
     const spawnX = this.player.x + Phaser.Math.Between(800, 1200);
     const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
     
-    const sandwich = this.sandwiches.create(spawnX, spawnY, 'sandwich');
-    sandwich.setScale(0.12); // Scale down the sandwich
-    sandwich.setDepth(10);
+    // Create arrow warning indicator for sandwich using custom sandwich arrow
+    const arrow = this.arrowIndicators.create(590, spawnY, 'sandwich_arrow') as Phaser.GameObjects.Sprite;
+    arrow.setScale(0.15);
+    arrow.setDepth(102); // Above UI
+    arrow.setScrollFactor(0); // Keep fixed on screen
     
-    // No glow effect - removed completely for better performance
-    
-    // Add floating animation
+    // Flash the arrow for visibility
     this.tweens.add({
-      targets: sandwich,
-      y: spawnY - 20,
-      duration: 1500,
-      ease: 'Sine.inOut',
+      targets: arrow,
+      alpha: { from: 1, to: 0.5 },
+      duration: 400,
       yoyo: true,
       repeat: -1
     });
     
-    console.log(`Sandwich spawned at (${spawnX}, ${spawnY})`);
+    console.log(`[DEBUG SANDWICH] Arrow indicator shown at Y=${spawnY}, sandwich will spawn at X=${spawnX}`);
+    
+    // Spawn sandwich after 2 second warning
+    this.time.delayedCall(2000, () => {
+      arrow.destroy();
+      
+      const sandwich = this.sandwiches.create(spawnX, spawnY, 'sandwich');
+      sandwich.setScale(0.12); // Scale down the sandwich
+      sandwich.setDepth(10);
+      
+      // Add floating animation
+      this.tweens.add({
+        targets: sandwich,
+        y: spawnY - 20,
+        duration: 1500,
+        ease: 'Sine.inOut',
+        yoyo: true,
+        repeat: -1
+      });
+      
+      console.log(`Sandwich spawned at (${spawnX}, ${spawnY})`);  
+    });
   }
   
   collectSandwich(sandwich: any) {
@@ -1133,13 +1153,36 @@ export default class Game extends Phaser.Scene {
     this.stars += amount;
     this.starText.setText(this.stars.toString());
     
-    // Add a little scale pop animation to the star counter
+    // Add a shine effect to the star counter instead of scaling
+    const shineEffect = this.add.graphics();
+    shineEffect.x = this.starIcon.x;
+    shineEffect.y = this.starIcon.y;
+    shineEffect.setDepth(101);
+    shineEffect.setScrollFactor(0);
+    
+    // Create a white shine overlay
+    shineEffect.fillStyle(0xffffff, 0.7);
+    shineEffect.fillCircle(0, 0, 25);
+    
+    // Animate the shine effect
     this.tweens.add({
-      targets: [this.starIcon, this.starText],
-      scale: 1.2,
+      targets: shineEffect,
+      alpha: { from: 0.7, to: 0 },
+      scale: { from: 0.5, to: 1.5 },
+      duration: 500,
+      ease: 'Cubic.out',
+      onComplete: () => {
+        shineEffect.destroy();
+      }
+    });
+    
+    // Also add a subtle glow to the text
+    this.tweens.add({
+      targets: this.starText,
+      alpha: { from: 1, to: 0.5 },
       duration: 200,
-      ease: 'Back.out',
-      yoyo: true
+      yoyo: true,
+      ease: 'Sine.inOut'
     });
     
     console.log(`Collected ${amount} stars! Total: ${this.stars}`);

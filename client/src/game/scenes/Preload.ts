@@ -30,8 +30,10 @@ export default class Preload extends Phaser.Scene {
     
     // Load star assets
     this.load.image('star_icon', 'assets/star_icon.png');
+    this.load.image('star_counter_icon', 'assets/star_counter_icon.png');
     this.load.image('star_single', 'assets/star_single.png');
     this.load.image('star_ten', 'assets/star_ten.png');
+    this.load.image('sandwich_arrow', 'assets/sandwich_arrow.png');
     
     // Load city background
     this.load.image('city_background', 'assets/city_background.png');
