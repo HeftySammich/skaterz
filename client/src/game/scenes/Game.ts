@@ -33,12 +33,17 @@ export default class Game extends Phaser.Scene {
   private scoreText!: Phaser.GameObjects.Text;
   private lastDifficulty = -1;
   private obstacleTimer: Phaser.Time.TimerEvent | null = null;
+  private enemyTimer: Phaser.Time.TimerEvent | null = null;
   
   // Enemy system
   private enemies!: Phaser.GameObjects.Group;
   private explosions!: Phaser.GameObjects.Group;
   private arrowIndicators!: Phaser.GameObjects.Group;
   private lastEnemyX = 0;
+  private lastEnemyY = 0;
+  private lastEnemySpawnTime = 0;
+  private lastSandwichY = 0;
+  private lastSandwichSpawnTime = 0;
   private bounceVelocity = -1200; // Stronger bounce when landing on enemy
   
   // Stamina system
@@ -75,11 +80,11 @@ export default class Game extends Phaser.Scene {
   private redSkyBg: Phaser.GameObjects.TileSprite | null = null; // Red sky background reference
   
   // Physics constants
-  private readonly JUMP_VELOCITY = -1600;  // Higher first jump
-  private readonly TRICK_JUMP_VELOCITY = -1350; // Lower double jump
-  private readonly SWIPE_TRICK_VELOCITY = -800; // Small jump for swipe trick
-  private readonly GRAVITY = 4800; // Less floaty, more responsive
-  private readonly FLOAT_GRAVITY = 3600; // Less float during tricks
+  private readonly JUMP_VELOCITY = -1750;  // Slightly higher first jump
+  private readonly TRICK_JUMP_VELOCITY = -1450; // Slightly higher double jump
+  private readonly SWIPE_TRICK_VELOCITY = -850; // Small jump for swipe trick
+  private readonly GRAVITY = 4200; // Slightly floatier
+  private readonly FLOAT_GRAVITY = 3200; // More float during tricks
 
   constructor() {
     super('Game');
@@ -95,6 +100,10 @@ export default class Game extends Phaser.Scene {
     this.score = 0; // Reset score
     this.lastObstacleX = 0;
     this.lastEnemyX = 0;
+    this.lastEnemyY = 0;
+    this.lastEnemySpawnTime = 0;
+    this.lastSandwichY = 0;
+    this.lastSandwichSpawnTime = 0;
     this.isGrounded = true;
     this.jumpCount = 0;
     this.hasDoubleJumped = false;
@@ -347,16 +356,28 @@ export default class Game extends Phaser.Scene {
     // Create group for arrow indicators
     this.arrowIndicators = this.add.group();
     
-    // Start spawning enemies with a delay to give player time
-    this.time.delayedCall(5000, () => {
+    // Start spawning enemies with a longer delay to give player time (easier start)
+    this.time.delayedCall(12000, () => {
       console.log('[DEBUG ENEMY SYSTEM] Starting enemy spawning...');
-      const enemyTimer = this.time.addEvent({
-        delay: 2500, // Spawn enemies more frequently
+      this.enemyTimer = this.time.addEvent({
+        delay: 5000, // Start with enemies spawning every 5 seconds
         callback: this.spawnEnemy,
         callbackScope: this,
         loop: true
       });
-      console.log('[DEBUG ENEMY SYSTEM] Enemy timer created with delay: 2500ms');
+      console.log('[DEBUG ENEMY SYSTEM] Enemy timer created with delay: 5000ms');
+    });
+    
+    // Update enemy spawn rate based on difficulty every 30 seconds
+    this.time.addEvent({
+      delay: 30000,
+      callback: () => {
+        const gameTime = this.time.now - this.gameStartTime;
+        const difficulty = this.getDifficulty(gameTime);
+        this.updateEnemySpawnRate(difficulty);
+      },
+      callbackScope: this,
+      loop: true
     });
     
     console.log('[DEBUG ENEMY SYSTEM] Enemy system initialized (spawning starts in 5s)');
@@ -368,8 +389,8 @@ export default class Game extends Phaser.Scene {
     
     console.log(`[DEBUG ENEMY SPAWN] Called at gameTime=${gameTime}ms`);
     
-    // Don't spawn enemies in the first 3 seconds
-    if (gameTime < 3000) {
+    // Don't spawn enemies in the first 10 seconds (easier start)
+    if (gameTime < 10000) {
       console.log(`[DEBUG ENEMY SPAWN] Too early, waiting...`);
       return;
     }
@@ -405,6 +426,17 @@ export default class Game extends Phaser.Scene {
       // High enemy - requires double jump but not too high
       enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(320, 400);
     }
+    
+    // Check if this Y position conflicts with recent sandwich spawn
+    const timeSinceLastSandwich = (this.time.now - this.lastSandwichSpawnTime) / 1000;
+    if (timeSinceLastSandwich < 5 && Math.abs(enemyY - this.lastSandwichY) < 100) {
+      console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
+      return;
+    }
+    
+    // Store enemy spawn info
+    this.lastEnemyY = enemyY;
+    this.lastEnemySpawnTime = this.time.now;
     
     // Create arrow indicator on right side of screen
     // Since arrow uses scrollFactor(0), we need viewport coordinates, not world coordinates
@@ -819,10 +851,10 @@ export default class Game extends Phaser.Scene {
       this.obstacleTimer.remove();
     }
     
-    // Create new timer with adjusted delay
-    const baseDelay = 3000;
-    const difficultyReduction = difficulty * 200;
-    const newDelay = Math.max(baseDelay - difficultyReduction, 800); // Min 0.8 seconds
+    // Create new timer with adjusted delay - start easier and gradually increase
+    const baseDelay = 4500; // Start easier with 4.5 seconds
+    const difficultyReduction = difficulty * 250; // Increase rate more gradually
+    const newDelay = Math.max(baseDelay - difficultyReduction, 1200); // Min 1.2 seconds (not as intense)
     
     this.obstacleTimer = this.time.addEvent({
       delay: newDelay,
@@ -830,6 +862,27 @@ export default class Game extends Phaser.Scene {
       callbackScope: this,
       loop: true
     });
+  }
+  
+  updateEnemySpawnRate(difficulty: number) {
+    // Update enemy spawn rate based on difficulty
+    if (this.enemyTimer) {
+      this.enemyTimer.remove();
+    }
+    
+    // Start with 5 second delay, reduce by 300ms per difficulty level
+    const baseDelay = 5000;
+    const difficultyReduction = difficulty * 300;
+    const newDelay = Math.max(baseDelay - difficultyReduction, 2000); // Min 2 seconds
+    
+    this.enemyTimer = this.time.addEvent({
+      delay: newDelay,
+      callback: this.spawnEnemy,
+      callbackScope: this,
+      loop: true
+    });
+    
+    console.log(`[DEBUG ENEMY SYSTEM] Updated enemy spawn rate to ${newDelay}ms for difficulty ${difficulty}`);
   }
 
   gameOver() {
@@ -1071,6 +1124,17 @@ export default class Game extends Phaser.Scene {
     // Calculate initial spawn distance
     const spawnDistance = Phaser.Math.Between(800, 1200);
     const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
+    
+    // Check if this Y position conflicts with recent enemy spawn
+    const timeSinceLastEnemy = (this.time.now - this.lastEnemySpawnTime) / 1000;
+    if (timeSinceLastEnemy < 5 && Math.abs(spawnY - this.lastEnemyY) < 100) {
+      console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
+      return;
+    }
+    
+    // Store sandwich spawn info
+    this.lastSandwichY = spawnY;
+    this.lastSandwichSpawnTime = this.time.now;
     
     // Create arrow warning indicator for sandwich using custom sandwich arrow
     // Move arrow slightly left (from 590 to 580)
