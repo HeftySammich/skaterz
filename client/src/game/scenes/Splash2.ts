@@ -4,18 +4,15 @@ export class Splash2 extends Phaser.Scene {
   }
 
   create() {
-    // Second splash with BUILT BY SLIME image
+    // Warning skull splash (first time)
     this.cameras.main.setBackgroundColor('#000000');
     
-    // Add the BUILT BY SLIME image, properly centered on screen
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
     
-    const slimeImage = this.add.image(centerX, centerY, 'slime_splash');
-    slimeImage.setOrigin(0.5, 0.5);
-    
-    // Scale the image to fit nicely on screen (adjust as needed)
-    slimeImage.setScale(0.5);
+    const warningSkull = this.add.image(centerX, centerY, 'warning_skull');
+    warningSkull.setOrigin(0.5, 0.5);
+    warningSkull.setScale(0.8);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {

@@ -14,9 +14,13 @@ export default class GameOver extends Phaser.Scene {
   }
 
   create() {
-    // Dark overlay
+    // Add graffiti background
+    const bg = this.add.image(320, 480, 'graffiti_bg');
+    bg.setDisplaySize(640, 960);
+    
+    // Dark overlay over background
     const overlay = this.add.graphics();
-    overlay.fillStyle(0x000000, 0.8);
+    overlay.fillStyle(0x000000, 0.5);
     overlay.fillRect(0, 0, 640, 960);
 
     // Game Over text

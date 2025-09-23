@@ -17,7 +17,10 @@ export default class CharacterSelect extends Phaser.Scene {
 
   create() {
     const cam = this.cameras.main;
-    this.cameras.main.setBackgroundColor('#1a1a2e');
+    
+    // Add graffiti background
+    const bg = this.add.image(cam.centerX, cam.centerY, 'graffiti_bg');
+    bg.setDisplaySize(cam.width, cam.height);
     
     // Title
     this.add.text(cam.centerX, 100, 'SELECT CHARACTER', {

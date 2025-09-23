@@ -12,38 +12,45 @@ export class OptionsMenu extends Phaser.Scene {
   }
 
   create() {
-    // Options background
-    this.cameras.main.setBackgroundColor('#1f3d6e');
+    // Add graffiti background
+    const bg = this.add.image(320, 480, 'graffiti_bg');
+    bg.setDisplaySize(640, 960);
     
-    // Title (GBA screen is 240x160)
-    this.add.text(120, 35, 'OPTIONS', {
-      fontSize: '12px',
+    // Title
+    this.add.text(320, 200, 'OPTIONS', {
+      fontSize: '32px',
       color: '#ffecb3',
       fontFamily: '"Press Start 2P", monospace',
-      align: 'center'
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 4
     }).setOrigin(0.5);
 
     // Placeholder content
-    this.add.text(120, 70, 'OPTIONS MENU', {
-      fontSize: '8px',
+    this.add.text(320, 350, 'OPTIONS MENU', {
+      fontSize: '24px',
       color: '#b9c0cf',
       fontFamily: '"Press Start 2P", monospace',
-      align: 'center'
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 3
     }).setOrigin(0.5);
 
-    this.add.text(120, 90, '(COMING SOON)', {
-      fontSize: '6px',
+    this.add.text(320, 450, '(COMING SOON)', {
+      fontSize: '18px',
       color: '#646c7a',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center'
     }).setOrigin(0.5);
 
     // Back instruction
-    const backText = this.add.text(120, 125, 'PRESS ESC TO GO BACK', {
-      fontSize: '6px',
+    const backText = this.add.text(320, 700, 'PRESS ESC TO GO BACK', {
+      fontSize: '16px',
       color: '#e2e28e',
       fontFamily: '"Press Start 2P", monospace',
-      align: 'center'
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 2
     }).setOrigin(0.5);
 
     // Set up input

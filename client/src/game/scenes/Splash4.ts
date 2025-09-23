@@ -1,22 +1,22 @@
-export class Splash1 extends Phaser.Scene {
+export class Splash4 extends Phaser.Scene {
   constructor() {
-    super({ key: 'Splash1' });
+    super({ key: 'Splash4' });
   }
 
   create() {
-    // Soul Arcade Advance splash
+    // Built by slime splash
     this.cameras.main.setBackgroundColor('#000000');
     
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
     
-    const soulArcade = this.add.image(centerX, centerY, 'soul_arcade');
-    soulArcade.setOrigin(0.5, 0.5);
-    soulArcade.setScale(0.8);
+    const slimeImage = this.add.image(centerX, centerY, 'slime_splash');
+    slimeImage.setOrigin(0.5, 0.5);
+    slimeImage.setScale(0.5);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {
-      this.scene.start('Splash2');
+      this.scene.start('Splash5');
     });
   }
 }
