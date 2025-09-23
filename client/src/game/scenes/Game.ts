@@ -1016,11 +1016,13 @@ export default class Game extends Phaser.Scene {
   }
   
   spawnSandwich() {
-    const spawnX = this.player.x + Phaser.Math.Between(800, 1200);
+    // Calculate initial spawn distance
+    const spawnDistance = Phaser.Math.Between(800, 1200);
     const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
     
     // Create arrow warning indicator for sandwich using custom sandwich arrow
-    const arrow = this.arrowIndicators.create(590, spawnY, 'sandwich_arrow') as Phaser.GameObjects.Sprite;
+    // Move arrow slightly left (from 590 to 580)
+    const arrow = this.arrowIndicators.create(580, spawnY, 'sandwich_arrow') as Phaser.GameObjects.Sprite;
     arrow.setScale(0.15);
     arrow.setDepth(102); // Above UI
     arrow.setScrollFactor(0); // Keep fixed on screen
@@ -1034,13 +1036,17 @@ export default class Game extends Phaser.Scene {
       repeat: -1
     });
     
-    console.log(`[DEBUG SANDWICH] Arrow indicator shown at Y=${spawnY}, sandwich will spawn at X=${spawnX}`);
+    console.log(`[DEBUG SANDWICH] Arrow indicator shown at Y=${spawnY}, sandwich will spawn in 2 seconds`);
     
     // Spawn sandwich after 2 second warning
     this.time.delayedCall(2000, () => {
       arrow.destroy();
       
-      const sandwich = this.sandwiches.create(spawnX, spawnY, 'sandwich');
+      // Recalculate spawn position based on current player position
+      // Account for the 2 second delay - player moves at 380 pixels/second
+      const adjustedSpawnX = this.player.x + spawnDistance;
+      
+      const sandwich = this.sandwiches.create(adjustedSpawnX, spawnY, 'sandwich');
       sandwich.setScale(0.12); // Scale down the sandwich
       sandwich.setDepth(10);
       
@@ -1054,7 +1060,7 @@ export default class Game extends Phaser.Scene {
         repeat: -1
       });
       
-      console.log(`Sandwich spawned at (${spawnX}, ${spawnY})`);  
+      console.log(`Sandwich spawned at (${adjustedSpawnX}, ${spawnY}) - player at ${this.player.x}`);  
     });
   }
   
