@@ -198,6 +198,50 @@ export default class Game extends Phaser.Scene {
     // Initialize game timing
     this.gameStartTime = this.time.now;
     
+    // Create tutorial instructions at the bottom of the screen
+    const tutorialContainer = this.add.container(320, 800);
+    tutorialContainer.setScrollFactor(0);
+    tutorialContainer.setDepth(110);
+    
+    // Background for tutorial
+    const tutorialBg = this.add.graphics();
+    tutorialBg.fillStyle(0x000000, 0.8);
+    tutorialBg.fillRoundedRect(-300, -60, 600, 120, 10);
+    tutorialContainer.add(tutorialBg);
+    
+    // Tutorial text
+    const line1 = this.add.text(0, -30, 'TAP TO JUMP', {
+      fontSize: '16px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#00ff00'
+    }).setOrigin(0.5);
+    
+    const line2 = this.add.text(0, 0, 'TAP AGAIN FOR DOUBLE JUMP', {
+      fontSize: '16px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#00ffff'
+    }).setOrigin(0.5);
+    
+    const line3 = this.add.text(0, 30, 'SWIPE UP FOR TRICK', {
+      fontSize: '16px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#ffff00'
+    }).setOrigin(0.5);
+    
+    tutorialContainer.add([line1, line2, line3]);
+    
+    // Fade out the tutorial after 5 seconds
+    this.time.delayedCall(5000, () => {
+      this.tweens.add({
+        targets: tutorialContainer,
+        alpha: 0,
+        duration: 1000,
+        onComplete: () => {
+          tutorialContainer.destroy();
+        }
+      });
+    });
+    
     // Add position tracking every second for debugging
     this.time.addEvent({
       delay: 1000,
@@ -598,7 +642,7 @@ export default class Game extends Phaser.Scene {
 
     // Create score display
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
-      fontSize: '16px',
+      fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
     });
@@ -631,7 +675,7 @@ export default class Game extends Phaser.Scene {
     
     // Add health label
     this.healthText = this.add.text(50, 88, 'HEALTH', {
-      fontSize: '10px',
+      fontSize: '14px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ff4444',
       stroke: '#000000',
@@ -640,7 +684,7 @@ export default class Game extends Phaser.Scene {
     
     // Add stamina label (now below health)
     this.add.text(50, 148, 'STAMINA', {
-      fontSize: '10px',
+      fontSize: '14px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffffff',
       stroke: '#000000',
@@ -654,7 +698,7 @@ export default class Game extends Phaser.Scene {
     this.starIcon.setScrollFactor(0);
     
     this.starText = this.add.text(570, 50, '0', {
-      fontSize: '14px',
+      fontSize: '18px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
       stroke: '#000000',
