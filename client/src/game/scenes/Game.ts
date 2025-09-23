@@ -198,32 +198,32 @@ export default class Game extends Phaser.Scene {
     // Initialize game timing
     this.gameStartTime = this.time.now;
     
-    // Create tutorial instructions at the bottom of the screen
-    const tutorialContainer = this.add.container(320, 800);
+    // Create tutorial instructions in the middle of the screen
+    const tutorialContainer = this.add.container(320, 480);
     tutorialContainer.setScrollFactor(0);
     tutorialContainer.setDepth(110);
     
     // Background for tutorial
     const tutorialBg = this.add.graphics();
     tutorialBg.fillStyle(0x000000, 0.8);
-    tutorialBg.fillRoundedRect(-300, -60, 600, 120, 10);
+    tutorialBg.fillRoundedRect(-320, -70, 640, 140, 10);
     tutorialContainer.add(tutorialBg);
     
     // Tutorial text
-    const line1 = this.add.text(0, -30, 'TAP TO JUMP', {
-      fontSize: '16px',
+    const line1 = this.add.text(0, -35, 'TAP TO JUMP', {
+      fontSize: '20px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#00ff00'
     }).setOrigin(0.5);
     
     const line2 = this.add.text(0, 0, 'TAP AGAIN FOR DOUBLE JUMP', {
-      fontSize: '16px',
+      fontSize: '20px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#00ffff'
     }).setOrigin(0.5);
     
-    const line3 = this.add.text(0, 30, 'SWIPE UP FOR TRICK', {
-      fontSize: '16px',
+    const line3 = this.add.text(0, 35, 'SWIPE UP FOR TRICK', {
+      fontSize: '20px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00'
     }).setOrigin(0.5);
@@ -697,7 +697,7 @@ export default class Game extends Phaser.Scene {
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(570, 50, '0', {
+    this.starText = this.add.text(590, 50, '0', {
       fontSize: '18px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
