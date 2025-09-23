@@ -69,7 +69,7 @@ export default class Game extends Phaser.Scene {
   
   // Background tiles for infinite scrolling
   private backgroundTiles: Phaser.GameObjects.Image[] = [];
-  private backgroundWidth = 1408; // 1280 * 1.1
+  private backgroundWidth = 1280; // Original width without scaling
   
   // Parallax background layers
   private farBackground!: Phaser.GameObjects.TileSprite;  // Farthest back (red gradient)
@@ -249,8 +249,8 @@ export default class Game extends Phaser.Scene {
         const tile = scene.add.image(startX + (i * this.backgroundWidth), 960, 'city_background')
           .setOrigin(0.5, 1)
           .setScrollFactor(1.0)
-          .setDepth(3)
-          .setScale(1.1, 1.1);
+          .setDepth(3);
+        // No scaling - show tiles at original size to preserve gaps
         this.backgroundTiles.push(tile);
       }
 
@@ -1195,8 +1195,8 @@ export default class Game extends Phaser.Scene {
         const newTile = this.add.image(newX, 960, 'city_background')
           .setOrigin(0.5, 1)
           .setScrollFactor(1.0)
-          .setDepth(3)
-          .setScale(1.1, 1.1);
+          .setDepth(3);
+        // No scaling - show tiles at original size to preserve gaps
         this.backgroundTiles.push(newTile);
         rightmostTile = newTile;
       }
