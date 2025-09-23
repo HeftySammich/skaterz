@@ -12,7 +12,7 @@ export class Splash4 extends Phaser.Scene {
     
     const slimeImage = this.add.image(centerX, centerY, 'slime_splash');
     slimeImage.setOrigin(0.5, 0.5);
-    slimeImage.setScale(0.5);
+    slimeImage.setScale(0.3);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {

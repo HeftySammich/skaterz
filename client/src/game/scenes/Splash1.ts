@@ -12,7 +12,7 @@ export class Splash1 extends Phaser.Scene {
     
     const soulArcade = this.add.image(centerX, centerY, 'soul_arcade');
     soulArcade.setOrigin(0.5, 0.5);
-    soulArcade.setScale(0.8);
+    soulArcade.setScale(0.4);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {

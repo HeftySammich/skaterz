@@ -12,7 +12,7 @@ export class Splash2 extends Phaser.Scene {
     
     const warningSkull = this.add.image(centerX, centerY, 'warning_skull');
     warningSkull.setOrigin(0.5, 0.5);
-    warningSkull.setScale(0.8);
+    warningSkull.setScale(0.35);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {

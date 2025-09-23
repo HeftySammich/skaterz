@@ -12,7 +12,7 @@ export class Splash5 extends Phaser.Scene {
     
     const starfallPresents = this.add.image(centerX, centerY, 'starfall_presents');
     starfallPresents.setOrigin(0.5, 0.5);
-    starfallPresents.setScale(0.8);
+    starfallPresents.setScale(0.4);
 
     // Auto-advance after 2 seconds
     this.time.delayedCall(2000, () => {
