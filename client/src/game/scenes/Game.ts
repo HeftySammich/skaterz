@@ -72,6 +72,7 @@ export default class Game extends Phaser.Scene {
   // Background tiles for infinite scrolling
   private backgroundTiles: Phaser.GameObjects.Image[] = [];
   private backgroundWidth = 1408; // 1280 * 1.1
+  private redSkyBg: Phaser.GameObjects.TileSprite | null = null; // Red sky background reference
   
   // Physics constants
   private readonly JUMP_VELOCITY = -1600;  // Higher first jump
@@ -218,10 +219,12 @@ export default class Game extends Phaser.Scene {
     
     const createSeamlessWorld = (scene: any) => {
       // Add red sky background first (behind everything else)
-      const redSkyBg = scene.add.tileSprite(0, 0, scene.cameras.main.width * 2, scene.cameras.main.height, 'red_sky_bg')
+      // Use the actual texture size for proper repeating
+      this.redSkyBg = scene.add.tileSprite(0, 0, 1920, 960, 'red_sky_bg')
         .setOrigin(0, 0)
-        .setScrollFactor(0.3) // Slow parallax for sky
-        .setDepth(0); // Behind everything
+        .setScrollFactor(0) // Fixed to viewport
+        .setDepth(0) // Behind everything
+        .setScale(0.5, 0.5); // Scale down to make it smaller
       
       // Create initial background tiles directly without placeholder
       const startX = 320;
@@ -1281,6 +1284,12 @@ export default class Game extends Phaser.Scene {
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
     if (Math.floor(this.time.now / 1000) % 5 === 0 && this.time.now % 1000 < 16) {
       console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Stamina:${Math.round(this.stamina)}`);
+    }
+    
+    // Update red sky background scrolling for parallax effect
+    if (this.redSkyBg) {
+      // Scroll the tile position based on camera position for infinite repeating
+      this.redSkyBg.tilePositionX = this.cameras.main.scrollX * 0.3; // Slower scrolling for parallax
     }
     
     // Manage infinite background scrolling
