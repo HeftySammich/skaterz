@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { setupControls } from '../systems/controls';
 // All visual asset imports removed - clean slate for new assets
 
 // Define ground level constants - skater runs higher than obstacles sit
@@ -8,6 +9,7 @@ const OBSTACLE_GROUND_Y = 956;  // Where obstacles sit on the street
 export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private controls!: ReturnType<typeof setupControls>;
   private world!: any;
   private jumpParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
   private trickParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -74,6 +76,7 @@ export default class Game extends Phaser.Scene {
   // Physics constants
   private readonly JUMP_VELOCITY = -1600;  // Higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1350; // Lower double jump
+  private readonly SWIPE_TRICK_VELOCITY = -800; // Small jump for swipe trick
   private readonly GRAVITY = 4800; // Less floaty, more responsive
   private readonly FLOAT_GRAVITY = 3600; // Less float during tricks
 
@@ -125,11 +128,7 @@ export default class Game extends Phaser.Scene {
     
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
-    
-    // Add touch/click controls for mobile
-    this.input.on('pointerdown', () => {
-      this.performJump();
-    });
+    this.controls = setupControls(this);
     
     // No ground collision - handle landing through position checks only to avoid invisible floors
 
@@ -914,6 +913,50 @@ export default class Game extends Phaser.Scene {
     }
   }
   
+  performTrick() {
+    console.log(`Trick attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, stamina=${this.stamina}`);
+    
+    // Can perform trick if not on ground and has stamina
+    if (!this.isGrounded && this.stamina >= 15) {
+      // Apply small upward boost
+      this.player.setVelocityY(this.SWIPE_TRICK_VELOCITY);
+      
+      // Set trick texture (will be replaced with animation later)
+      this.player.setTexture('skater_trick');
+      this.trickActive = true;
+      
+      // Consume less stamina for tricks
+      this.stamina = Math.max(0, this.stamina - 15);
+      this.updateStaminaBar();
+      
+      // Add score for performing trick
+      this.score += 10;
+      this.scoreText.setText('Score: ' + this.score);
+      
+      // Trigger golden trick particles
+      this.trickParticles.setPosition(this.player.x, this.player.y);
+      this.trickParticles.start();
+      
+      // Slightly reduce gravity for a moment
+      this.physics.world.gravity.y = this.FLOAT_GRAVITY;
+      
+      // Return to normal gravity after trick
+      this.time.delayedCall(400, () => {
+        this.physics.world.gravity.y = this.GRAVITY;
+        this.trickActive = false;
+        this.trickParticles.stop();
+      });
+      
+      console.log('Swipe trick performed!');
+    } else {
+      if (this.isGrounded) {
+        console.log('Trick blocked - must be in air');
+      } else if (this.stamina < 15) {
+        console.log('Trick blocked - not enough stamina');
+      }
+    }
+  }
+  
   updateStaminaBar() {
     this.staminaBar.clear();
     
@@ -1267,8 +1310,14 @@ export default class Game extends Phaser.Scene {
     
     // Handle jumping with simple state check
     if ((Phaser.Input.Keyboard.JustDown(this.cursors.space!) || 
-         Phaser.Input.Keyboard.JustDown(this.cursors.up!))) {
+         Phaser.Input.Keyboard.JustDown(this.cursors.up!)) || 
+         this.controls.justTapped()) {
       this.performJump();
+    }
+    
+    // Handle swipe-up for tricks
+    if (this.controls.justSwipedUp()) {
+      this.performTrick();
     }
     
     // Update world scrolling for infinite background
