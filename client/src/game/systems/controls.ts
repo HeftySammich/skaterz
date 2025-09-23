@@ -22,7 +22,7 @@ export function setupControls(scene: Phaser.Scene) {
   // Setup touch/click events with swipe detection
   scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
     const now = scene.time.now;
-    if (now - lastInput > 200) { // Debounce
+    if (now - lastInput > 50) { // Shorter debounce for more responsive controls
       // Record start position for swipe detection
       startX = pointer.x;
       startY = pointer.y;
@@ -55,11 +55,11 @@ export function setupControls(scene: Phaser.Scene) {
       lastInput = now;
       console.log('SWIPE UP detected!');
       
-    } else if (distance < 20 && deltaTime < 200) { 
-      // It's a tap (minimal movement and quick)
+    } else if (distance < 20) { 
+      // It's a tap (minimal movement, any press duration)
       justTapped = true;
       lastInput = now;
-      console.log('TAP detected');
+      console.log('TAP detected - duration:', deltaTime, 'ms');
     }
     
     isPointerDown = false;
