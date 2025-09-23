@@ -893,6 +893,7 @@ export default class Game extends Phaser.Scene {
     // Stop all timers to prevent them from running after game over
     if (this.obstacleTimer) this.obstacleTimer.remove();
     if (this.sandwichTimer) this.sandwichTimer.remove();
+    if (this.enemyTimer) this.enemyTimer.remove();
     
     // Transition to GameOver scene with score and time
     this.scene.start('GameOver', { score: this.score, time: survivalTime });
