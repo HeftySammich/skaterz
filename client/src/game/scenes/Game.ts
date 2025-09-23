@@ -75,6 +75,11 @@ export default class Game extends Phaser.Scene {
   private lastStarPatternX = 0;
   private sandwichTimer!: Phaser.Time.TimerEvent;
   
+  // Life system
+  private lives = 3; // Start with 3 lives
+  private lifeHearts: Phaser.GameObjects.Image[] = [];
+  private starLifeThreshold = 100; // Stars needed for extra life
+  
   // Background tiles for infinite scrolling
   private backgroundTiles: Phaser.GameObjects.Image[] = [];
   private backgroundWidth = 1408; // 1280 * 1.1
@@ -111,6 +116,8 @@ export default class Game extends Phaser.Scene {
     this.hasDoubleJumped = false;
     this.trickActive = false;
     this.backgroundTiles = []; // Clear background tiles
+    this.stars = 0; // Reset stars
+    this.lives = 3; // Reset lives
     
     console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
     
@@ -697,13 +704,16 @@ export default class Game extends Phaser.Scene {
       strokeThickness: 4
     }).setDepth(100).setScrollFactor(0)
     
-    // Create star counter UI in top right with new icon
-    this.starIcon = this.add.image(540, 50, 'star_counter_icon');
+    // Create life counter above star counter
+    this.createLifeDisplay();
+    
+    // Create star counter UI below life counter
+    this.starIcon = this.add.image(540, 85, 'star_counter_icon');
     this.starIcon.setScale(0.08);
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(590, 50, '0', {
+    this.starText = this.add.text(590, 85, '0', {
       fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
@@ -938,15 +948,27 @@ export default class Game extends Phaser.Scene {
   gameOver() {
     const survivalTime = this.time.now - this.gameStartTime;
     console.log(`[DEBUG GAME OVER] Final Score: ${this.score}, Survival Time: ${survivalTime}ms`);
-    console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Invulnerable: ${this.invulnerable}`);
+    console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Lives remaining: ${this.lives}`);
     
-    // Stop all timers to prevent them from running after game over
-    if (this.obstacleTimer) this.obstacleTimer.remove();
-    if (this.sandwichTimer) this.sandwichTimer.remove();
-    if (this.enemyTimer) this.enemyTimer.remove();
-    
-    // Transition to GameOver scene with score and time
-    this.scene.start('GameOver', { score: this.score, time: survivalTime });
+    // Check if player has lives left
+    if (this.lives > 0) {
+      // Use a life and respawn
+      this.lives--;
+      this.updateLifeDisplay();
+      this.respawnPlayer();
+      console.log(`[RESPAWN] Using life, ${this.lives} lives remaining`);
+    } else {
+      // No lives left - actual game over
+      console.log('[GAME OVER] No lives remaining - ending game');
+      
+      // Stop all timers to prevent them from running after game over
+      if (this.obstacleTimer) this.obstacleTimer.remove();
+      if (this.sandwichTimer) this.sandwichTimer.remove();
+      if (this.enemyTimer) this.enemyTimer.remove();
+      
+      // Transition to GameOver scene with score and time
+      this.scene.start('GameOver', { score: this.score, time: survivalTime });
+    }
   }
 
   handleLanding() {
@@ -1326,6 +1348,34 @@ export default class Game extends Phaser.Scene {
     this.stars += amount;
     this.starText.setText(this.stars.toString());
     
+    // Check if player earned an extra life (every 100 stars)
+    if (this.stars >= this.starLifeThreshold) {
+      this.stars -= this.starLifeThreshold; // Reset star counter
+      this.starText.setText(this.stars.toString());
+      this.lives++; // Add extra life
+      this.updateLifeDisplay();
+      
+      // Show "1UP" message
+      const oneUpText = this.add.text(this.player.x, this.player.y - 100, '1UP!', {
+        fontSize: '32px',
+        fontFamily: '"Press Start 2P", monospace',
+        color: '#00ff00',
+        stroke: '#000000',
+        strokeThickness: 4
+      });
+      oneUpText.setDepth(20);
+      
+      this.tweens.add({
+        targets: oneUpText,
+        y: oneUpText.y - 80,
+        alpha: 0,
+        duration: 1500,
+        onComplete: () => oneUpText.destroy()
+      });
+      
+      console.log('[EXTRA LIFE] Earned 1UP! Lives: ' + this.lives);
+    }
+    
     // Add a shine effect to the star counter instead of scaling
     const shineEffect = this.add.graphics();
     shineEffect.x = this.starIcon.x;
@@ -1392,6 +1442,82 @@ export default class Game extends Phaser.Scene {
         rightmostTile = newTile;
       }
     }
+  }
+
+  createLifeDisplay() {
+    // Clear any existing hearts
+    this.lifeHearts.forEach(heart => heart.destroy());
+    this.lifeHearts = [];
+    
+    // Create hearts for each life
+    for (let i = 0; i < this.lives; i++) {
+      const heart = this.add.image(470 + (i * 35), 45, 'heart');
+      heart.setScale(0.08);
+      heart.setDepth(100);
+      heart.setScrollFactor(0);
+      this.lifeHearts.push(heart);
+    }
+  }
+  
+  updateLifeDisplay() {
+    // Recreate the heart display with current lives
+    this.createLifeDisplay();
+  }
+  
+  respawnPlayer() {
+    // Reset player health and position
+    this.health = 100;
+    this.updateHealthBar();
+    this.stamina = 100;
+    this.updateStaminaBar();
+    
+    // Reset player state
+    this.gameOverTriggered = false;
+    this.invulnerable = true; // Give temporary invulnerability after respawn
+    this.player.clearTint();
+    this.player.y = PLAYER_GROUND_Y;
+    this.isGrounded = true;
+    this.jumpCount = 0;
+    this.hasDoubleJumped = false;
+    this.trickActive = false;
+    
+    // Clear nearby obstacles for safe respawn
+    const clearRadius = 800;
+    this.obstacles.children.entries.forEach((obstacle: any) => {
+      if (Math.abs(obstacle.x - this.player.x) < clearRadius) {
+        obstacle.destroy();
+      }
+    });
+    
+    // Clear nearby enemies
+    this.enemies.children.entries.forEach((enemy: any) => {
+      if (Math.abs(enemy.x - this.player.x) < clearRadius) {
+        enemy.destroy();
+      }
+    });
+    
+    // Flash effect to indicate respawn
+    let flashCount = 0;
+    const flashTimer = this.time.addEvent({
+      delay: 150,
+      callback: () => {
+        flashCount++;
+        if (flashCount % 2 === 0) {
+          this.player.setAlpha(1);
+        } else {
+          this.player.setAlpha(0.5);
+        }
+        
+        if (flashCount >= 12) {
+          this.player.setAlpha(1);
+          this.invulnerable = false;
+          flashTimer.remove();
+        }
+      },
+      loop: true
+    });
+    
+    console.log('[RESPAWN] Player respawned with full health');
   }
 
   update() {

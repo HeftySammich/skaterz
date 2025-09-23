@@ -29,6 +29,9 @@ export default class Preload extends Phaser.Scene {
     this.load.image('explosion', 'assets/explosion.png');
     this.load.image('arrow_indicator', 'assets/arrow_indicator.png');
     
+    // Load heart image for life system
+    this.load.image('heart', 'assets/heart.png');
+    
     // Load health pickup
     this.load.image('sandwich', 'assets/sandwich.png');
     
