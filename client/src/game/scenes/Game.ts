@@ -69,11 +69,7 @@ export default class Game extends Phaser.Scene {
   
   // Background tiles for infinite scrolling
   private backgroundTiles: Phaser.GameObjects.Image[] = [];
-  private backgroundWidth = 3072; // Actual width of the image (includes gaps)
-  
-  // Parallax background layers
-  private farBackground!: Phaser.GameObjects.TileSprite;  // Farthest back (red gradient)
-  private midBackground!: Phaser.GameObjects.TileSprite;  // Middle layer (city silhouette)
+  private backgroundWidth = 1408; // 1280 * 1.1
   
   // Physics constants
   private readonly JUMP_VELOCITY = -1600;  // Higher first jump
@@ -102,9 +98,6 @@ export default class Game extends Phaser.Scene {
     this.backgroundTiles = []; // Clear background tiles
     
     console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
-    
-    // Create parallax background layers FIRST (behind everything)
-    this.createParallaxBackgrounds();
     
     // Create seamless background world
     this.world = this.createSeamlessWorld();
@@ -215,24 +208,6 @@ export default class Game extends Phaser.Scene {
     console.log('Game scene loaded with enhanced zombie skater mechanics');
   }
 
-  createParallaxBackgrounds() {
-    // Create the farthest background layer (red gradient sky)
-    // Use full height for gradient to fill entire screen
-    this.farBackground = this.add.tileSprite(0, 0, 640, 960, 'bg_parallax_far')
-      .setOrigin(0, 0)
-      .setScrollFactor(0)  // Doesn't move with camera
-      .setDepth(0)  // Farthest back
-      .setDisplaySize(640, 960);  // Stretch to fill entire screen height
-    
-    // Create the middle background layer (city silhouette)
-    // Position the city skyline at horizon level
-    this.midBackground = this.add.tileSprite(0, 480, 640, 480, 'bg_parallax_mid')
-      .setOrigin(0, 0.5)  // Centered vertically at horizon
-      .setScrollFactor(0)  // Doesn't move with camera
-      .setDepth(1)  // In front of far background but behind main buildings
-      .setDisplaySize(640, 240);  // Scale to fit nicely in the scene
-  }
-
   createSeamlessWorld() {
     // Create the seamless world directly
     const { createSeamlessWorld } = this.loadSeamlessWorld();
@@ -249,8 +224,8 @@ export default class Game extends Phaser.Scene {
         const tile = scene.add.image(startX + (i * this.backgroundWidth), 960, 'city_background')
           .setOrigin(0.5, 1)
           .setScrollFactor(1.0)
-          .setDepth(3);
-        // No scaling - show tiles at original size to preserve gaps
+          .setDepth(1)
+          .setScale(1.1, 1.1);
         this.backgroundTiles.push(tile);
       }
 
@@ -1195,8 +1170,8 @@ export default class Game extends Phaser.Scene {
         const newTile = this.add.image(newX, 960, 'city_background')
           .setOrigin(0.5, 1)
           .setScrollFactor(1.0)
-          .setDepth(3);
-        // No scaling - show tiles at original size to preserve gaps
+          .setDepth(1)
+          .setScale(1.1, 1.1);
         this.backgroundTiles.push(newTile);
         rightmostTile = newTile;
       }
@@ -1204,15 +1179,6 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
-    if (this.gameOverTriggered) {
-      return;
-    }
-    
-    // Update parallax backgrounds based on camera scroll
-    const scrollX = this.cameras.main.scrollX;
-    this.farBackground.tilePositionX = scrollX * 0.15;  // Slowest parallax (0.15x speed)
-    this.midBackground.tilePositionX = scrollX * 0.3;   // Medium parallax (0.3x speed)
-    
     // Throttled debug logging to prevent stuttering (only log every 5 seconds)
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
     if (Math.floor(this.time.now / 1000) % 5 === 0 && this.time.now % 1000 < 16) {
