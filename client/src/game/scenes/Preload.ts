@@ -31,9 +31,18 @@ export default class Preload extends Phaser.Scene {
     
     // Load heart image for life system
     this.load.image('heart', 'assets/heart.png');
+    this.load.image('life_icon', 'assets/life_icon.png');
     
     // Load health pickup
     this.load.image('sandwich', 'assets/sandwich.png');
+    
+    // Load energy drink power-up
+    this.load.image('energy_drink', 'assets/energy_drink.png');
+    this.load.image('energy_warning', 'assets/energy_warning.png');
+    this.load.image('maximum_text', 'assets/maximum_text.png');
+    
+    // Load game over background
+    this.load.image('game_over_bg', 'assets/game_over_bg.png');
     
     // Load star assets
     this.load.image('star_icon', 'assets/star_icon.png');
@@ -60,17 +69,7 @@ export default class Preload extends Phaser.Scene {
     // Load menu music
     this.load.audio('menu_music', 'assets/menu_music.m4a');
     
-    const loadingText = this.make.text({
-      x: 320,
-      y: 480,
-      text: 'Loading zombie skater...',
-      style: {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: '24px',
-        color: '#ffffff'
-      }
-    });
-    loadingText.setOrigin(0.5, 0.5);
+    // Loading silently without text
   }
 
   create() {

@@ -66,6 +66,14 @@ export default class Game extends Phaser.Scene {
   
   // Sandwiches (health pickups)
   private sandwiches!: Phaser.GameObjects.Group;
+  private sandwichesCollected = 0;
+  
+  // Energy drinks (stamina power-ups)
+  private energyDrinks!: Phaser.GameObjects.Group;
+  private cansCollected = 0;
+  private energyDrinkTimer!: Phaser.Time.TimerEvent;
+  private staminaBoostActive = false;
+  private staminaBoostTimer?: Phaser.Time.TimerEvent;
   
   // Star collection system
   private stars = 0;
@@ -77,7 +85,8 @@ export default class Game extends Phaser.Scene {
   
   // Life system
   private lives = 3; // Start with 3 lives
-  private lifeHearts: Phaser.GameObjects.Image[] = [];
+  private lifeIcon!: Phaser.GameObjects.Image;
+  private lifeText!: Phaser.GameObjects.Text;
   private starLifeThreshold = 100; // Stars needed for extra life
   
   // Background tiles for infinite scrolling
@@ -118,6 +127,9 @@ export default class Game extends Phaser.Scene {
     this.backgroundTiles = []; // Clear background tiles
     this.stars = 0; // Reset stars
     this.lives = 3; // Reset lives
+    this.sandwichesCollected = 0; // Reset sandwich counter
+    this.cansCollected = 0; // Reset can counter
+    this.staminaBoostActive = false; // Reset stamina boost
     
     console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
     
@@ -141,6 +153,9 @@ export default class Game extends Phaser.Scene {
     
     // Create sandwich system (health pickups)
     this.createSandwichSystem();
+    
+    // Create energy drink system (stamina power-ups)
+    this.createEnergyDrinkSystem();
     
     // Create star collection system
     this.createStarSystem();
@@ -188,6 +203,11 @@ export default class Game extends Phaser.Scene {
     // Add collision detection for sandwiches (health pickups)
     this.physics.add.overlap(this.player, this.sandwiches, (player: any, sandwich: any) => {
       this.collectSandwich(sandwich);
+    }, undefined, this);
+    
+    // Add collision detection for energy drinks (stamina power-ups)
+    this.physics.add.overlap(this.player, this.energyDrinks, (player: any, energyDrink: any) => {
+      this.collectEnergyDrink(energyDrink);
     }, undefined, this);
     
     console.log('Collision detection set up between player and obstacles/enemies');
@@ -966,8 +986,13 @@ export default class Game extends Phaser.Scene {
       if (this.sandwichTimer) this.sandwichTimer.remove();
       if (this.enemyTimer) this.enemyTimer.remove();
       
-      // Transition to GameOver scene with score and time
-      this.scene.start('GameOver', { score: this.score, time: survivalTime });
+      // Transition to GameOver scene with score, time, and collectibles
+      this.scene.start('GameOver', { 
+        score: this.score, 
+        time: survivalTime,
+        sandwiches: this.sandwichesCollected,
+        cans: this.cansCollected
+      });
     }
   }
 
@@ -1001,8 +1026,10 @@ export default class Game extends Phaser.Scene {
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
       
-      // Consume stamina
-      this.stamina = Math.max(0, this.stamina - this.staminaCost);
+      // Consume stamina (unless boost is active)
+      if (!this.staminaBoostActive) {
+        this.stamina = Math.max(0, this.stamina - this.staminaCost);
+      }
       this.updateStaminaBar();
       
       // Trigger jump particles
@@ -1020,8 +1047,10 @@ export default class Game extends Phaser.Scene {
       this.trickActive = true;
       this.jumpCount = 2;
       
-      // Consume stamina
-      this.stamina = Math.max(0, this.stamina - this.staminaCost);
+      // Consume stamina (unless boost is active)
+      if (!this.staminaBoostActive) {
+        this.stamina = Math.max(0, this.stamina - this.staminaCost);
+      }
       this.updateStaminaBar();
       
       // Trigger trick particles - continuous golden trail
@@ -1060,8 +1089,10 @@ export default class Game extends Phaser.Scene {
       this.player.setTexture('skater_trick');
       this.trickActive = true;
       
-      // Consume less stamina for tricks
-      this.stamina = Math.max(0, this.stamina - 15);
+      // Consume less stamina for tricks (unless boost is active)
+      if (!this.staminaBoostActive) {
+        this.stamina = Math.max(0, this.stamina - 15);
+      }
       this.updateStaminaBar();
       
       // Add score for performing trick
@@ -1095,16 +1126,28 @@ export default class Game extends Phaser.Scene {
   updateStaminaBar() {
     this.staminaBar.clear();
     
-    // Choose color based on stamina level
-    let color = 0x00ff00;  // Green
-    if (this.stamina < 33.33) {
-      color = 0xff0000;  // Red
-    } else if (this.stamina < 66.66) {
-      color = 0xffaa00;  // Orange
+    let color = 0x00ff00;  // Default green
+    let flashAlpha = 1;
+    
+    // If stamina boost is active, flash between neon blue and magenta
+    if (this.staminaBoostActive) {
+      // Use time to determine which color to show
+      const time = this.time.now;
+      const flashSpeed = 200; // Flash every 200ms
+      const isBlue = Math.floor(time / flashSpeed) % 2 === 0;
+      color = isBlue ? 0x00ffff : 0xff00ff; // Neon blue or magenta
+      this.stamina = this.maxStamina; // Keep stamina at max during boost
+    } else {
+      // Normal color based on stamina level
+      if (this.stamina < 33.33) {
+        color = 0xff0000;  // Red
+      } else if (this.stamina < 66.66) {
+        color = 0xffaa00;  // Orange
+      }
     }
     
     // Draw stamina bar (now at y=172)
-    this.staminaBar.fillStyle(color, 1);
+    this.staminaBar.fillStyle(color, flashAlpha);
     const barWidth = (this.stamina / this.maxStamina) * 200;
     this.staminaBar.fillRect(52, 172, barWidth, 20);
   }
@@ -1253,7 +1296,147 @@ export default class Game extends Phaser.Scene {
     });
   }
   
+  createEnergyDrinkSystem() {
+    // Create physics group for energy drinks
+    this.energyDrinks = this.physics.add.group({
+      allowGravity: false,
+      immovable: true
+    });
+    
+    // Start spawning energy drinks less frequently than sandwiches
+    this.energyDrinkTimer = this.time.addEvent({
+      delay: 30000, // Spawn every 30 seconds
+      callback: this.spawnEnergyDrink,
+      callbackScope: this,
+      loop: true
+    });
+    
+    // Spawn first energy drink after 25 seconds
+    this.time.delayedCall(25000, () => {
+      this.spawnEnergyDrink();
+    });
+  }
+  
+  spawnEnergyDrink() {
+    // Calculate initial spawn distance
+    const spawnDistance = Phaser.Math.Between(900, 1300);
+    const spawnY = Phaser.Math.Between(450, 650); // Float in the sky
+    
+    // Create arrow warning indicator for energy drink
+    const arrow = this.arrowIndicators.create(580, spawnY, 'energy_warning') as Phaser.GameObjects.Sprite;
+    arrow.setScale(0.15);
+    arrow.setDepth(102); // Above UI
+    arrow.setScrollFactor(0); // Keep fixed on screen
+    
+    // Flash the arrow for visibility
+    this.tweens.add({
+      targets: arrow,
+      alpha: { from: 1, to: 0.5 },
+      duration: 400,
+      yoyo: true,
+      repeat: -1
+    });
+    
+    console.log(`[DEBUG ENERGY DRINK] Arrow indicator shown at Y=${spawnY}, drink will spawn in 2 seconds`);
+    
+    // Spawn energy drink after 2 second warning
+    this.time.delayedCall(2000, () => {
+      arrow.destroy();
+      
+      // Recalculate spawn position based on current player position
+      const adjustedSpawnX = this.player.x + spawnDistance;
+      
+      const energyDrink = this.energyDrinks.create(adjustedSpawnX, spawnY, 'energy_drink');
+      energyDrink.setScale(0.12); // Scale down the energy drink
+      energyDrink.setDepth(10);
+      
+      // Add floating animation with shimmer effect
+      this.tweens.add({
+        targets: energyDrink,
+        y: spawnY - 20,
+        duration: 1500,
+        ease: 'Sine.inOut',
+        yoyo: true,
+        repeat: -1
+      });
+      
+      // Add shimmer effect
+      this.tweens.add({
+        targets: energyDrink,
+        alpha: { from: 0.8, to: 1 },
+        duration: 300,
+        yoyo: true,
+        repeat: -1
+      });
+      
+      console.log(`Energy drink spawned at (${adjustedSpawnX}, ${spawnY}) - player at ${this.player.x}`);
+    });
+  }
+  
+  collectEnergyDrink(energyDrink: any) {
+    // Increment can counter
+    this.cansCollected++;
+    
+    // Show MAXIMUM! text with shimmer effect
+    const maximumText = this.add.image(this.player.x, this.player.y - 100, 'maximum_text');
+    maximumText.setScale(0.5);
+    maximumText.setDepth(150);
+    
+    // Add shimmer effect to MAXIMUM! text
+    this.tweens.add({
+      targets: maximumText,
+      alpha: { from: 0.5, to: 1 },
+      scale: { from: 0.5, to: 0.7 },
+      duration: 200,
+      yoyo: true,
+      repeat: 2
+    });
+    
+    // Float up and fade out
+    this.tweens.add({
+      targets: maximumText,
+      y: maximumText.y - 150,
+      alpha: 0,
+      duration: 1500,
+      ease: 'Power2',
+      onComplete: () => {
+        maximumText.destroy();
+      }
+    });
+    
+    // Activate stamina boost
+    this.staminaBoostActive = true;
+    this.stamina = this.maxStamina; // Fill stamina to max
+    
+    // Cancel any existing boost timer
+    if (this.staminaBoostTimer) {
+      this.staminaBoostTimer.remove();
+    }
+    
+    // Set timer to deactivate boost after 5 seconds
+    this.staminaBoostTimer = this.time.delayedCall(5000, () => {
+      this.staminaBoostActive = false;
+      console.log('[ENERGY DRINK] Stamina boost expired');
+    });
+    
+    // Add score
+    this.score += 50;
+    this.scoreText.setText('Score: ' + this.score);
+    
+    // Play particle effect at drink location
+    this.jumpParticles.setPosition(energyDrink.x, energyDrink.y);
+    this.jumpParticles.explode(25);
+    
+    // Remove energy drink
+    energyDrink.destroy();
+    
+    console.log(`Energy drink collected! Stamina boost active for 5 seconds, Total: ${this.cansCollected}`);
+  }
+  
   collectSandwich(sandwich: any) {
+    // Increment sandwich counter
+    this.sandwichesCollected++;
+    
     // Heal player
     this.health = Math.min(this.maxHealth, this.health + 40);
     this.updateHealthBar();
@@ -1269,7 +1452,7 @@ export default class Game extends Phaser.Scene {
     // Remove sandwich
     sandwich.destroy();
     
-    console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}`);
+    console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}, Total: ${this.sandwichesCollected}`);
   }
   
   createStarSystem() {
@@ -1445,23 +1628,29 @@ export default class Game extends Phaser.Scene {
   }
 
   createLifeDisplay() {
-    // Clear any existing hearts
-    this.lifeHearts.forEach(heart => heart.destroy());
-    this.lifeHearts = [];
+    // Create life icon and text (like stars)
+    this.lifeIcon = this.add.image(470, 45, 'life_icon');
+    this.lifeIcon.setScale(0.08);
+    this.lifeIcon.setDepth(100);
+    this.lifeIcon.setScrollFactor(0);
     
-    // Create hearts for each life
-    for (let i = 0; i < this.lives; i++) {
-      const heart = this.add.image(470 + (i * 35), 45, 'heart');
-      heart.setScale(0.08);
-      heart.setDepth(100);
-      heart.setScrollFactor(0);
-      this.lifeHearts.push(heart);
-    }
+    this.lifeText = this.add.text(510, 45, this.lives.toString(), {
+      fontSize: '24px',
+      color: '#ffffff',
+      fontFamily: '"Press Start 2P", monospace',
+      stroke: '#000000',
+      strokeThickness: 4
+    });
+    this.lifeText.setOrigin(0, 0.5);
+    this.lifeText.setDepth(100);
+    this.lifeText.setScrollFactor(0);
   }
   
   updateLifeDisplay() {
-    // Recreate the heart display with current lives
-    this.createLifeDisplay();
+    // Update the life counter text
+    if (this.lifeText) {
+      this.lifeText.setText(this.lives.toString());
+    }
   }
   
   respawnPlayer() {
@@ -1536,11 +1725,11 @@ export default class Game extends Phaser.Scene {
     // Manage infinite background scrolling
     this.updateBackgroundTiles();
     
-    // Regenerate stamina slowly
-    if (this.stamina < this.maxStamina) {
+    // Regenerate stamina slowly (unless boost is active)
+    if (!this.staminaBoostActive && this.stamina < this.maxStamina) {
       this.stamina = Math.min(this.maxStamina, this.stamina + this.staminaRegen);
-      this.updateStaminaBar();
     }
+    this.updateStaminaBar(); // Always update to handle flashing during boost
     
     // Force movement by directly updating position since velocity isn't working
     // Apply speed multiplier for progressive difficulty
