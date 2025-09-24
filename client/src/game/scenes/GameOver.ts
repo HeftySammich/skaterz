@@ -306,26 +306,28 @@ export default class GameOver extends Phaser.Scene {
   
   setupMenuInteraction() {
     // Touch/click handling for menu options
-    this.playAgainText.setInteractive({ useHandCursor: true });
-    this.mainMenuText.setInteractive({ useHandCursor: true });
-    
-    this.playAgainText.on('pointerdown', () => {
-      this.scene.start('Game');
-    });
-    
-    this.playAgainText.on('pointerover', () => {
-      this.selectedOption = 0;
-      this.updateSelector();
-    });
-    
-    this.mainMenuText.on('pointerdown', () => {
-      this.scene.start('MainMenu');
-    });
-    
-    this.mainMenuText.on('pointerover', () => {
-      this.selectedOption = 1;
-      this.updateSelector();
-    });
+    if (this.playAgainText && this.mainMenuText) {
+      this.playAgainText.setInteractive({ useHandCursor: true });
+      this.mainMenuText.setInteractive({ useHandCursor: true });
+      
+      this.playAgainText.on('pointerdown', () => {
+        this.scene.start('Game');
+      });
+      
+      this.playAgainText.on('pointerover', () => {
+        this.selectedOption = 0;
+        this.updateSelector();
+      });
+      
+      this.mainMenuText.on('pointerdown', () => {
+        this.scene.start('MainMenu');
+      });
+      
+      this.mainMenuText.on('pointerover', () => {
+        this.selectedOption = 1;
+        this.updateSelector();
+      });
+    }
   }
   
   setupInput() {
