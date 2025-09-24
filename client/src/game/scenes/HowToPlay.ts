@@ -43,7 +43,7 @@ export class HowToPlay extends Phaser.Scene {
     const star = this.add.image(100, yPos, 'star_counter_icon');
     star.setScale(0.10);
     this.add.text(180, yPos, 'STARS\nCOLLECT 100 FOR EXTRA LIFE', {
-      fontSize: '14px',
+      fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'left',
@@ -57,7 +57,7 @@ export class HowToPlay extends Phaser.Scene {
     const sandwich = this.add.image(100, yPos, 'sandwich');
     sandwich.setScale(0.13);
     this.add.text(180, yPos, 'SANDWICH\nRESTORES HEALTH', {
-      fontSize: '14px',
+      fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'left',
@@ -65,13 +65,13 @@ export class HowToPlay extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0, 0.5);
 
-    yPos += 110; // Increased spacing
+    yPos += 120; // Slightly more spacing before energy drink
     
-    // Energy Drink (third item)
+    // Energy Drink (third item - lowered more)
     const energyDrink = this.add.image(100, yPos, 'energy_drink');
     energyDrink.setScale(0.13);
     this.add.text(180, yPos, 'ENERGY DRINK\nSTAMINA BOOST + INVINCIBLE', {
-      fontSize: '14px',
+      fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'left',
@@ -92,7 +92,7 @@ export class HowToPlay extends Phaser.Scene {
 
     yPos += 60;
     this.add.text(320, yPos, 'TAP/SPACE: JUMP\nSWIPE UP: TRICK (IN AIR)\nSTOMP ON ENEMIES TO DEFEAT', {
-      fontSize: '14px',
+      fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
