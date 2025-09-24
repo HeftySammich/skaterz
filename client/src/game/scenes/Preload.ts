@@ -8,7 +8,7 @@ export default class Preload extends Phaser.Scene {
 
   preload() {
     // Load new character select and background images
-    this.load.image('kev_character', 'assets/kev_character.png');
+    this.load.image('zombie_character', 'assets/zombie_character.png');
     this.load.image('red_sky_bg', 'assets/red_sky_bg.png');
     
     // Load zombie skater assets

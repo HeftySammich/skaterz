@@ -29,12 +29,12 @@ export default class CharacterSelect extends Phaser.Scene {
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
     
-    // Character 1: Kev
-    const kevImage = this.add.image(cam.centerX - 200, cam.centerY, 'kev_character');
-    kevImage.setScale(0.3);
-    kevImage.setInteractive({ useHandCursor: true });
+    // Character 1: Zombie Kev
+    const zombieImage = this.add.image(cam.centerX - 120, cam.centerY, 'zombie_character');
+    zombieImage.setScale(0.25);
+    zombieImage.setInteractive({ useHandCursor: true });
     
-    const kevName = this.add.text(cam.centerX - 200, cam.centerY + 150, 'KEV', {
+    const zombieName = this.add.text(cam.centerX - 120, cam.centerY + 150, 'KEV', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
@@ -43,9 +43,9 @@ export default class CharacterSelect extends Phaser.Scene {
     // Character 2: Mystery character (black square)
     const mysteryGraphics = this.add.graphics();
     mysteryGraphics.fillStyle(0x000000, 1);
-    mysteryGraphics.fillRect(cam.centerX + 100, cam.centerY - 100, 200, 200);
+    mysteryGraphics.fillRect(cam.centerX + 20, cam.centerY - 100, 200, 200);
     
-    const mysteryName = this.add.text(cam.centerX + 200, cam.centerY + 150, '???', {
+    const mysteryName = this.add.text(cam.centerX + 120, cam.centerY + 150, '???', {
       fontSize: '16px',
       color: '#666666',
       fontFamily: '"Press Start 2P", monospace'
@@ -53,7 +53,7 @@ export default class CharacterSelect extends Phaser.Scene {
     
     // Store characters for selection
     this.characters = [
-      { image: kevImage, name: kevName },
+      { image: zombieImage, name: zombieName },
       { image: mysteryGraphics as any, name: mysteryName }
     ];
     
@@ -65,7 +65,7 @@ export default class CharacterSelect extends Phaser.Scene {
     this.cursors = this.input.keyboard!.createCursorKeys();
     
     // Mouse/touch input
-    kevImage.on('pointerdown', () => {
+    zombieImage.on('pointerdown', () => {
       this.selectedIndex = 0;
       this.confirmSelection();
     });
@@ -146,7 +146,7 @@ export default class CharacterSelect extends Phaser.Scene {
   
   confirmSelection() {
     if (this.selectedIndex === 0) {
-      // Selected Kev - start the game
+      // Selected Zombie Kev - start the game
       // Stop menu music when game starts
       if (this.menuMusic && this.menuMusic.isPlaying) {
         this.menuMusic.stop();
