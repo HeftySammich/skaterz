@@ -1790,6 +1790,52 @@ export default class Game extends Phaser.Scene {
 // console.log('[RESPAWN] Player respawned with full health');
   }
 
+  shutdown() {
+    // Clean up all arrow indicators when scene shuts down
+    if (this.arrowIndicators) {
+      this.arrowIndicators.clear(true, true); // Remove and destroy all arrows
+    }
+    
+    // Clean up any remaining arrows attached to enemies
+    if (this.enemies) {
+      this.enemies.children.entries.forEach((enemy: any) => {
+        if (enemy.arrow) {
+          enemy.arrow.destroy();
+          enemy.arrow = null;
+        }
+      });
+    }
+    
+    // Clean up any remaining arrows attached to obstacles
+    if (this.obstacles) {
+      this.obstacles.children.entries.forEach((obstacle: any) => {
+        if (obstacle.arrow) {
+          obstacle.arrow.destroy();
+          obstacle.arrow = null;
+        }
+      });
+    }
+    
+    // Clean up any remaining arrows attached to sandwiches or energy drinks
+    if (this.sandwiches) {
+      this.sandwiches.children.entries.forEach((item: any) => {
+        if (item.arrow) {
+          item.arrow.destroy();
+          item.arrow = null;
+        }
+      });
+    }
+    
+    if (this.energyDrinks) {
+      this.energyDrinks.children.entries.forEach((item: any) => {
+        if (item.arrow) {
+          item.arrow.destroy();
+          item.arrow = null;
+        }
+      });
+    }
+  }
+
   update() {
     // Get player body for velocity checks
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
