@@ -285,19 +285,19 @@ export default class Game extends Phaser.Scene {
     
     // Tutorial text
     const line1 = this.add.text(0, -35, 'TAP TO JUMP', {
-      fontSize: '24px',
+      fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#00ff00'
     }).setOrigin(0.5);
     
     const line2 = this.add.text(0, 0, 'TAP AGAIN FOR DOUBLE JUMP', {
-      fontSize: '24px',
+      fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#00ffff'
     }).setOrigin(0.5);
     
     const line3 = this.add.text(0, 35, 'SWIPE UP (IN AIR) FOR TRICK', {
-      fontSize: '24px',
+      fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00'
     }).setOrigin(0.5);
@@ -2059,6 +2059,9 @@ export default class Game extends Phaser.Scene {
     if (this.comboTracker) {
       const starsEarned = this.comboTracker.updateAirState(this.score, this.wasGrounded, this.isGrounded);
       this.wasGrounded = this.isGrounded;
+      
+      // Update combo UI every frame to ensure it's hidden when inactive
+      this.updateComboUI();
     }
   }
   
