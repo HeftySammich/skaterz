@@ -2083,13 +2083,11 @@ export default class Game extends Phaser.Scene {
     
     const state = this.comboTracker.getComboState();
     
-    if (state.status === 'inactive') {
+    if (state.status === 'inactive' || state.status === 'pending') {
+      // Hide the combo UI for both inactive and pending states
       this.comboUI.setVisible(false);
-    } else if (state.status === 'pending') {
-      this.comboUI.setVisible(true);
-      this.comboUI.setText(`${state.airEventCount}/3 EVENTS`);
-      this.comboUI.setColor('#ffffff');
     } else if (state.status === 'active') {
+      // Only show combo UI when combo is actually active (3+ events)
       this.comboUI.setVisible(true);
       this.comboUI.setText(`COMBO x${state.multiplier}\nSCORE: ${state.comboScorePoints}`);
       this.comboUI.setColor('#00ff00');
