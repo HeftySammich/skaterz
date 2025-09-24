@@ -29,6 +29,8 @@ export default class Game extends Phaser.Scene {
   private isJumpAnimating = false;
   private jumpAnimationFrame = 0;
   private jumpFrames = ['jump_frame_1', 'jump_frame_2', 'jump_frame_3', 'jump_frame_4', 'jump_frame_5'];
+  // Individual scale values to make all jump frames match idle sprite size
+  private jumpFrameScales = [0.48, 0.42, 0.41, 0.38, 0.43];
   
   // Obstacle system
   private obstacles!: Phaser.GameObjects.Group;
@@ -1073,7 +1075,7 @@ export default class Game extends Phaser.Scene {
     this.isJumpAnimating = true;
     this.jumpAnimationFrame = 0;
     this.player.setTexture(this.jumpFrames[0]);
-    this.player.setScale(0.4); // Match current character scale
+    this.player.setScale(this.jumpFrameScales[0]); // Use individual scale for each frame
     
     // Animate through all 5 frames over 500ms (100ms per frame)
     this.time.addEvent({
@@ -1082,7 +1084,7 @@ export default class Game extends Phaser.Scene {
         this.jumpAnimationFrame++;
         if (this.jumpAnimationFrame < this.jumpFrames.length) {
           this.player.setTexture(this.jumpFrames[this.jumpAnimationFrame]);
-          this.player.setScale(0.4); // Ensure consistent scaling
+          this.player.setScale(this.jumpFrameScales[this.jumpAnimationFrame]); // Use proper scale for each frame
         } else {
           // Animation complete - hold on last frame until landing
           this.isJumpAnimating = false;
