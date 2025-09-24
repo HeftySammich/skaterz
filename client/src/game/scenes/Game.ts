@@ -1946,10 +1946,8 @@ export default class Game extends Phaser.Scene {
       this.performJump();
     }
     
-    // Handle swipe-up for tricks
-    if (this.controls.justSwipedUp()) {
-      this.performTrick();
-    }
+    // Swipe up trick feature removed - no longer does anything
+    // Similar to how swipe down (stomp) was removed
     
     // Swipe down does nothing now - stomp feature removed
     
