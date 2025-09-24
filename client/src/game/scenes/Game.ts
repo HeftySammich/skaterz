@@ -119,7 +119,7 @@ export default class Game extends Phaser.Scene {
   private readonly JUMP_VELOCITY = -1750;  // Slightly higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1450; // Slightly higher double jump
   private readonly SWIPE_TRICK_VELOCITY = -850; // Small jump for swipe trick
-  private readonly STOMP_VELOCITY = 1800; // Fast downward velocity for stomp attack
+  private readonly STOMP_VELOCITY = 400; // Slight downward nudge for stomp attack
   private readonly GRAVITY = 4200; // Slightly floatier
   private readonly FLOAT_GRAVITY = 3200; // More float during tricks
 
@@ -707,8 +707,8 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 1; // Set to 1 so they can only do ONE more jump (double jump)
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
-    // Start jump animation since player is now airborne
-    this.startJumpAnimation();
+    // Keep using idle sprite
+    this.player.setTexture('skater_idle');
     
     // Restore more stamina as reward for successful stomp
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
@@ -1104,29 +1104,10 @@ export default class Game extends Phaser.Scene {
     }
   }
 
-  startJumpAnimation() {
-    // Start the 5-frame jump animation sequence
-    this.isJumpAnimating = true;
-    this.jumpAnimationFrame = 0;
-    this.player.setTexture(this.jumpFrames[0]);
-    this.player.setScale(this.jumpFrameScales[0]); // Use calculated scale for each frame
-    
-    // Animate through all 5 frames over 500ms (100ms per frame)
-    this.time.addEvent({
-      delay: 100,
-      callback: () => {
-        this.jumpAnimationFrame++;
-        if (this.jumpAnimationFrame < this.jumpFrames.length) {
-          this.player.setTexture(this.jumpFrames[this.jumpAnimationFrame]);
-          this.player.setScale(this.jumpFrameScales[this.jumpAnimationFrame]); // Use calculated scale for each frame
-        } else {
-          // Animation complete - hold on last frame until landing
-          this.isJumpAnimating = false;
-        }
-      },
-      repeat: this.jumpFrames.length - 2, // Repeat 4 times (frames 2-5)
-    });
-  }
+  // Jump animation removed - now using idle sprite for all jump states
+  // startJumpAnimation() {
+  //   // Removed - using idle sprite for jumps
+  // }
 
   handleLanding() {
     this.isGrounded = true;
@@ -1158,7 +1139,8 @@ export default class Game extends Phaser.Scene {
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
-      this.startJumpAnimation(); // Start animation instead of single texture
+      // Keep using idle sprite during jump
+      this.player.setTexture('skater_idle');
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
@@ -1179,7 +1161,8 @@ export default class Game extends Phaser.Scene {
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      this.startJumpAnimation(); // Use animation for double jump too
+      // Keep using idle sprite for double jump
+      this.player.setTexture('skater_idle');
       this.hasDoubleJumped = true;
       this.trickActive = true;
       this.jumpCount = 2;
@@ -1269,13 +1252,21 @@ export default class Game extends Phaser.Scene {
   }
   
   performStomp() {
-    console.log(`Stomp attempt: grounded=${this.isGrounded}, isStomping=${this.isStomping}`);
+    console.log(`Stomp attempt: grounded=${this.isGrounded}, isStomping=${this.isStomping}, stamina=${this.stamina}`);
     
-    // Can only stomp if airborne and not already stomping
-    if (!this.isGrounded && !this.isStomping) {
-      // Set downward velocity for quick stomp
-      this.player.setVelocityY(this.STOMP_VELOCITY);
+    // Can only stomp if airborne, not already stomping, and have enough stamina
+    if (!this.isGrounded && !this.isStomping && this.stamina >= 20) {
+      // Apply slight downward nudge (not all the way to ground)
+      const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
+      const currentVelocity = playerBody.velocity.y;
+      this.player.setVelocityY(Math.min(currentVelocity + this.STOMP_VELOCITY, 800)); // Cap max downward speed
       this.isStomping = true;
+      
+      // Consume stamina for stomp (unless boost is active)
+      if (!this.staminaBoostActive) {
+        this.stamina = Math.max(0, this.stamina - 20);
+      }
+      this.updateStaminaBar();
       
       // Add particles or visual effects for the stomp
       this.jumpParticles.setPosition(this.player.x, this.player.y);
@@ -1290,7 +1281,14 @@ export default class Game extends Phaser.Scene {
       this.player.setTexture('skater_trick');
       this.trickActive = true;
       
+      // Reset stomp flag after a short time
+      this.time.delayedCall(300, () => {
+        this.isStomping = false;
+      });
+      
       console.log('Stomp attack initiated!');
+    } else if (this.stamina < 20) {
+      console.log('Stomp blocked - not enough stamina');
     }
   }
   
