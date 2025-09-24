@@ -93,6 +93,9 @@ export default class Game extends Phaser.Scene {
   private lifeText!: Phaser.GameObjects.Text;
   private starLifeThreshold = 100; // Stars needed for extra life
   
+  // Distance tracking for scoring
+  private lastDistanceScoreMilestone = 0; // Track the last distance milestone for scoring
+  
   // Background tiles for infinite scrolling
   private backgroundTiles: Phaser.GameObjects.Image[] = [];
   private backgroundWidth = 1408; // 1280 * 1.1
@@ -138,6 +141,7 @@ export default class Game extends Phaser.Scene {
     this.cansCollected = 0; // Reset can counter
     this.enemiesDefeated = 0; // Reset enemies defeated counter
     this.staminaBoostActive = false; // Reset stamina boost
+    this.lastDistanceScoreMilestone = 0; // Reset distance tracking
     
     console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
     
@@ -1837,10 +1841,13 @@ export default class Game extends Phaser.Scene {
       this.trickParticles.setPosition(this.player.x, this.player.y);
     }
     
-    // Update score based on distance
-    const currentScore = Math.floor((this.player.x - 320) / 100);
-    if (currentScore > this.score) {
-      this.score = currentScore;
+    // Update score based on distance traveled (incremental)
+    const currentDistanceMilestone = Math.floor((this.player.x - 320) / 100);
+    if (currentDistanceMilestone > this.lastDistanceScoreMilestone) {
+      // Add 10 points for each new milestone reached
+      const milestonesGained = currentDistanceMilestone - this.lastDistanceScoreMilestone;
+      this.score += (milestonesGained * 10);
+      this.lastDistanceScoreMilestone = currentDistanceMilestone;
       this.scoreText.setText(`Score: ${this.score}`);
     }
     
