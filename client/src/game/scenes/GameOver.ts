@@ -16,6 +16,12 @@ export default class GameOver extends Phaser.Scene {
   private downKey?: Phaser.Input.Keyboard.Key;
   private spaceKey?: Phaser.Input.Keyboard.Key;
   private enterKey?: Phaser.Input.Keyboard.Key;
+  private playerName = '';
+  private nameInputText?: Phaser.GameObjects.Text;
+  private isEnteringName = false;
+  private hasSavedScore = false;
+  private namePromptText?: Phaser.GameObjects.Text;
+  private instructionText?: Phaser.GameObjects.Text;
 
   constructor() {
     super('GameOver');
@@ -125,8 +131,8 @@ export default class GameOver extends Phaser.Scene {
     // Check and show high score info
     this.checkHighScoreDisplay();
 
-    // Show menu options immediately
-    this.showMenuOptions();
+    // Ask for player name to save score
+    this.showNameInput();
     
 // console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
 
@@ -218,6 +224,86 @@ export default class GameOver extends Phaser.Scene {
   
   createMenuOptions() {
     // Initially hidden - will be shown after name input or high score check
+  }
+  
+  showNameInput() {
+    this.isEnteringName = true;
+    
+    // Name input prompt
+    this.namePromptText = this.add.text(320, 720, 'ENTER YOUR NAME:', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '18px',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    this.namePromptText.setShadow(2, 2, '#000000', 3, true, true);
+    
+    // Name input field
+    this.nameInputText = this.add.text(320, 760, 'PLAYER', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '20px',
+      color: '#00ff00',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    this.nameInputText.setShadow(2, 2, '#000000', 3, true, true);
+    this.playerName = 'PLAYER';
+    
+    // Instructions
+    this.instructionText = this.add.text(320, 810, 'TAP TO CONTINUE', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '14px',
+      color: '#b9c0cf',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5);
+    this.instructionText.setShadow(1, 1, '#000000', 2, true, true);
+    
+    // Click/tap to submit
+    this.input.once('pointerdown', () => {
+      if (this.isEnteringName) {
+        this.submitScore();
+      }
+    });
+  }
+  
+  async submitScore() {
+    if (this.hasSavedScore) return; // Prevent double submission
+    this.hasSavedScore = true;
+    this.isEnteringName = false;
+    
+    const finalName = this.playerName || 'PLAYER';
+    
+    try {
+      // Submit score to database
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playerName: finalName,
+          score: Math.floor(this.finalScore)
+        })
+      });
+      
+      if (response.ok) {
+        console.log('Score saved to leaderboard');
+      } else {
+        console.error('Failed to save score to leaderboard');
+      }
+    } catch (error) {
+      console.error('Error saving score:', error);
+    }
+    
+    // Clear the name input UI
+    if (this.nameInputText) this.nameInputText.destroy();
+    if (this.namePromptText) this.namePromptText.destroy();
+    if (this.instructionText) this.instructionText.destroy();
+    
+    // Show menu options after name submission
+    this.showMenuOptions();
   }
   
   showMenuOptions() {
