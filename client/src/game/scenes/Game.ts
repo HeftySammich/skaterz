@@ -741,13 +741,13 @@ export default class Game extends Phaser.Scene {
     // Create life counter above star counter
     this.createLifeDisplay();
     
-    // Create star counter UI much lower to avoid overlap with skateboard
-    this.starIcon = this.add.image(540, 130, 'star_counter_icon');
+    // Create star counter UI further down to avoid overlap
+    this.starIcon = this.add.image(540, 145, 'star_counter_icon');
     this.starIcon.setScale(0.08); // Keep original size
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(590, 130, '0', {
+    this.starText = this.add.text(590, 145, '0', {
       fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
@@ -1422,12 +1422,12 @@ export default class Game extends Phaser.Scene {
     
     // Show MAXIMUM! text at screen center - NO VFX, just appear and slide
     const maximumText = this.add.image(320, 480, 'maximum_text');
-    maximumText.setScale(0.5); // Back to original size
+    maximumText.setScale(0.45); // Slightly smaller
     maximumText.setDepth(150);
     maximumText.setScrollFactor(0); // Keep fixed on screen
     
-    // Keep on screen for only 0.5 seconds, then slide left EXTREMELY fast
-    this.time.delayedCall(500, () => {
+    // Keep on screen for 1.5 seconds, then slide left EXTREMELY fast
+    this.time.delayedCall(1500, () => {
       // Slide to the left extremely fast
       this.tweens.add({
         targets: maximumText,
@@ -1664,13 +1664,13 @@ export default class Game extends Phaser.Scene {
   }
 
   createLifeDisplay() {
-    // Create life icon and text - level with score on left (Y=50)
-    this.lifeIcon = this.add.image(540, 50, 'life_icon');
+    // Create life icon and text - perfectly aligned with score
+    this.lifeIcon = this.add.image(540, 54, 'life_icon');
     this.lifeIcon.setScale(0.12); // Keep larger size
     this.lifeIcon.setDepth(102); // Higher depth than star (100)
     this.lifeIcon.setScrollFactor(0);
     
-    this.lifeText = this.add.text(580, 50, this.lives.toString(), {
+    this.lifeText = this.add.text(580, 54, this.lives.toString(), {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
