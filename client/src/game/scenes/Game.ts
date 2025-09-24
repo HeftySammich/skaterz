@@ -1043,7 +1043,8 @@ export default class Game extends Phaser.Scene {
   performJump() {
     console.log(`Jump attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, stamina=${this.stamina}`);
     
-    if (this.isGrounded && this.stamina >= this.staminaCost) {
+    // Allow jump if grounded OR if we have reset jump count (from enemy stomp)
+    if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
       this.player.setTexture('skater_jump');
@@ -1338,25 +1339,32 @@ export default class Game extends Phaser.Scene {
       immovable: true
     });
     
-    // Start spawning energy drinks less frequently than sandwiches
+    // Random energy drink spawning with minimum 30 second cooldown
+    // Check every 5 seconds if we should spawn
     this.energyDrinkTimer = this.time.addEvent({
-      delay: 30000, // Spawn every 30 seconds
-      callback: this.spawnEnergyDrink,
+      delay: 5000, // Check every 5 seconds
+      callback: () => {
+        // Only try to spawn if 30+ seconds have passed and random chance
+        const timeSinceLastCan = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
+        if (timeSinceLastCan >= 30 && Math.random() < 0.3) { // 30% chance each check after cooldown
+          this.spawnEnergyDrink();
+        }
+      },
       callbackScope: this,
       loop: true
     });
     
-    // Spawn first energy drink after 25 seconds
-    this.time.delayedCall(25000, () => {
+    // First potential spawn after 35-45 seconds
+    this.time.delayedCall(Phaser.Math.Between(35000, 45000), () => {
       this.spawnEnergyDrink();
     });
   }
   
   spawnEnergyDrink() {
-    // Check if 30 seconds have passed since last energy drink spawn
+    // Double-check cooldown (in case called directly)
     const timeSinceLastCan = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
     if (timeSinceLastCan < 30) {
-      console.log(`[DEBUG ENERGY DRINK] Cooldown active - ${30 - timeSinceLastCan}s remaining`);
+      console.log(`[DEBUG ENERGY DRINK] Cooldown active - ${Math.floor(30 - timeSinceLastCan)}s remaining`);
       return;
     }
     
