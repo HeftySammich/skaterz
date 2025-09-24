@@ -650,9 +650,9 @@ export default class Game extends Phaser.Scene {
     const currentVelX = playerBody.velocity.x;
     playerBody.setVelocityX(Math.min(currentVelX + 80, 450));
     
-    // Reset jump state completely - player can perform another full jump sequence
+    // Reset jump state - player gets ONE more jump after stomping
     this.isGrounded = false; // Important: player is now airborne after bounce
-    this.jumpCount = 0; // Reset to 0 so they can perform first jump again
+    this.jumpCount = 1; // Set to 1 so they can only do ONE more jump (double jump)
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
     // Set jumping texture since player is now airborne
@@ -755,7 +755,7 @@ export default class Game extends Phaser.Scene {
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(590, 145, '0', {
+    this.starText = this.add.text(580, 145, '0', {
       fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
@@ -1690,12 +1690,12 @@ export default class Game extends Phaser.Scene {
 
   createLifeDisplay() {
     // Create life icon and text - perfectly aligned with score
-    this.lifeIcon = this.add.image(540, 58, 'life_icon');
+    this.lifeIcon = this.add.image(540, 62, 'life_icon');
     this.lifeIcon.setScale(0.12); // Keep larger size
     this.lifeIcon.setDepth(102); // Higher depth than star (100)
     this.lifeIcon.setScrollFactor(0);
     
-    this.lifeText = this.add.text(580, 58, this.lives.toString(), {
+    this.lifeText = this.add.text(580, 62, this.lives.toString(), {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
