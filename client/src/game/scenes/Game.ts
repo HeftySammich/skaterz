@@ -74,6 +74,7 @@ export default class Game extends Phaser.Scene {
   // Energy drinks (stamina power-ups)
   private energyDrinks!: Phaser.GameObjects.Group;
   private cansCollected = 0;
+  private enemiesDefeated = 0; // Track defeated enemies
   private energyDrinkTimer!: Phaser.Time.TimerEvent;
   private staminaBoostActive = false;
   private staminaBoostTimer?: Phaser.Time.TimerEvent;
@@ -135,6 +136,7 @@ export default class Game extends Phaser.Scene {
     this.lives = 3; // Reset lives
     this.sandwichesCollected = 0; // Reset sandwich counter
     this.cansCollected = 0; // Reset can counter
+    this.enemiesDefeated = 0; // Reset enemies defeated counter
     this.staminaBoostActive = false; // Reset stamina boost
     
     console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
@@ -606,6 +608,9 @@ export default class Game extends Phaser.Scene {
   }
   
   stompEnemy(enemy: Phaser.GameObjects.Sprite) {
+    // Increment enemies defeated counter
+    this.enemiesDefeated++;
+    
     // Create explosion at enemy position
     const explosion = this.explosions.create(enemy.x, enemy.y, 'explosion') as Phaser.Physics.Arcade.Sprite;
     explosion.setScale(0.3);
@@ -645,11 +650,13 @@ export default class Game extends Phaser.Scene {
     const currentVelX = playerBody.velocity.x;
     playerBody.setVelocityX(Math.min(currentVelX + 80, 450));
     
-    // Reset jump count to allow another jump AND trick
+    // Reset jump state completely - player can perform another full jump sequence
     this.isGrounded = false; // Important: player is now airborne after bounce
-    this.jumpCount = 0; // Reset to 0 so they can jump again
+    this.jumpCount = 0; // Reset to 0 so they can perform first jump again
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
+    // Set jumping texture since player is now airborne
+    this.player.setTexture('skater_jump');
     
     // Restore more stamina as reward for successful stomp
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
@@ -1007,7 +1014,8 @@ export default class Game extends Phaser.Scene {
         time: survivalTime,
         sandwiches: this.sandwichesCollected,
         cans: this.cansCollected,
-        stars: this.stars // Add stars collected
+        stars: this.stars, // Add stars collected
+        enemies: this.enemiesDefeated // Add enemies defeated
       });
     }
   }
@@ -1345,6 +1353,13 @@ export default class Game extends Phaser.Scene {
   }
   
   spawnEnergyDrink() {
+    // Check if 30 seconds have passed since last energy drink spawn
+    const timeSinceLastCan = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
+    if (timeSinceLastCan < 30) {
+      console.log(`[DEBUG ENERGY DRINK] Cooldown active - ${30 - timeSinceLastCan}s remaining`);
+      return;
+    }
+    
     // Calculate initial spawn distance
     const spawnDistance = Phaser.Math.Between(900, 1300);
     const spawnY = Phaser.Math.Between(450, 650); // Float in the sky

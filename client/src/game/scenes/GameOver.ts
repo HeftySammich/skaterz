@@ -6,17 +6,19 @@ export default class GameOver extends Phaser.Scene {
   private sandwichesCollected = 0;
   private cansCollected = 0;
   private starsCollected = 0;
+  private enemiesDefeated = 0;
 
   constructor() {
     super('GameOver');
   }
 
-  init(data: { score: number, time: number, sandwiches?: number, cans?: number, stars?: number }) {
+  init(data: { score: number, time: number, sandwiches?: number, cans?: number, stars?: number, enemies?: number }) {
     this.finalScore = data.score || 0;
     this.survivalTime = data.time || 0;
     this.sandwichesCollected = data.sandwiches || 0;
     this.cansCollected = data.cans || 0;
     this.starsCollected = data.stars || 0;
+    this.enemiesDefeated = data.enemies || 0;
   }
 
   create() {
@@ -65,7 +67,7 @@ export default class GameOver extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Stars collected - most important stat!
-    this.add.text(320, 520, `STARS: ${this.starsCollected}`, {
+    this.add.text(320, 510, `STARS: ${this.starsCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '22px',
       color: '#ffff00',
@@ -73,8 +75,17 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
     
+    // Enemies defeated
+    this.add.text(320, 555, `ENEMIES: ${this.enemiesDefeated}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '20px',
+      color: '#ff6600',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    
     // Sandwiches collected
-    this.add.text(320, 570, `SANDWICHES: ${this.sandwichesCollected}`, {
+    this.add.text(320, 595, `SANDWICHES: ${this.sandwichesCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '18px',
       color: '#00ff00',
@@ -83,7 +94,7 @@ export default class GameOver extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Energy drinks collected  
-    this.add.text(320, 620, `ENERGY DRINKS: ${this.cansCollected}`, {
+    this.add.text(320, 635, `ENERGY DRINKS: ${this.cansCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '18px',
       color: '#00ffff',
