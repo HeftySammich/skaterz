@@ -8,6 +8,19 @@ export default class GameOver extends Phaser.Scene {
   private starsCollected = 0;
   private enemiesDefeated = 0;
   private selectedOption = 0; // 0 = Play Again, 1 = Main Menu
+  private showingNameInput = false;
+  private nameInputText = '';
+  private maxNameLength = 12;
+  private isNewHighScore = false;
+  private nameDisplay?: Phaser.GameObjects.Text;
+  private playAgainText?: Phaser.GameObjects.Text;
+  private mainMenuText?: Phaser.GameObjects.Text;
+  private selector?: Phaser.GameObjects.Text;
+  private upKey?: Phaser.Input.Keyboard.Key;
+  private downKey?: Phaser.Input.Keyboard.Key;
+  private spaceKey?: Phaser.Input.Keyboard.Key;
+  private enterKey?: Phaser.Input.Keyboard.Key;
+  private backspaceKey?: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super('GameOver');
@@ -106,40 +119,149 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
-    // High score (using localStorage)
-    const highScore = this.getHighScore();
-    let highScoreText;
-    if (this.finalScore > highScore) {
-      this.setHighScore(this.finalScore);
-      highScoreText = this.add.text(320, 685, 'NEW HIGH SCORE!', {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: '22px',
-        color: '#ffff00',
-        stroke: '#000000',
-        strokeThickness: 4
-      }).setOrigin(0.5);
-      
-      // Flash effect for new high score
-      this.tweens.add({
-        targets: highScoreText,
-        alpha: 0.3,
-        duration: 500,
-        ease: 'Sine.inOut',
-        yoyo: true,
-        repeat: -1
-      });
-    } else {
-      highScoreText = this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: '18px',
-        color: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 3
-      }).setOrigin(0.5);
-    }
+    // Check if this is a high score and prompt for name entry
+    this.checkHighScoreAndPromptName();
 
+    // Show menu options (will be hidden during name input)
+    this.createMenuOptions();
+    
+// console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
+
+    // Setup keyboard input
+    this.setupInput();
+  }
+
+  async checkHighScoreAndPromptName() {
+    // Show current high score
+    try {
+      const response = await fetch('/api/leaderboard/high-score');
+      if (response.ok) {
+        const { highScore } = await response.json();
+        
+        this.isNewHighScore = this.finalScore > highScore;
+        
+        if (this.isNewHighScore) {
+          this.add.text(320, 685, 'NEW HIGH SCORE!', {
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '22px',
+            color: '#ffff00',
+            stroke: '#000000',
+            strokeThickness: 4
+          }).setOrigin(0.5);
+        } else {
+          this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '18px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
+        }
+        
+        // Always prompt to save score to leaderboard
+        this.promptForName();
+      } else {
+        // Fallback to localStorage if API fails
+        const highScore = this.getHighScore();
+        this.isNewHighScore = this.finalScore > highScore;
+        
+        if (this.isNewHighScore) {
+          this.setHighScore(this.finalScore);
+        }
+        this.promptForName();
+      }
+    } catch (error) {
+      console.error('Error checking high score:', error);
+      // Fallback to localStorage
+      const highScore = this.getHighScore();
+      this.isNewHighScore = this.finalScore > highScore;
+      if (this.isNewHighScore) {
+        this.setHighScore(this.finalScore);
+      }
+      this.promptForName();
+    }
+  }
+  
+  promptForName() {
+    this.showingNameInput = true;
+    
+    // Add name input prompt
+    this.add.text(320, 720, 'ENTER YOUR NAME:', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    // Name input display
+    this.nameDisplay = this.add.text(320, 750, this.nameInputText + '_', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '18px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    // Instructions
+    this.add.text(320, 790, 'PRESS ENTER TO SAVE', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '12px',
+      color: '#cccccc',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5);
+  }
+  
+  async saveScore() {
+    if (this.nameInputText.trim() === '') {
+      this.nameInputText = 'ANONYMOUS';
+    }
+    
+    try {
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playerName: this.nameInputText.trim(),
+          score: this.finalScore
+        })
+      });
+      
+      if (response.ok) {
+        console.log('Score saved to leaderboard successfully');
+      } else {
+        console.error('Failed to save score to leaderboard');
+      }
+    } catch (error) {
+      console.error('Error saving score:', error);
+    }
+    
+    // Show confirmation and proceed to menu
+    this.showingNameInput = false;
+    this.add.text(320, 820, 'SCORE SAVED!', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
+      color: '#00ff00',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    // Enable menu navigation after a short delay
+    this.time.delayedCall(1000, () => {
+      this.showMenuOptions();
+    });
+  }
+  
+  createMenuOptions() {
+    // Initially hidden - will be shown after name input or high score check
+  }
+  
+  showMenuOptions() {
     // Menu options
-    const playAgainText = this.add.text(320, 780, 'PLAY AGAIN', {
+    this.playAgainText = this.add.text(320, 860, 'PLAY AGAIN', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#00ff00',
@@ -147,7 +269,7 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
     
-    const mainMenuText = this.add.text(320, 830, 'MAIN MENU', {
+    this.mainMenuText = this.add.text(320, 900, 'MAIN MENU', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ffffff',
@@ -156,7 +278,7 @@ export default class GameOver extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Selection indicator
-    const selector = this.add.text(200, 780, '>', {
+    this.selector = this.add.text(200, 860, '>', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '24px',
       color: '#ffff00',
@@ -164,75 +286,98 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
     
-    // Update selector position
-    const updateSelector = () => {
-      if (this.selectedOption === 0) {
-        selector.setY(780);
-        playAgainText.setColor('#00ff00');
-        mainMenuText.setColor('#ffffff');
-      } else {
-        selector.setY(830);
-        playAgainText.setColor('#ffffff');
-        mainMenuText.setColor('#00ff00');
-      }
-    };
+    this.updateSelector();
+    this.setupMenuInteraction();
+  }
+  
+  updateSelector() {
+    if (!this.selector || !this.playAgainText || !this.mainMenuText) return;
     
-    updateSelector();
-    
-// console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
-
-    // Input handling - keyboard
-    const upKey = this.input.keyboard?.addKey('UP');
-    const downKey = this.input.keyboard?.addKey('DOWN');
-    const spaceKey = this.input.keyboard?.addKey('SPACE');
-    const enterKey = this.input.keyboard?.addKey('ENTER');
-    
-    upKey?.on('down', () => {
-      this.selectedOption = 0;
-      updateSelector();
-    });
-    
-    downKey?.on('down', () => {
-      this.selectedOption = 1;
-      updateSelector();
-    });
-    
-    const selectOption = () => {
-      if (this.selectedOption === 0) {
-// console.log('[DEBUG GAME OVER] Starting new game...');
-        this.scene.start('Game');
-      } else {
-// console.log('[DEBUG GAME OVER] Returning to main menu...');
-        this.scene.start('MainMenu');
-      }
-    };
-    
-    spaceKey?.on('down', selectOption);
-    enterKey?.on('down', selectOption);
-    
+    if (this.selectedOption === 0) {
+      this.selector.setY(860);
+      this.playAgainText.setColor('#00ff00');
+      this.mainMenuText.setColor('#ffffff');
+    } else {
+      this.selector.setY(900);
+      this.playAgainText.setColor('#ffffff');
+      this.mainMenuText.setColor('#00ff00');
+    }
+  }
+  
+  setupMenuInteraction() {
     // Touch/click handling for menu options
-    playAgainText.setInteractive({ useHandCursor: true });
-    mainMenuText.setInteractive({ useHandCursor: true });
+    this.playAgainText.setInteractive({ useHandCursor: true });
+    this.mainMenuText.setInteractive({ useHandCursor: true });
     
-    playAgainText.on('pointerdown', () => {
-// console.log('[DEBUG GAME OVER] Play Again selected...');
+    this.playAgainText.on('pointerdown', () => {
       this.scene.start('Game');
     });
     
-    playAgainText.on('pointerover', () => {
+    this.playAgainText.on('pointerover', () => {
       this.selectedOption = 0;
-      updateSelector();
+      this.updateSelector();
     });
     
-    mainMenuText.on('pointerdown', () => {
-// console.log('[DEBUG GAME OVER] Main Menu selected...');
+    this.mainMenuText.on('pointerdown', () => {
       this.scene.start('MainMenu');
     });
     
-    mainMenuText.on('pointerover', () => {
+    this.mainMenuText.on('pointerover', () => {
       this.selectedOption = 1;
-      updateSelector();
+      this.updateSelector();
     });
+  }
+  
+  setupInput() {
+    // Input handling - keyboard
+    this.upKey = this.input.keyboard?.addKey('UP');
+    this.downKey = this.input.keyboard?.addKey('DOWN');
+    this.spaceKey = this.input.keyboard?.addKey('SPACE');
+    this.enterKey = this.input.keyboard?.addKey('ENTER');
+    this.backspaceKey = this.input.keyboard?.addKey('BACKSPACE');
+    
+    // Handle letter keys for name input
+    this.input.keyboard?.on('keydown', (event: any) => {
+      if (this.showingNameInput) {
+        if (event.key === 'Enter') {
+          this.saveScore();
+        } else if (event.key === 'Backspace') {
+          this.nameInputText = this.nameInputText.slice(0, -1);
+          this.updateNameDisplay();
+        } else if (event.key.length === 1 && this.nameInputText.length < this.maxNameLength) {
+          // Only accept letters, numbers, and some symbols
+          if (event.key.match(/[a-zA-Z0-9 !@#$%^&*()_+-=\[\]{}|;:,.<>?]/)) {
+            this.nameInputText += event.key.toUpperCase();
+            this.updateNameDisplay();
+          }
+        }
+      } else {
+        // Menu navigation
+        if (event.key === 'ArrowUp') {
+          this.selectedOption = 0;
+          this.updateSelector();
+        } else if (event.key === 'ArrowDown') {
+          this.selectedOption = 1;
+          this.updateSelector();
+        } else if (event.key === ' ' || event.key === 'Enter') {
+          this.selectOption();
+        }
+      }
+    });
+  }
+  
+  updateNameDisplay() {
+    if (this.nameDisplay) {
+      this.nameDisplay.setText(this.nameInputText + '_');
+    }
+  }
+  
+  selectOption() {
+    if (this.selectedOption === 0) {
+      this.scene.start('Game');
+    } else {
+      this.scene.start('MainMenu');
+    }
   }
 
   getHighScore(): number {

@@ -1,6 +1,6 @@
 export class MainMenu extends Phaser.Scene {
   private selectedIndex = 0;
-  private menuItems: Phaser.GameObjects.Image[] = [];
+  private menuItems: (Phaser.GameObjects.Image | Phaser.GameObjects.Text)[] = [];
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private enterKey!: Phaser.Input.Keyboard.Key;
   private buttonBaseScales: number[] = [];
@@ -35,20 +35,31 @@ export class MainMenu extends Phaser.Scene {
     const targetButtonWidth = cam.width * 0.4;
     
     // Add button images - positioned responsively below the SKATERZ title
-    const playButton = this.add.image(cam.centerX, cam.height * 0.82, 'play_button').setOrigin(0.5);
-    const optionsButton = this.add.image(cam.centerX, cam.height * 0.92, 'options_button').setOrigin(0.5);
+    const playButton = this.add.image(cam.centerX, cam.height * 0.78, 'play_button').setOrigin(0.5);
+    const optionsButton = this.add.image(cam.centerX, cam.height * 0.86, 'options_button').setOrigin(0.5);
+    
+    // Add text-based leaderboard button
+    const leaderboardButton = this.add.text(cam.centerX, cam.height * 0.94, 'LEADERBOARD', {
+      fontSize: '18px',
+      color: '#ffffff',
+      fontFamily: '"Press Start 2P", monospace',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
 
     // Calculate base scales for buttons to fit target size
     const playBaseScale = Math.min(targetButtonWidth / playButton.width, 0.8);
     const optionsBaseScale = Math.min(targetButtonWidth / optionsButton.width, 0.8);
+    const leaderboardBaseScale = 1.0; // Text element, use scale 1.0
     
     playButton.setScale(playBaseScale);
     optionsButton.setScale(optionsBaseScale);
+    leaderboardButton.setScale(leaderboardBaseScale);
     
     // Store base scales for selection highlighting
-    this.buttonBaseScales = [playBaseScale, optionsBaseScale];
+    this.buttonBaseScales = [playBaseScale, optionsBaseScale, leaderboardBaseScale];
     
-    this.menuItems = [playButton, optionsButton];
+    this.menuItems = [playButton, optionsButton, leaderboardButton];
 
     // Make buttons interactive
     playButton.setInteractive({ useHandCursor: true })
@@ -60,6 +71,12 @@ export class MainMenu extends Phaser.Scene {
     optionsButton.setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.selectItem(1);
+        this.confirmSelection();
+      });
+      
+    leaderboardButton.setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        this.selectItem(2);
         this.confirmSelection();
       });
 
@@ -113,6 +130,9 @@ export class MainMenu extends Phaser.Scene {
     } else if (this.selectedIndex === 1) {
       // Go to options, keep music playing
       this.scene.start('OptionsMenu', { menuMusic: this.menuMusic });
+    } else if (this.selectedIndex === 2) {
+      // Go to leaderboard, keep music playing
+      this.scene.start('Leaderboard', { menuMusic: this.menuMusic });
     }
   }
 }

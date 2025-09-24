@@ -7,6 +7,7 @@ import { Splash4 } from './scenes/Splash4';
 import { Splash5 } from './scenes/Splash5';
 import { MainMenu } from './scenes/MainMenu';
 import { OptionsMenu } from './scenes/OptionsMenu';
+import Leaderboard from './scenes/Leaderboard';
 import CharacterSelect from './scenes/CharacterSelect';
 import Game from './scenes/Game';
 import GameOver from './scenes/GameOver';
@@ -50,7 +51,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       gamepad: false,
       activePointers: 1
     },
-    scene: [Preload, Splash1, Splash2, Splash3, Splash4, Splash5, MainMenu, OptionsMenu, CharacterSelect, Game, GameOver],
+    scene: [Preload, Splash1, Splash2, Splash3, Splash4, Splash5, MainMenu, OptionsMenu, Leaderboard, CharacterSelect, Game, GameOver],
     backgroundColor: '#2c5f2d' // GBA green background
   };
 

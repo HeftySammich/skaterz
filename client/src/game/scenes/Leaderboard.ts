@@ -1,0 +1,159 @@
+import Phaser from 'phaser';
+
+interface LeaderboardEntry {
+  id: number;
+  playerName: string;
+  score: number;
+  createdAt: string;
+}
+
+export default class Leaderboard extends Phaser.Scene {
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private menuMusic: Phaser.Sound.BaseSound | null = null;
+  private leaderboardData: LeaderboardEntry[] = [];
+  private isLoading = true;
+
+  constructor() {
+    super({ key: 'Leaderboard' });
+  }
+
+  init(data: { menuMusic?: Phaser.Sound.BaseSound }) {
+    // Receive menu music from MainMenu to keep it playing
+    this.menuMusic = data.menuMusic || null;
+  }
+
+  async create() {
+    // Add graffiti background
+    const bg = this.add.image(320, 480, 'graffiti_bg');
+    bg.setDisplaySize(640, 960);
+    
+    // Title
+    this.add.text(320, 120, 'LEADERBOARD', {
+      fontSize: '28px',
+      color: '#ffecb3',
+      fontFamily: '"Press Start 2P", monospace',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+
+    // Loading text (will be replaced)
+    const loadingText = this.add.text(320, 350, 'LOADING...', {
+      fontSize: '20px',
+      color: '#b9c0cf',
+      fontFamily: '"Press Start 2P", monospace',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+
+    // Back instruction
+    this.add.text(320, 850, 'GO BACK', {
+      fontSize: '22px',
+      color: '#e2e28e',
+      fontFamily: '"Press Start 2P", monospace',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5);
+
+    // Set up input
+    this.cursors = this.input.keyboard!.createCursorKeys();
+    
+    // Touch/click to go back
+    this.input.on('pointerdown', () => {
+      this.scene.start('MainMenu', { menuMusic: this.menuMusic });
+    });
+
+    // Fetch leaderboard data
+    try {
+      const response = await fetch('/api/leaderboard?limit=10');
+      if (response.ok) {
+        this.leaderboardData = await response.json();
+        this.isLoading = false;
+        
+        // Remove loading text
+        loadingText.destroy();
+        
+        // Display leaderboard
+        this.displayLeaderboard();
+      } else {
+        throw new Error('Failed to fetch leaderboard');
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      this.isLoading = false;
+      
+      // Show error message
+      loadingText.setText('FAILED TO LOAD\nLEADERBOARD');
+      loadingText.setColor('#ff0000');
+    }
+  }
+
+  displayLeaderboard() {
+    if (this.leaderboardData.length === 0) {
+      this.add.text(320, 350, 'NO SCORES YET!\nBE THE FIRST!', {
+        fontSize: '18px',
+        color: '#b9c0cf',
+        fontFamily: '"Press Start 2P", monospace',
+        align: 'center',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+      return;
+    }
+
+    // Display top 10 scores
+    let yPosition = 200;
+    const lineHeight = 45;
+
+    this.leaderboardData.forEach((entry, index) => {
+      const rank = index + 1;
+      let rankColor = '#ffffff';
+      
+      // Special colors for top 3
+      if (rank === 1) rankColor = '#ffd700'; // Gold
+      else if (rank === 2) rankColor = '#c0c0c0'; // Silver
+      else if (rank === 3) rankColor = '#cd7f32'; // Bronze
+
+      // Rank and player name
+      const nameText = entry.playerName.length > 12 ? 
+        entry.playerName.substring(0, 12) + '...' : 
+        entry.playerName;
+
+      this.add.text(80, yPosition, `${rank}.`, {
+        fontSize: '16px',
+        color: rankColor,
+        fontFamily: '"Press Start 2P", monospace',
+        stroke: '#000000',
+        strokeThickness: 2
+      }).setOrigin(0, 0.5);
+
+      this.add.text(130, yPosition, nameText, {
+        fontSize: '16px',
+        color: rankColor,
+        fontFamily: '"Press Start 2P", monospace',
+        stroke: '#000000',
+        strokeThickness: 2
+      }).setOrigin(0, 0.5);
+
+      // Score (right aligned)
+      this.add.text(560, yPosition, Math.floor(entry.score).toString(), {
+        fontSize: '16px',
+        color: rankColor,
+        fontFamily: '"Press Start 2P", monospace',
+        stroke: '#000000',
+        strokeThickness: 2
+      }).setOrigin(1, 0.5);
+
+      yPosition += lineHeight;
+    });
+  }
+
+  update() {
+    // ESC to go back
+    if (Phaser.Input.Keyboard.JustDown(this.input.keyboard!.addKey('ESC'))) {
+      this.scene.start('MainMenu', { menuMusic: this.menuMusic });
+    }
+  }
+}
