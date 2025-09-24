@@ -88,6 +88,8 @@ export default class Game extends Phaser.Scene {
   private comboTracker!: ComboTracker;
   private wasGrounded = true;
   private comboUI: Phaser.GameObjects.Text | null = null;
+  private comboDisplayTimer?: Phaser.Time.TimerEvent;
+  private lastComboData: { multiplier: number, scorePoints: number } | null = null;
   
   // Star collection system
   private stars = 0;
@@ -269,7 +271,33 @@ export default class Game extends Phaser.Scene {
       console.log(`[COMBO] Combo ended! Stars earned: ${data.starsEarned}`);
       this.collectStars(data.starsEarned);
       this.showComboEndEffect(data);
-      this.updateComboUI();
+      
+      // Keep the combo display visible for 2 seconds after landing
+      if (this.lastComboData && data.starsEarned > 0) {
+        // Cancel any existing timer
+        if (this.comboDisplayTimer) {
+          this.comboDisplayTimer.remove();
+        }
+        
+        // Keep the combo display visible
+        if (this.comboUI) {
+          this.comboUI.setVisible(true);
+          this.comboUI.setText(`COMBO x${this.lastComboData.multiplier}\nSCORE: ${this.lastComboData.scorePoints}`);
+          this.comboUI.setColor('#00ff00');
+        }
+        
+        // Start a new timer to hide the combo display after 2 seconds
+        this.comboDisplayTimer = this.time.delayedCall(2000, () => {
+          if (this.comboUI) {
+            this.comboUI.setVisible(false);
+          }
+          this.lastComboData = null;
+          this.comboDisplayTimer = undefined;
+        });
+      } else {
+        // If no combo was achieved, hide immediately
+        this.updateComboUI();
+      }
     });
     
     // Create tutorial instructions in the middle of the screen
@@ -2083,14 +2111,32 @@ export default class Game extends Phaser.Scene {
     
     const state = this.comboTracker.getComboState();
     
-    if (state.status === 'inactive' || state.status === 'pending') {
-      // Hide the combo UI for both inactive and pending states
+    if (state.status === 'inactive') {
+      // Don't hide immediately if we have combo data to display
+      if (!this.lastComboData) {
+        this.comboUI.setVisible(false);
+      }
+    } else if (state.status === 'pending') {
+      // Hide the pending state display
       this.comboUI.setVisible(false);
+      this.lastComboData = null;
     } else if (state.status === 'active') {
+      // Cancel any existing hide timer when combo is active
+      if (this.comboDisplayTimer) {
+        this.comboDisplayTimer.remove();
+        this.comboDisplayTimer = undefined;
+      }
+      
       // Only show combo UI when combo is actually active (3+ events)
       this.comboUI.setVisible(true);
       this.comboUI.setText(`COMBO x${state.multiplier}\nSCORE: ${state.comboScorePoints}`);
       this.comboUI.setColor('#00ff00');
+      
+      // Store the combo data for display after landing
+      this.lastComboData = {
+        multiplier: state.multiplier,
+        scorePoints: state.comboScorePoints
+      };
     }
   }
   
