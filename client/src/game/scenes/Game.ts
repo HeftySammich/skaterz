@@ -181,9 +181,9 @@ export default class Game extends Phaser.Scene {
     // Add collision detection for obstacles using overlap for guaranteed detection
     this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
 // console.log(`[DEBUG COLLISION] Obstacle collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}, Health: ${this.health}`);
-      if (!this.invulnerable && !this.gameOverTriggered) {
+      if (!this.invulnerable && !this.gameOverTriggered && !this.staminaBoostActive) {
 // console.log(`[DEBUG COLLISION] Taking damage from obstacle...`);
-        this.takeDamage(25); // Take 25 damage from obstacles
+        this.takeDamage(25); // Take 25 damage from obstacles (but not if energy drink is active)
         this.obstacles.remove(obstacle); // Remove from physics group first
         obstacle.destroy(); // Then destroy the sprite
       } else {
@@ -201,8 +201,8 @@ export default class Game extends Phaser.Scene {
 // console.log(`[DEBUG COLLISION] Stomping enemy!`);
         this.stompEnemy(enemy);
         this.bouncePlayer();
-      } else if (!this.invulnerable && !this.gameOverTriggered) {
-        // Hit enemy from side or below - take damage
+      } else if (!this.invulnerable && !this.gameOverTriggered && !this.staminaBoostActive) {
+        // Hit enemy from side or below - take damage (but not if energy drink is active)
 // console.log(`[DEBUG COLLISION] Taking damage from enemy...`);
         this.takeDamage(35); // Take 35 damage from enemies
         this.enemies.remove(enemy); // Remove from physics group first
