@@ -4,15 +4,15 @@ export interface ComboState {
   status: 'inactive' | 'pending' | 'active';
   airEventCount: number;
   multiplier: number;
-  startX: number;
-  comboDistance: number;
+  startScore: number;
+  comboScorePoints: number;
   lastEventTime: number;
 }
 
 export interface ComboEvents {
   comboActivated: { multiplier: number };
-  comboUpdated: { multiplier: number; distance: number };
-  comboEnded: { multiplier: number; distance: number; starsEarned: number };
+  comboUpdated: { multiplier: number; scorePoints: number };
+  comboEnded: { multiplier: number; scorePoints: number; starsEarned: number };
 }
 
 export class ComboTracker extends Phaser.Events.EventEmitter {
@@ -21,8 +21,8 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
     status: 'inactive',
     airEventCount: 0,
     multiplier: 0,
-    startX: 0,
-    comboDistance: 0,
+    startScore: 0,
+    comboScorePoints: 0,
     lastEventTime: 0
   };
 
@@ -37,39 +37,39 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
       status: 'inactive',
       airEventCount: 0,
       multiplier: 0,
-      startX: 0,
-      comboDistance: 0,
+      startScore: 0,
+      comboScorePoints: 0,
       lastEventTime: 0
     };
   }
 
-  registerTrick(playerX: number, isGrounded: boolean): void {
+  registerTrick(currentScore: number, isGrounded: boolean): void {
     if (isGrounded) {
       console.log('[COMBO] Trick ignored - player is grounded');
       return;
     }
 
-    this.registerAirEvent(playerX);
+    this.registerAirEvent(currentScore);
     console.log(`[COMBO] Trick registered - airEventCount: ${this.state.airEventCount}`);
   }
 
-  registerEnemyKill(playerX: number, isGrounded: boolean): void {
+  registerEnemyKill(currentScore: number, isGrounded: boolean): void {
     if (isGrounded) {
       console.log('[COMBO] Enemy kill ignored - player is grounded');
       return;
     }
 
-    this.registerAirEvent(playerX);
+    this.registerAirEvent(currentScore);
     console.log(`[COMBO] Enemy kill registered - airEventCount: ${this.state.airEventCount}`);
   }
 
-  private registerAirEvent(playerX: number): void {
+  private registerAirEvent(currentScore: number): void {
     const currentTime = this.scene.time.now;
     
     if (this.state.status === 'inactive') {
       // Start pending combo
       this.state.status = 'pending';
-      this.state.startX = playerX;
+      this.state.startScore = currentScore;
       this.state.airEventCount = 1;
       this.state.lastEventTime = currentTime;
       console.log('[COMBO] Started pending combo');
@@ -90,30 +90,30 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
       this.state.lastEventTime = currentTime;
       console.log(`[COMBO] Combo updated - multiplier: ${this.state.multiplier}`);
       
-      const distance = Math.floor(playerX - this.state.startX);
-      this.emit('comboUpdated', { multiplier: this.state.multiplier, distance });
+      const scorePoints = currentScore - this.state.startScore;
+      this.emit('comboUpdated', { multiplier: this.state.multiplier, scorePoints });
     }
   }
 
-  updateAirState(playerX: number, wasGrounded: boolean, isGrounded: boolean): number {
+  updateAirState(currentScore: number, wasGrounded: boolean, isGrounded: boolean): number {
     // Only process landing if we were in air and now on ground
     if (!wasGrounded && isGrounded) {
-      return this.handleLanding(playerX);
+      return this.handleLanding(currentScore);
     }
     
-    // Update distance if combo is active
+    // Update score points if combo is active
     if (this.state.status === 'active') {
-      this.state.comboDistance = Math.floor(playerX - this.state.startX);
+      this.state.comboScorePoints = currentScore - this.state.startScore;
       this.emit('comboUpdated', { 
         multiplier: this.state.multiplier, 
-        distance: this.state.comboDistance 
+        scorePoints: this.state.comboScorePoints 
       });
     }
     
     return 0;
   }
 
-  private handleLanding(playerX: number): number {
+  private handleLanding(currentScore: number): number {
     if (this.state.status === 'inactive') {
       return 0;
     }
@@ -121,15 +121,15 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
     let starsEarned = 0;
     
     if (this.state.status === 'active') {
-      // Calculate stars: distance * multiplier
-      this.state.comboDistance = Math.floor(playerX - this.state.startX);
-      starsEarned = this.state.comboDistance * this.state.multiplier;
+      // Calculate stars: score points earned during combo * multiplier
+      this.state.comboScorePoints = currentScore - this.state.startScore;
+      starsEarned = this.state.comboScorePoints * this.state.multiplier;
       
-      console.log(`[COMBO] COMBO COMPLETED! Distance: ${this.state.comboDistance}, Multiplier: ${this.state.multiplier}, Stars: ${starsEarned}`);
+      console.log(`[COMBO] COMBO COMPLETED! Score Points: ${this.state.comboScorePoints}, Multiplier: ${this.state.multiplier}, Stars: ${starsEarned}`);
       
       this.emit('comboEnded', {
         multiplier: this.state.multiplier,
-        distance: this.state.comboDistance,
+        scorePoints: this.state.comboScorePoints,
         starsEarned
       });
     } else {

@@ -8,11 +8,7 @@ export default class GameOver extends Phaser.Scene {
   private starsCollected = 0;
   private enemiesDefeated = 0;
   private selectedOption = 0; // 0 = Play Again, 1 = Main Menu
-  private showingNameInput = false;
-  private nameInputText = '';
-  private maxNameLength = 12;
   private isNewHighScore = false;
-  private nameDisplay?: Phaser.GameObjects.Text;
   private playAgainText?: Phaser.GameObjects.Text;
   private mainMenuText?: Phaser.GameObjects.Text;
   private selector?: Phaser.GameObjects.Text;
@@ -20,7 +16,6 @@ export default class GameOver extends Phaser.Scene {
   private downKey?: Phaser.Input.Keyboard.Key;
   private spaceKey?: Phaser.Input.Keyboard.Key;
   private enterKey?: Phaser.Input.Keyboard.Key;
-  private backspaceKey?: Phaser.Input.Keyboard.Key;
 
   constructor() {
     super('GameOver');
@@ -119,11 +114,11 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
-    // Check if this is a high score and prompt for name entry
-    this.checkHighScoreAndPromptName();
+    // Check and show high score info
+    this.checkHighScoreDisplay();
 
-    // Show menu options (will be hidden during name input)
-    this.createMenuOptions();
+    // Show menu options immediately
+    this.showMenuOptions();
     
 // console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
 
@@ -131,7 +126,7 @@ export default class GameOver extends Phaser.Scene {
     this.setupInput();
   }
 
-  async checkHighScoreAndPromptName() {
+  async checkHighScoreDisplay() {
     // Show current high score
     try {
       const response = await fetch('/api/leaderboard/high-score');
@@ -157,9 +152,6 @@ export default class GameOver extends Phaser.Scene {
             strokeThickness: 3
           }).setOrigin(0.5);
         }
-        
-        // Always prompt to save score to leaderboard
-        this.promptForName();
       } else {
         // Fallback to localStorage if API fails
         const highScore = this.getHighScore();
@@ -167,8 +159,22 @@ export default class GameOver extends Phaser.Scene {
         
         if (this.isNewHighScore) {
           this.setHighScore(this.finalScore);
+          this.add.text(320, 685, 'NEW HIGH SCORE!', {
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '22px',
+            color: '#ffff00',
+            stroke: '#000000',
+            strokeThickness: 4
+          }).setOrigin(0.5);
+        } else {
+          this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '18px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3
+          }).setOrigin(0.5);
         }
-        this.promptForName();
       }
     } catch (error) {
       console.error('Error checking high score:', error);
@@ -177,91 +183,34 @@ export default class GameOver extends Phaser.Scene {
       this.isNewHighScore = this.finalScore > highScore;
       if (this.isNewHighScore) {
         this.setHighScore(this.finalScore);
-      }
-      this.promptForName();
-    }
-  }
-  
-  promptForName() {
-    this.showingNameInput = true;
-    
-    // Add name input prompt
-    this.add.text(320, 720, 'ENTER YOUR NAME:', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '16px',
-      color: '#ffff00',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-    
-    // Name input display
-    this.nameDisplay = this.add.text(320, 750, this.nameInputText + '_', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '18px',
-      color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-    
-    // Instructions
-    this.add.text(320, 790, 'PRESS ENTER TO SAVE', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '12px',
-      color: '#cccccc',
-      stroke: '#000000',
-      strokeThickness: 2
-    }).setOrigin(0.5);
-  }
-  
-  async saveScore() {
-    if (this.nameInputText.trim() === '') {
-      this.nameInputText = 'ANONYMOUS';
-    }
-    
-    try {
-      const response = await fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          playerName: this.nameInputText.trim(),
-          score: this.finalScore
-        })
-      });
-      
-      if (response.ok) {
-        console.log('Score saved to leaderboard successfully');
+        this.add.text(320, 685, 'NEW HIGH SCORE!', {
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: '22px',
+          color: '#ffff00',
+          stroke: '#000000',
+          strokeThickness: 4
+        }).setOrigin(0.5);
       } else {
-        console.error('Failed to save score to leaderboard');
+        this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: '18px',
+          color: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5);
       }
-    } catch (error) {
-      console.error('Error saving score:', error);
     }
-    
-    // Show confirmation and proceed to menu
-    this.showingNameInput = false;
-    this.add.text(320, 820, 'SCORE SAVED!', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '16px',
-      color: '#00ff00',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-    
-    // Enable menu navigation after a short delay
-    this.time.delayedCall(1000, () => {
-      this.showMenuOptions();
-    });
   }
+  
+  
   
   createMenuOptions() {
     // Initially hidden - will be shown after name input or high score check
   }
   
   showMenuOptions() {
-    // Menu options
-    this.playAgainText = this.add.text(320, 860, 'PLAY AGAIN', {
+    // Menu options - positioned higher since no name input
+    this.playAgainText = this.add.text(320, 760, 'PLAY AGAIN', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#00ff00',
@@ -269,7 +218,7 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
     
-    this.mainMenuText = this.add.text(320, 900, 'MAIN MENU', {
+    this.mainMenuText = this.add.text(320, 800, 'MAIN MENU', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ffffff',
@@ -278,7 +227,7 @@ export default class GameOver extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Selection indicator
-    this.selector = this.add.text(200, 860, '>', {
+    this.selector = this.add.text(200, 760, '>', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '24px',
       color: '#ffff00',
@@ -294,11 +243,11 @@ export default class GameOver extends Phaser.Scene {
     if (!this.selector || !this.playAgainText || !this.mainMenuText) return;
     
     if (this.selectedOption === 0) {
-      this.selector.setY(860);
+      this.selector.setY(760);
       this.playAgainText.setColor('#00ff00');
       this.mainMenuText.setColor('#ffffff');
     } else {
-      this.selector.setY(900);
+      this.selector.setY(800);
       this.playAgainText.setColor('#ffffff');
       this.mainMenuText.setColor('#00ff00');
     }
@@ -331,48 +280,26 @@ export default class GameOver extends Phaser.Scene {
   }
   
   setupInput() {
-    // Input handling - keyboard
+    // Input handling - keyboard (simplified - menu navigation only)
     this.upKey = this.input.keyboard?.addKey('UP');
     this.downKey = this.input.keyboard?.addKey('DOWN');
     this.spaceKey = this.input.keyboard?.addKey('SPACE');
     this.enterKey = this.input.keyboard?.addKey('ENTER');
-    this.backspaceKey = this.input.keyboard?.addKey('BACKSPACE');
     
-    // Handle letter keys for name input
+    // Handle menu navigation
     this.input.keyboard?.on('keydown', (event: any) => {
-      if (this.showingNameInput) {
-        if (event.key === 'Enter') {
-          this.saveScore();
-        } else if (event.key === 'Backspace') {
-          this.nameInputText = this.nameInputText.slice(0, -1);
-          this.updateNameDisplay();
-        } else if (event.key.length === 1 && this.nameInputText.length < this.maxNameLength) {
-          // Only accept letters, numbers, and some symbols
-          if (event.key.match(/[a-zA-Z0-9 !@#$%^&*()_+-=\[\]{}|;:,.<>?]/)) {
-            this.nameInputText += event.key.toUpperCase();
-            this.updateNameDisplay();
-          }
-        }
-      } else {
-        // Menu navigation
-        if (event.key === 'ArrowUp') {
-          this.selectedOption = 0;
-          this.updateSelector();
-        } else if (event.key === 'ArrowDown') {
-          this.selectedOption = 1;
-          this.updateSelector();
-        } else if (event.key === ' ' || event.key === 'Enter') {
-          this.selectOption();
-        }
+      if (event.key === 'ArrowUp') {
+        this.selectedOption = 0;
+        this.updateSelector();
+      } else if (event.key === 'ArrowDown') {
+        this.selectedOption = 1;
+        this.updateSelector();
+      } else if (event.key === ' ' || event.key === 'Enter') {
+        this.selectOption();
       }
     });
   }
   
-  updateNameDisplay() {
-    if (this.nameDisplay) {
-      this.nameDisplay.setText(this.nameInputText + '_');
-    }
-  }
   
   selectOption() {
     if (this.selectedOption === 0) {

@@ -645,7 +645,7 @@ export default class Game extends Phaser.Scene {
     
     // Register enemy kill with combo system
     if (this.comboTracker) {
-      this.comboTracker.registerEnemyKill(this.player.x, this.isGrounded);
+      this.comboTracker.registerEnemyKill(this.score, this.isGrounded);
     }
     
     // Create explosion at enemy position
@@ -1158,7 +1158,7 @@ export default class Game extends Phaser.Scene {
       
       // Register trick with combo system
       if (this.comboTracker) {
-        this.comboTracker.registerTrick(this.player.x, this.isGrounded);
+        this.comboTracker.registerTrick(this.score, this.isGrounded);
       }
       this.hasUsedTrick = true; // Mark trick as used
       
@@ -2028,15 +2028,15 @@ export default class Game extends Phaser.Scene {
     
     // Update combo system with ground state
     if (this.comboTracker) {
-      const starsEarned = this.comboTracker.updateAirState(this.player.x, this.wasGrounded, this.isGrounded);
+      const starsEarned = this.comboTracker.updateAirState(this.score, this.wasGrounded, this.isGrounded);
       this.wasGrounded = this.isGrounded;
     }
   }
   
   setupComboUI() {
-    // Create combo UI text (initially hidden) - positioned lower and larger font
-    this.comboUI = this.add.text(320, 180, '', {
-      fontSize: '20px',
+    // Create combo UI text (initially hidden) - positioned much lower and larger font
+    this.comboUI = this.add.text(320, 300, '', {
+      fontSize: '26px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
       stroke: '#000000',
@@ -2059,8 +2059,7 @@ export default class Game extends Phaser.Scene {
       this.comboUI.setColor('#ffffff');
     } else if (state.status === 'active') {
       this.comboUI.setVisible(true);
-      const distance = Math.floor(this.player.x - state.startX);
-      this.comboUI.setText(`COMBO x${state.multiplier}\nDISTANCE: ${distance}`);
+      this.comboUI.setText(`COMBO x${state.multiplier}\nSCORE: ${state.comboScorePoints}`);
       this.comboUI.setColor('#00ff00');
     }
   }
@@ -2068,8 +2067,8 @@ export default class Game extends Phaser.Scene {
   showComboEndEffect(data: any) {
     if (!data.starsEarned || data.starsEarned <= 0) return;
     
-    // Show combo end effect with stars earned - positioned lower to avoid combo UI
-    const comboEndText = this.add.text(320, 230, `COMBO!\n+${data.starsEarned} STARS`, {
+    // Show simple combo end effect with stars earned - no floating VFX
+    const comboEndText = this.add.text(320, 360, `COMBO!\n+${data.starsEarned} STARS`, {
       fontSize: '24px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
@@ -2078,17 +2077,9 @@ export default class Game extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(102);
     
-    // Animate the effect
-    this.tweens.add({
-      targets: comboEndText,
-      y: comboEndText.y - 50,
-      alpha: 0,
-      scale: 1.5,
-      duration: 2000,
-      ease: 'Power2',
-      onComplete: () => {
-        comboEndText.destroy();
-      }
+    // Just show for 1.5 seconds then remove - no floating animation
+    this.time.delayedCall(1500, () => {
+      comboEndText.destroy();
     });
   }
 }
