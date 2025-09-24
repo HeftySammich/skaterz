@@ -19,6 +19,7 @@ export default class Game extends Phaser.Scene {
   private isGrounded = true;
   private hasDoubleJumped = false;
   private trickActive = false;
+  private hasUsedTrick = false; // Track if trick was used after jump
   private jumpCount = 0;
   private maxJumps = 2; // Regular jump + trick jump
   private jumpDebounce = false;
@@ -128,6 +129,7 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 0;
     this.hasDoubleJumped = false;
     this.trickActive = false;
+    this.hasUsedTrick = false;
     this.backgroundTiles = []; // Clear background tiles
     this.stars = 0; // Reset stars
     this.lives = 3; // Reset lives
@@ -508,16 +510,16 @@ export default class Game extends Phaser.Scene {
       enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(320, 400);
     }
     
-    // Check if this Y position conflicts with recent sandwich or energy drink spawn
+    // Check if this Y position conflicts with recent sandwich or energy drink spawn (reduced to 3 seconds)
     const timeSinceLastSandwich = (this.time.now - this.lastSandwichSpawnTime) / 1000;
     const timeSinceLastEnergyDrink = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
     
-    if (timeSinceLastSandwich < 5 && Math.abs(enemyY - this.lastSandwichY) < 100) {
+    if (timeSinceLastSandwich < 3 && Math.abs(enemyY - this.lastSandwichY) < 100) {
       console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
       return;
     }
     
-    if (timeSinceLastEnergyDrink < 5 && Math.abs(enemyY - this.lastEnergyDrinkY) < 100) {
+    if (timeSinceLastEnergyDrink < 3 && Math.abs(enemyY - this.lastEnergyDrinkY) < 100) {
       console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
       return;
     }
@@ -643,9 +645,10 @@ export default class Game extends Phaser.Scene {
     const currentVelX = playerBody.velocity.x;
     playerBody.setVelocityX(Math.min(currentVelX + 80, 450));
     
-    // Reset jump count to allow another jump
+    // Reset jump count to allow another jump AND trick
     this.jumpCount = 0;
     this.hasDoubleJumped = false;
+    this.hasUsedTrick = false; // Reset trick ability after stomping enemy
     
     // Restore more stamina as reward for successful stomp
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
@@ -740,7 +743,7 @@ export default class Game extends Phaser.Scene {
     
     // Create star counter UI below life counter
     this.starIcon = this.add.image(540, 85, 'star_counter_icon');
-    this.starIcon.setScale(0.08);
+    this.starIcon.setScale(0.12);
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
@@ -1011,6 +1014,7 @@ export default class Game extends Phaser.Scene {
     this.isGrounded = true;
     this.hasDoubleJumped = false;
     this.trickActive = false;
+    this.hasUsedTrick = false; // Reset trick when landing
     this.jumpCount = 0;
     
     // Return to normal gravity and skating texture
@@ -1089,16 +1093,17 @@ export default class Game extends Phaser.Scene {
   }
   
   performTrick() {
-    console.log(`Trick attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, stamina=${this.stamina}`);
+    console.log(`Trick attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, hasUsedTrick=${this.hasUsedTrick}, stamina=${this.stamina}`);
     
-    // Can perform trick if not on ground and has stamina
-    if (!this.isGrounded && this.stamina >= 15) {
+    // Can perform trick if not on ground, hasn't used trick yet, and has stamina
+    if (!this.isGrounded && !this.hasUsedTrick && this.stamina >= 15) {
       // Apply small upward boost
       this.player.setVelocityY(this.SWIPE_TRICK_VELOCITY);
       
       // Set trick texture (will be replaced with animation later)
       this.player.setTexture('skater_trick');
       this.trickActive = true;
+      this.hasUsedTrick = true; // Mark trick as used
       
       // Consume less stamina for tricks (unless boost is active)
       if (!this.staminaBoostActive) {
@@ -1128,6 +1133,8 @@ export default class Game extends Phaser.Scene {
     } else {
       if (this.isGrounded) {
         console.log('Trick blocked - must be in air');
+      } else if (this.hasUsedTrick) {
+        console.log('Trick blocked - already used trick this jump');
       } else if (this.stamina < 15) {
         console.log('Trick blocked - not enough stamina');
       }
@@ -1252,16 +1259,16 @@ export default class Game extends Phaser.Scene {
     const spawnDistance = Phaser.Math.Between(800, 1200);
     const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
     
-    // Check if this Y position conflicts with recent enemy or energy drink spawn
+    // Check if this Y position conflicts with recent enemy or energy drink spawn (reduced to 3 seconds)
     const timeSinceLastEnemy = (this.time.now - this.lastEnemySpawnTime) / 1000;
     const timeSinceLastEnergyDrink = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
     
-    if (timeSinceLastEnemy < 5 && Math.abs(spawnY - this.lastEnemyY) < 100) {
+    if (timeSinceLastEnemy < 3 && Math.abs(spawnY - this.lastEnemyY) < 100) {
       console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
       return;
     }
     
-    if (timeSinceLastEnergyDrink < 5 && Math.abs(spawnY - this.lastEnergyDrinkY) < 100) {
+    if (timeSinceLastEnergyDrink < 3 && Math.abs(spawnY - this.lastEnergyDrinkY) < 100) {
       console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
       return;
     }
@@ -1340,16 +1347,16 @@ export default class Game extends Phaser.Scene {
     const spawnDistance = Phaser.Math.Between(900, 1300);
     const spawnY = Phaser.Math.Between(450, 650); // Float in the sky
     
-    // Check if this Y position conflicts with recent spawns (sandwich or enemy) within 5 seconds
+    // Check if this Y position conflicts with recent spawns (sandwich or enemy) within 3 seconds (reduced from 5)
     const timeSinceLastSandwich = (this.time.now - this.lastSandwichSpawnTime) / 1000;
     const timeSinceLastEnemy = (this.time.now - this.lastEnemySpawnTime) / 1000;
     
-    if (timeSinceLastSandwich < 5 && Math.abs(spawnY - this.lastSandwichY) < 100) {
+    if (timeSinceLastSandwich < 3 && Math.abs(spawnY - this.lastSandwichY) < 100) {
       console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
       return;
     }
     
-    if (timeSinceLastEnemy < 5 && Math.abs(spawnY - this.lastEnemyY) < 100) {
+    if (timeSinceLastEnemy < 3 && Math.abs(spawnY - this.lastEnemyY) < 100) {
       console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
       return;
     }
@@ -1668,8 +1675,8 @@ export default class Game extends Phaser.Scene {
   createLifeDisplay() {
     // Create life icon and text (like stars) - aligned vertically with star
     this.lifeIcon = this.add.image(540, 45, 'life_icon');
-    this.lifeIcon.setScale(0.08);
-    this.lifeIcon.setDepth(100);
+    this.lifeIcon.setScale(0.12); // Make it larger, same size as star
+    this.lifeIcon.setDepth(102); // Higher depth than star (100)
     this.lifeIcon.setScrollFactor(0);
     
     this.lifeText = this.add.text(580, 45, this.lives.toString(), {
