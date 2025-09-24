@@ -58,6 +58,7 @@ export default class Preload extends Phaser.Scene {
     this.load.image('slime_splash', 'assets/slime_splash.png');
     this.load.image('soul_arcade', 'assets/soul_arcade.png');
     this.load.image('soul_arcade_logo', 'soul_arcade_logo.png');
+    this.load.image('soul_arcade_new_logo', 'assets/soul_arcade_new_logo.png');
     this.load.image('warning_skull', 'assets/warning_skull.png');
     this.load.image('starfall_presents', 'assets/starfall_presents.png');
     this.load.image('graffiti_bg', 'assets/graffiti_bg.png');

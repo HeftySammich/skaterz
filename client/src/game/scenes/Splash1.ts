@@ -11,7 +11,7 @@ export class Splash1 extends Phaser.Scene {
     const centerY = this.cameras.main.height / 2;
     
     // Display the Soul Arcade Advance logo - make it bigger
-    const logo = this.add.image(centerX, centerY, 'soul_arcade_logo');
+    const logo = this.add.image(centerX, centerY, 'soul_arcade_new_logo');
     logo.setOrigin(0.5, 0.5);
     
     // Make the logo bigger - use more of the screen
@@ -23,7 +23,7 @@ export class Splash1 extends Phaser.Scene {
     // Wait 2 seconds then add shine effect
     this.time.delayedCall(2000, () => {
       // Create a duplicate of the logo for the shine effect
-      const shineLogo = this.add.image(centerX, centerY, 'soul_arcade_logo');
+      const shineLogo = this.add.image(centerX, centerY, 'soul_arcade_new_logo');
       shineLogo.setOrigin(0.5, 0.5);
       shineLogo.setScale(scale);
       shineLogo.setAlpha(0); // Start invisible
