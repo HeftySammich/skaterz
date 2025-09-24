@@ -51,7 +51,7 @@ export class OptionsMenu extends Phaser.Scene {
     this.menuItems = [leaderboardText, backText];
     
     // Selection indicator
-    const selector = this.add.text(200, 350, '>', {
+    const selector = this.add.text(150, 350, '>', {
       fontSize: '24px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
