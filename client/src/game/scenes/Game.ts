@@ -1172,9 +1172,11 @@ export default class Game extends Phaser.Scene {
       // Apply small upward boost
       this.player.setVelocityY(this.SWIPE_TRICK_VELOCITY);
       
-      // ISSUE: This changes texture to trick sprite while airborne!
-      console.log('[DEBUG] performTrick() - Setting to trick texture (this might be the problem!)');
-      this.player.setTexture('skater_trick');
+      // Stop animation and keep jump sprite during trick
+      this.player.stop(); // Stop any animation
+      // Keep the jump sprite during the trick instead of changing to idle
+      this.player.setTexture('jump_static');
+      this.player.setScale(this.jumpScale);
       this.trickActive = true;
       
       // Register trick with combo system
@@ -1205,9 +1207,8 @@ export default class Game extends Phaser.Scene {
         this.physics.world.gravity.y = this.GRAVITY;
         this.trickActive = false;
         this.trickParticles.stop();
-        // Check if we should restore jump sprite if still airborne
+        // Keep jump sprite if still airborne
         if (!this.isGrounded) {
-          console.log('[DEBUG] Trick ended but still airborne - restoring jump sprite');
           this.player.setTexture('jump_static');
           this.player.setScale(this.jumpScale);
         }
@@ -1944,8 +1945,10 @@ export default class Game extends Phaser.Scene {
       this.performJump();
     }
     
-    // Swipe up trick feature removed - no longer does anything
-    // Similar to how swipe down (stomp) was removed
+    // Handle swipe-up for tricks while airborne
+    if (this.controls.justSwipedUp() && !this.isGrounded) {
+      this.performTrick();
+    }
     
     // Swipe down does nothing now - stomp feature removed
     
