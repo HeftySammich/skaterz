@@ -19,7 +19,7 @@ export class OptionsMenu extends Phaser.Scene {
     bg.setDisplaySize(640, 960);
     
     // Title
-    this.add.text(320, 200, 'OPTIONS', {
+    const titleText = this.add.text(320, 200, 'OPTIONS', {
       fontSize: '32px',
       color: '#ffecb3',
       fontFamily: '"Press Start 2P", monospace',
@@ -27,6 +27,7 @@ export class OptionsMenu extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    titleText.setShadow(3, 3, '#000000', 5, true, true);
 
     // Menu options
     const howToPlayText = this.add.text(320, 320, 'HOW TO PLAY', {
@@ -37,6 +38,7 @@ export class OptionsMenu extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    howToPlayText.setShadow(2, 2, '#000000', 3, true, true);
 
     const leaderboardText = this.add.text(320, 420, 'LEADERBOARD', {
       fontSize: '24px',
@@ -46,6 +48,7 @@ export class OptionsMenu extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    leaderboardText.setShadow(2, 2, '#000000', 3, true, true);
 
     const backText = this.add.text(320, 520, 'GO BACK', {
       fontSize: '22px',
@@ -55,6 +58,7 @@ export class OptionsMenu extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0.5);
+    backText.setShadow(2, 2, '#000000', 3, true, true);
     
     // Store menu items
     this.menuItems = [howToPlayText, leaderboardText, backText];
@@ -67,6 +71,7 @@ export class OptionsMenu extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    selector.setShadow(2, 2, '#000000', 3, true, true);
     
     // Update selector position
     const updateSelector = () => {
