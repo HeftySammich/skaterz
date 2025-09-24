@@ -19,6 +19,9 @@ export default class Preload extends Phaser.Scene {
     // Load single jump sprite - no animation, just one image
     this.load.image('jump_static', 'sprites/jump_static.png');
     
+    // Load trick sprite for swipe-up tricks
+    this.load.image('trick_sprite', 'sprites/trick_sprite.png');
+    
     // Load obstacle images
     this.load.image('obstacle_cone', 'assets/obstacle_cone.png');
     this.load.image('obstacle_trash', 'assets/obstacle_trash.png');

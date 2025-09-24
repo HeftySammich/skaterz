@@ -296,7 +296,7 @@ export default class Game extends Phaser.Scene {
       color: '#00ffff'
     }).setOrigin(0.5);
     
-    const line3 = this.add.text(0, 35, 'SWIPE UP FOR TRICK', {
+    const line3 = this.add.text(0, 35, 'SWIPE UP (IN AIR) FOR TRICK', {
       fontSize: '24px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00'
@@ -1172,10 +1172,10 @@ export default class Game extends Phaser.Scene {
       // Apply small upward boost
       this.player.setVelocityY(this.SWIPE_TRICK_VELOCITY);
       
-      // Stop animation and keep jump sprite during trick
+      // Stop animation and use trick sprite
       this.player.stop(); // Stop any animation
-      // Keep the jump sprite during the trick instead of changing to idle
-      this.player.setTexture('jump_static');
+      // Use the trick sprite during the trick
+      this.player.setTexture('trick_sprite');
       this.player.setScale(this.jumpScale);
       this.trickActive = true;
       
@@ -2106,8 +2106,8 @@ export default class Game extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5).setScrollFactor(0).setDepth(102);
     
-    // Show for 2.5 seconds then remove
-    this.time.delayedCall(2500, () => {
+    // Show for 2 seconds then remove immediately (no fade)
+    this.time.delayedCall(2000, () => {
       comboEndText.destroy();
     });
   }
