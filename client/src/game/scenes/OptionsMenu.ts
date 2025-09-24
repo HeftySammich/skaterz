@@ -1,7 +1,7 @@
 export class OptionsMenu extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private menuMusic: Phaser.Sound.BaseSound | null = null;
-  private selectedOption = 0; // 0 = Leaderboard, 1 = Back
+  private selectedOption = 0; // 0 = How to Play, 1 = Leaderboard, 2 = Back
   private menuItems: Phaser.GameObjects.Text[] = [];
 
   constructor() {
@@ -29,7 +29,7 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Menu options
-    const leaderboardText = this.add.text(320, 350, 'LEADERBOARD', {
+    const howToPlayText = this.add.text(320, 320, 'HOW TO PLAY', {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -38,7 +38,16 @@ export class OptionsMenu extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
 
-    const backText = this.add.text(320, 450, 'GO BACK', {
+    const leaderboardText = this.add.text(320, 420, 'LEADERBOARD', {
+      fontSize: '24px',
+      color: '#ffffff',
+      fontFamily: '"Press Start 2P", monospace',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+
+    const backText = this.add.text(320, 520, 'GO BACK', {
       fontSize: '22px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -48,10 +57,10 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Store menu items
-    this.menuItems = [leaderboardText, backText];
+    this.menuItems = [howToPlayText, leaderboardText, backText];
     
     // Selection indicator
-    const selector = this.add.text(150, 350, '>', {
+    const selector = this.add.text(150, 320, '>', {
       fontSize: '24px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
@@ -61,13 +70,19 @@ export class OptionsMenu extends Phaser.Scene {
     
     // Update selector position
     const updateSelector = () => {
+      // Reset all colors
+      howToPlayText.setColor('#ffffff');
+      leaderboardText.setColor('#ffffff');
+      backText.setColor('#ffffff');
+      
       if (this.selectedOption === 0) {
-        selector.setY(350);
+        selector.setY(320);
+        howToPlayText.setColor('#00ff00');
+      } else if (this.selectedOption === 1) {
+        selector.setY(420);
         leaderboardText.setColor('#00ff00');
-        backText.setColor('#ffffff');
       } else {
-        selector.setY(450);
-        leaderboardText.setColor('#ffffff');
+        selector.setY(520);
         backText.setColor('#00ff00');
       }
     };
@@ -75,12 +90,21 @@ export class OptionsMenu extends Phaser.Scene {
     updateSelector();
     
     // Make options interactive
+    howToPlayText.setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        this.scene.start('HowToPlay', { menuMusic: this.menuMusic });
+      })
+      .on('pointerover', () => {
+        this.selectedOption = 0;
+        updateSelector();
+      });
+
     leaderboardText.setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('Leaderboard', { menuMusic: this.menuMusic });
       })
       .on('pointerover', () => {
-        this.selectedOption = 0;
+        this.selectedOption = 1;
         updateSelector();
       });
       
@@ -89,7 +113,7 @@ export class OptionsMenu extends Phaser.Scene {
         this.scene.start('MainMenu', { menuMusic: this.menuMusic });
       })
       .on('pointerover', () => {
-        this.selectedOption = 1;
+        this.selectedOption = 2;
         updateSelector();
       });
     
@@ -111,6 +135,8 @@ export class OptionsMenu extends Phaser.Scene {
     
     const selectOption = () => {
       if (this.selectedOption === 0) {
+        this.scene.start('HowToPlay', { menuMusic: this.menuMusic });
+      } else if (this.selectedOption === 1) {
         this.scene.start('Leaderboard', { menuMusic: this.menuMusic });
       } else {
         this.scene.start('MainMenu', { menuMusic: this.menuMusic });
