@@ -119,7 +119,7 @@ export default class Game extends Phaser.Scene {
   private readonly JUMP_VELOCITY = -1750;  // Slightly higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1450; // Slightly higher double jump
   private readonly SWIPE_TRICK_VELOCITY = -850; // Small jump for swipe trick
-  private readonly STOMP_VELOCITY = 400; // Slight downward nudge for stomp attack
+  private readonly STOMP_VELOCITY = 1200; // Fast downward stomp attack
   private readonly GRAVITY = 4200; // Slightly floatier
   private readonly FLOAT_GRAVITY = 3200; // More float during tricks
 
