@@ -44,7 +44,7 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Back instruction
-    const backText = this.add.text(320, 700, 'PRESS ESC TO GO BACK', {
+    const backText = this.add.text(320, 700, 'GO BACK', {
       fontSize: '16px',
       color: '#e2e28e',
       fontFamily: '"Press Start 2P", monospace',
