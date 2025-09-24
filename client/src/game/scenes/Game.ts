@@ -788,13 +788,13 @@ export default class Game extends Phaser.Scene {
     // Create life counter above star counter
     this.createLifeDisplay();
     
-    // Create star counter UI further down to avoid overlap - moved more to the left
-    this.starIcon = this.add.image(480, 145, 'star_counter_icon');
+    // Create star counter UI further down to avoid overlap - positioned slightly more to the right
+    this.starIcon = this.add.image(500, 145, 'star_counter_icon');
     this.starIcon.setScale(0.08); // Keep original size
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(520, 145, '0', {
+    this.starText = this.add.text(540, 145, '0', {
       fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
@@ -1749,13 +1749,13 @@ export default class Game extends Phaser.Scene {
   }
 
   createLifeDisplay() {
-    // Create life icon and text - moved more to the left
-    this.lifeIcon = this.add.image(480, 62, 'life_icon');
+    // Create life icon and text - positioned slightly more to the right
+    this.lifeIcon = this.add.image(500, 62, 'life_icon');
     this.lifeIcon.setScale(0.12); // Keep larger size
     this.lifeIcon.setDepth(102); // Higher depth than star (100)
     this.lifeIcon.setScrollFactor(0);
     
-    this.lifeText = this.add.text(520, 62, this.lives.toString(), {
+    this.lifeText = this.add.text(540, 62, this.lives.toString(), {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',

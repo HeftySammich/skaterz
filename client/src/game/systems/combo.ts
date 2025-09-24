@@ -121,12 +121,12 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
     let starsEarned = 0;
     
     if (this.state.status === 'active') {
-      // Calculate stars: 10% of score points earned during combo, then apply multiplier
+      // Calculate stars: 1% of score points earned during combo, then apply multiplier
       this.state.comboScorePoints = currentScore - this.state.startScore;
-      const baseStars = Math.floor(this.state.comboScorePoints * 0.1); // 10% of score points
+      const baseStars = Math.floor(this.state.comboScorePoints * 0.01); // 1% of score points
       starsEarned = baseStars * this.state.multiplier;
       
-      console.log(`[COMBO] COMBO COMPLETED! Score Points: ${this.state.comboScorePoints}, Base Stars (10%): ${baseStars}, Multiplier: ${this.state.multiplier}, Total Stars: ${starsEarned}`);
+      console.log(`[COMBO] COMBO COMPLETED! Score Points: ${this.state.comboScorePoints}, Base Stars (1%): ${baseStars}, Multiplier: ${this.state.multiplier}, Total Stars: ${starsEarned}`);
       
       this.emit('comboEnded', {
         multiplier: this.state.multiplier,
