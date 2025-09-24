@@ -29,9 +29,9 @@ export default class Game extends Phaser.Scene {
   // Jump animation system
   private isJumpAnimating = false;
   private jumpAnimationFrame = 0;
-  private jumpFrames = ['jump_frame_1', 'jump_frame_2', 'jump_frame_3', 'jump_frame_4', 'jump_frame_5'];
-  // Calculated scale values to make all jump frames match idle sprite size exactly
-  private jumpFrameScales: number[] = [];
+  private jumpFrames = ['jump_frame_1', 'jump_frame_2', 'jump_frame_3']; // 3 new frames
+  // All frames use same scale as idle sprite
+  private jumpFrameScale = 0.4;
   
   // Obstacle system
   private obstacles!: Phaser.GameObjects.Group;
@@ -404,8 +404,7 @@ export default class Game extends Phaser.Scene {
     // Proper scale for visibility at new resolution - even smaller
     this.player.setScale(0.4);
     
-    // Calculate proper scales for jump frames to match idle sprite size
-    this.calculateJumpFrameScales();
+    // Jump frames now use the same scale as idle sprite
     
     // Physics body setup - normal sized collision box (not extended)
     const body = this.player.body as Phaser.Physics.Arcade.Body;
@@ -707,8 +706,8 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 1; // Set to 1 so they can only do ONE more jump (double jump)
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
-    // Keep using idle sprite
-    this.player.setTexture('skater_idle');
+    // Start jump animation since player is bouncing up
+    this.startJumpAnimation();
     
     // Restore more stamina as reward for successful stomp
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
@@ -1076,38 +1075,31 @@ export default class Game extends Phaser.Scene {
     }
   }
 
-  calculateJumpFrameScales() {
-    // Get idle sprite dimensions and current scale
-    const idleTexture = this.textures.get('skater_idle').getSourceImage() as HTMLImageElement;
-    const idleWidth = idleTexture.width;
-    const idleHeight = idleTexture.height;
-    const idleScale = 0.4;
-    
-    // Target rendered size (what we want all sprites to match)
-    const targetWidth = idleWidth * idleScale;
-    const targetHeight = idleHeight * idleScale;
-    
-    console.log(`Idle sprite: ${idleWidth}x${idleHeight}, scaled to ${targetWidth}x${targetHeight}`);
-    
-    // Calculate scale for each jump frame to match idle sprite rendered size
-    this.jumpFrameScales = [];
-    for (let i = 0; i < this.jumpFrames.length; i++) {
-      const frameTexture = this.textures.get(this.jumpFrames[i]).getSourceImage() as HTMLImageElement;
-      const frameWidth = frameTexture.width;
-      const frameHeight = frameTexture.height;
-      
-      // Calculate scale needed to match target height (height is usually the constraining dimension)
-      const scaleNeeded = targetHeight / frameHeight;
-      this.jumpFrameScales.push(scaleNeeded);
-      
-      console.log(`${this.jumpFrames[i]}: ${frameWidth}x${frameHeight}, scale: ${scaleNeeded.toFixed(3)}`);
-    }
-  }
+  // calculateJumpFrameScales removed - all frames now use same scale
 
-  // Jump animation removed - now using idle sprite for all jump states
-  // startJumpAnimation() {
-  //   // Removed - using idle sprite for jumps
-  // }
+  startJumpAnimation() {
+    // Play the 3-frame jump animation sequence
+    this.isJumpAnimating = true;
+    this.jumpAnimationFrame = 0;
+    this.player.setTexture(this.jumpFrames[0]);
+    this.player.setScale(this.jumpFrameScale);
+    
+    // Animate through all 3 frames quickly (50ms per frame)
+    this.time.addEvent({
+      delay: 50,
+      callback: () => {
+        this.jumpAnimationFrame++;
+        if (this.jumpAnimationFrame < this.jumpFrames.length) {
+          this.player.setTexture(this.jumpFrames[this.jumpAnimationFrame]);
+          this.player.setScale(this.jumpFrameScale);
+        } else {
+          // Animation complete - hold on last frame until landing
+          this.isJumpAnimating = false;
+        }
+      },
+      repeat: this.jumpFrames.length - 2, // Repeat once to show all 3 frames
+    });
+  }
 
   handleLanding() {
     this.isGrounded = true;
@@ -1139,8 +1131,8 @@ export default class Game extends Phaser.Scene {
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
-      // Keep using idle sprite during jump
-      this.player.setTexture('skater_idle');
+      // Start jump animation with new frames
+      this.startJumpAnimation();
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
@@ -1161,8 +1153,8 @@ export default class Game extends Phaser.Scene {
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      // Keep using idle sprite for double jump
-      this.player.setTexture('skater_idle');
+      // Start jump animation for double jump too
+      this.startJumpAnimation();
       this.hasDoubleJumped = true;
       this.trickActive = true;
       this.jumpCount = 2;

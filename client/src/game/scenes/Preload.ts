@@ -16,12 +16,10 @@ export default class Preload extends Phaser.Scene {
     this.load.image('skater_jump', 'assets/skater_idle.png'); // Use same image for now
     this.load.image('skater_trick', 'assets/skater_idle.png'); // Use same image for now
     
-    // Load jump animation frames
-    this.load.image('jump_frame_1', 'sprites/jump_frame_1.png');
-    this.load.image('jump_frame_2', 'sprites/jump_frame_2.png');
-    this.load.image('jump_frame_3', 'sprites/jump_frame_3.png');
-    this.load.image('jump_frame_4', 'sprites/jump_frame_4.png');
-    this.load.image('jump_frame_5', 'sprites/jump_frame_5.png');
+    // Load new jump animation frames (3 frames)
+    this.load.image('jump_frame_1', 'sprites/jump_frame_1_new.png');
+    this.load.image('jump_frame_2', 'sprites/jump_frame_2_new.png');
+    this.load.image('jump_frame_3', 'sprites/jump_frame_3_new.png');
     
     // Load obstacle images
     this.load.image('obstacle_cone', 'assets/obstacle_cone.png');
