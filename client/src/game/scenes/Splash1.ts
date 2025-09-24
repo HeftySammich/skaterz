@@ -15,8 +15,8 @@ export class Splash1 extends Phaser.Scene {
     logo.setOrigin(0.5, 0.5);
     
     // Make the logo bigger - use more of the screen
-    const maxWidth = 1100;  // Much bigger
-    const maxHeight = 900; // Much bigger
+    const maxWidth = 1600;  // Much bigger
+    const maxHeight = 1400; // Much bigger
     const scale = Math.min(maxWidth / logo.width, maxHeight / logo.height);
     logo.setScale(scale);
     
