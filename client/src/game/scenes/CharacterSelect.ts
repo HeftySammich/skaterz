@@ -73,18 +73,31 @@ export default class CharacterSelect extends Phaser.Scene {
     // Update initial selection
     this.updateSelection();
     
-    // Instructions
-    this.add.text(cam.centerX, cam.height - 100, 'PRESS SPACE TO SELECT', {
-      fontSize: '12px',
-      color: '#00ff00',
-      fontFamily: '"Press Start 2P", monospace'
+    // Main Menu button
+    const mainMenuButton = this.add.text(cam.centerX, cam.height - 80, 'MAIN MENU', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontFamily: '"Press Start 2P", monospace',
+      backgroundColor: '#333333',
+      padding: { x: 20, y: 10 }
     }).setOrigin(0.5);
     
-    this.add.text(cam.centerX, cam.height - 60, 'PRESS ESC FOR MAIN MENU', {
-      fontSize: '10px',
-      color: '#888888',
-      fontFamily: '"Press Start 2P", monospace'
-    }).setOrigin(0.5);
+    // Make it interactive
+    mainMenuButton.setInteractive({ useHandCursor: true });
+    
+    mainMenuButton.on('pointerover', () => {
+      mainMenuButton.setColor('#00ff00');
+      mainMenuButton.setScale(1.1);
+    });
+    
+    mainMenuButton.on('pointerout', () => {
+      mainMenuButton.setColor('#ffffff');
+      mainMenuButton.setScale(1);
+    });
+    
+    mainMenuButton.on('pointerdown', () => {
+      this.scene.start('MainMenu', { menuMusic: this.menuMusic });
+    });
   }
   
   update() {
