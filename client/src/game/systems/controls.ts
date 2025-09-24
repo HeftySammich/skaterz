@@ -3,7 +3,8 @@ import Phaser from 'phaser';
 export function setupControls(scene: Phaser.Scene) {
   let lastInput = 0;
   let justTapped = false;
-  let justSwiped = false;
+  let justSwipedUp = false;
+  let justSwipedDown = false;
   
   // Swipe detection variables
   let startX = 0;
@@ -51,9 +52,18 @@ export function setupControls(scene: Phaser.Scene) {
         velocity > SWIPE_VELOCITY_THRESHOLD &&
         Math.abs(deltaX) < deltaY) { // Ensure it's more vertical than horizontal
       
-      justSwiped = true;
+      justSwipedUp = true;
       lastInput = now;
       console.log('SWIPE UP detected!');
+      
+    } else if (-deltaY > SWIPE_THRESHOLD && 
+               deltaTime < SWIPE_TIME_THRESHOLD && 
+               velocity > SWIPE_VELOCITY_THRESHOLD &&
+               Math.abs(deltaX) < Math.abs(deltaY)) { // Check for swipe down
+      
+      justSwipedDown = true;
+      lastInput = now;
+      console.log('SWIPE DOWN detected!');
       
     } else if (distance < 20) { 
       // It's a tap (minimal movement, any press duration)
@@ -88,9 +98,18 @@ export function setupControls(scene: Phaser.Scene) {
     },
     
     justSwipedUp: () => {
-      if (justSwiped) {
-        justSwiped = false; // Reset swipe flag
+      if (justSwipedUp) {
+        justSwipedUp = false; // Reset swipe flag
         console.log('Trick triggered by swipe up!');
+        return true;
+      }
+      return false;
+    },
+    
+    justSwipedDown: () => {
+      if (justSwipedDown) {
+        justSwipedDown = false; // Reset swipe flag
+        console.log('Stomp attack triggered by swipe down!');
         return true;
       }
       return false;

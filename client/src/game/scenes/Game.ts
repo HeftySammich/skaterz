@@ -24,6 +24,7 @@ export default class Game extends Phaser.Scene {
   private jumpCount = 0;
   private maxJumps = 2; // Regular jump + trick jump
   private jumpDebounce = false;
+  private isStomping = false; // Track if performing stomp attack
   
   // Jump animation system
   private isJumpAnimating = false;
@@ -118,6 +119,7 @@ export default class Game extends Phaser.Scene {
   private readonly JUMP_VELOCITY = -1750;  // Slightly higher first jump
   private readonly TRICK_JUMP_VELOCITY = -1450; // Slightly higher double jump
   private readonly SWIPE_TRICK_VELOCITY = -850; // Small jump for swipe trick
+  private readonly STOMP_VELOCITY = 1800; // Fast downward velocity for stomp attack
   private readonly GRAVITY = 4200; // Slightly floatier
   private readonly FLOAT_GRAVITY = 3200; // More float during tricks
 
@@ -149,6 +151,7 @@ export default class Game extends Phaser.Scene {
     this.hasUsedTrick = false;
     this.isJumpAnimating = false;
     this.jumpAnimationFrame = 0;
+    this.isStomping = false;
     this.backgroundTiles = []; // Clear background tiles
     this.stars = 0; // Reset stars
     this.lives = 3; // Reset lives
@@ -1132,6 +1135,7 @@ export default class Game extends Phaser.Scene {
     this.hasUsedTrick = false; // Reset trick when landing
     this.jumpCount = 0;
     this.isJumpAnimating = false; // Reset animation state
+    this.isStomping = false; // Reset stomp state when landing
     
     // Return to normal gravity and skating texture
     this.physics.world.gravity.y = this.GRAVITY;
@@ -1261,6 +1265,32 @@ export default class Game extends Phaser.Scene {
       } else if (this.stamina < 15) {
 // console.log('Trick blocked - not enough stamina');
       }
+    }
+  }
+  
+  performStomp() {
+    console.log(`Stomp attempt: grounded=${this.isGrounded}, isStomping=${this.isStomping}`);
+    
+    // Can only stomp if airborne and not already stomping
+    if (!this.isGrounded && !this.isStomping) {
+      // Set downward velocity for quick stomp
+      this.player.setVelocityY(this.STOMP_VELOCITY);
+      this.isStomping = true;
+      
+      // Add particles or visual effects for the stomp
+      this.jumpParticles.setPosition(this.player.x, this.player.y);
+      this.jumpParticles.explode(8); // More particles for stomp effect
+      
+      // Register with combo system
+      if (this.comboTracker) {
+        this.comboTracker.registerTrick(this.score, this.isGrounded);
+      }
+      
+      // Play trick animation during stomp
+      this.player.setTexture('skater_trick');
+      this.trickActive = true;
+      
+      console.log('Stomp attack initiated!');
     }
   }
   
@@ -1984,6 +2014,11 @@ export default class Game extends Phaser.Scene {
     // Handle swipe-up for tricks
     if (this.controls.justSwipedUp()) {
       this.performTrick();
+    }
+    
+    // Handle swipe-down for stomp attack
+    if (this.controls.justSwipedDown()) {
+      this.performStomp();
     }
     
     // Update world scrolling for infinite background

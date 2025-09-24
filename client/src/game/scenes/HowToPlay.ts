@@ -97,7 +97,7 @@ export class HowToPlay extends Phaser.Scene {
     controlsTitle.setShadow(2, 2, '#000000', 4, true, true);
 
     yPos += 60;
-    const controlsText = this.add.text(320, yPos, 'TAP/SPACE: JUMP\nSWIPE UP: TRICK (IN AIR)\nSTOMP ON ENEMIES TO DEFEAT', {
+    const controlsText = this.add.text(320, yPos, 'TAP/SPACE: JUMP\nSWIPE UP: TRICK (IN AIR)\nSWIPE DOWN: STOMP ATTACK\nSTOMP ON ENEMIES TO DEFEAT', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
