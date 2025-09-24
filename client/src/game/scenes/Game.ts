@@ -44,6 +44,8 @@ export default class Game extends Phaser.Scene {
   private lastEnemySpawnTime = 0;
   private lastSandwichY = 0;
   private lastSandwichSpawnTime = 0;
+  private lastEnergyDrinkY = 0;
+  private lastEnergyDrinkSpawnTime = 0;
   private bounceVelocity = -1200; // Stronger bounce when landing on enemy
   private speedMultiplier = 1.0; // Speed multiplier that increases over time
   
@@ -119,6 +121,8 @@ export default class Game extends Phaser.Scene {
     this.lastEnemySpawnTime = 0;
     this.lastSandwichY = 0;
     this.lastSandwichSpawnTime = 0;
+    this.lastEnergyDrinkY = 0;
+    this.lastEnergyDrinkSpawnTime = 0;
     this.speedMultiplier = 1.0; // Reset speed multiplier
     this.isGrounded = true;
     this.jumpCount = 0;
@@ -504,10 +508,17 @@ export default class Game extends Phaser.Scene {
       enemyY = PLAYER_GROUND_Y - Phaser.Math.Between(320, 400);
     }
     
-    // Check if this Y position conflicts with recent sandwich spawn
+    // Check if this Y position conflicts with recent sandwich or energy drink spawn
     const timeSinceLastSandwich = (this.time.now - this.lastSandwichSpawnTime) / 1000;
+    const timeSinceLastEnergyDrink = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
+    
     if (timeSinceLastSandwich < 5 && Math.abs(enemyY - this.lastSandwichY) < 100) {
       console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
+      return;
+    }
+    
+    if (timeSinceLastEnergyDrink < 5 && Math.abs(enemyY - this.lastEnergyDrinkY) < 100) {
+      console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
       return;
     }
     
@@ -1241,10 +1252,17 @@ export default class Game extends Phaser.Scene {
     const spawnDistance = Phaser.Math.Between(800, 1200);
     const spawnY = Phaser.Math.Between(400, 600); // Float in the sky
     
-    // Check if this Y position conflicts with recent enemy spawn
+    // Check if this Y position conflicts with recent enemy or energy drink spawn
     const timeSinceLastEnemy = (this.time.now - this.lastEnemySpawnTime) / 1000;
+    const timeSinceLastEnergyDrink = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
+    
     if (timeSinceLastEnemy < 5 && Math.abs(spawnY - this.lastEnemyY) < 100) {
       console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
+      return;
+    }
+    
+    if (timeSinceLastEnergyDrink < 5 && Math.abs(spawnY - this.lastEnergyDrinkY) < 100) {
+      console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
       return;
     }
     
@@ -1322,6 +1340,24 @@ export default class Game extends Phaser.Scene {
     const spawnDistance = Phaser.Math.Between(900, 1300);
     const spawnY = Phaser.Math.Between(450, 650); // Float in the sky
     
+    // Check if this Y position conflicts with recent spawns (sandwich or enemy) within 5 seconds
+    const timeSinceLastSandwich = (this.time.now - this.lastSandwichSpawnTime) / 1000;
+    const timeSinceLastEnemy = (this.time.now - this.lastEnemySpawnTime) / 1000;
+    
+    if (timeSinceLastSandwich < 5 && Math.abs(spawnY - this.lastSandwichY) < 100) {
+      console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
+      return;
+    }
+    
+    if (timeSinceLastEnemy < 5 && Math.abs(spawnY - this.lastEnemyY) < 100) {
+      console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
+      return;
+    }
+    
+    // Store energy drink spawn info
+    this.lastEnergyDrinkY = spawnY;
+    this.lastEnergyDrinkSpawnTime = this.time.now;
+    
     // Create arrow warning indicator for energy drink
     const arrow = this.arrowIndicators.create(580, spawnY, 'energy_warning') as Phaser.GameObjects.Sprite;
     arrow.setScale(0.15);
@@ -1377,10 +1413,11 @@ export default class Game extends Phaser.Scene {
     // Increment can counter
     this.cansCollected++;
     
-    // Show MAXIMUM! text with shimmer effect
-    const maximumText = this.add.image(this.player.x, this.player.y - 100, 'maximum_text');
+    // Show MAXIMUM! text at screen center with shimmer effect
+    const maximumText = this.add.image(320, 480, 'maximum_text');
     maximumText.setScale(0.5);
     maximumText.setDepth(150);
+    maximumText.setScrollFactor(0); // Keep fixed on screen
     
     // Add shimmer effect to MAXIMUM! text
     this.tweens.add({
@@ -1392,13 +1429,14 @@ export default class Game extends Phaser.Scene {
       repeat: 2
     });
     
-    // Float up and fade out
+    // Slide to the left quickly and fade out
     this.tweens.add({
       targets: maximumText,
-      y: maximumText.y - 150,
+      x: -200,
       alpha: 0,
-      duration: 1500,
+      duration: 800,
       ease: 'Power2',
+      delay: 400, // Small delay before sliding
       onComplete: () => {
         maximumText.destroy();
       }
@@ -1628,13 +1666,13 @@ export default class Game extends Phaser.Scene {
   }
 
   createLifeDisplay() {
-    // Create life icon and text (like stars)
-    this.lifeIcon = this.add.image(470, 45, 'life_icon');
+    // Create life icon and text (like stars) - aligned vertically with star
+    this.lifeIcon = this.add.image(540, 45, 'life_icon');
     this.lifeIcon.setScale(0.08);
     this.lifeIcon.setDepth(100);
     this.lifeIcon.setScrollFactor(0);
     
-    this.lifeText = this.add.text(510, 45, this.lives.toString(), {
+    this.lifeText = this.add.text(580, 45, this.lives.toString(), {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
