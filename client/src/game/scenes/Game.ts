@@ -741,13 +741,13 @@ export default class Game extends Phaser.Scene {
     // Create life counter above star counter
     this.createLifeDisplay();
     
-    // Create star counter UI below life counter
-    this.starIcon = this.add.image(540, 85, 'star_counter_icon');
-    this.starIcon.setScale(0.12);
+    // Create star counter UI below life counter (moved lower to avoid overlap)
+    this.starIcon = this.add.image(540, 95, 'star_counter_icon');
+    this.starIcon.setScale(0.08); // Keep original size
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(590, 85, '0', {
+    this.starText = this.add.text(590, 95, '0', {
       fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
@@ -1420,33 +1420,24 @@ export default class Game extends Phaser.Scene {
     // Increment can counter
     this.cansCollected++;
     
-    // Show MAXIMUM! text at screen center with shimmer effect
+    // Show MAXIMUM! text at screen center - NO VFX, just appear and slide
     const maximumText = this.add.image(320, 480, 'maximum_text');
-    maximumText.setScale(0.5);
+    maximumText.setScale(0.6); // Fixed size, no animation
     maximumText.setDepth(150);
     maximumText.setScrollFactor(0); // Keep fixed on screen
     
-    // Add shimmer effect to MAXIMUM! text
-    this.tweens.add({
-      targets: maximumText,
-      alpha: { from: 0.5, to: 1 },
-      scale: { from: 0.5, to: 0.7 },
-      duration: 200,
-      yoyo: true,
-      repeat: 2
-    });
-    
-    // Slide to the left quickly and fade out
-    this.tweens.add({
-      targets: maximumText,
-      x: -200,
-      alpha: 0,
-      duration: 800,
-      ease: 'Power2',
-      delay: 400, // Small delay before sliding
-      onComplete: () => {
-        maximumText.destroy();
-      }
+    // Keep on screen for 2.5 seconds, then slide left EXTREMELY fast
+    this.time.delayedCall(2500, () => {
+      // Slide to the left extremely fast
+      this.tweens.add({
+        targets: maximumText,
+        x: -300,
+        duration: 100, // VERY fast - only 100ms
+        ease: 'Power3.easeIn',
+        onComplete: () => {
+          maximumText.destroy();
+        }
+      });
     });
     
     // Activate stamina boost
