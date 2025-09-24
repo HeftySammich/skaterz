@@ -741,13 +741,13 @@ export default class Game extends Phaser.Scene {
     // Create life counter above star counter
     this.createLifeDisplay();
     
-    // Create star counter UI below life counter (moved lower to avoid overlap)
-    this.starIcon = this.add.image(540, 95, 'star_counter_icon');
+    // Create star counter UI much lower to avoid overlap with skateboard
+    this.starIcon = this.add.image(540, 130, 'star_counter_icon');
     this.starIcon.setScale(0.08); // Keep original size
     this.starIcon.setDepth(100);
     this.starIcon.setScrollFactor(0);
     
-    this.starText = this.add.text(590, 95, '0', {
+    this.starText = this.add.text(590, 130, '0', {
       fontSize: '22px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',
@@ -1422,12 +1422,12 @@ export default class Game extends Phaser.Scene {
     
     // Show MAXIMUM! text at screen center - NO VFX, just appear and slide
     const maximumText = this.add.image(320, 480, 'maximum_text');
-    maximumText.setScale(0.6); // Fixed size, no animation
+    maximumText.setScale(0.5); // Back to original size
     maximumText.setDepth(150);
     maximumText.setScrollFactor(0); // Keep fixed on screen
     
-    // Keep on screen for 2.5 seconds, then slide left EXTREMELY fast
-    this.time.delayedCall(2500, () => {
+    // Keep on screen for only 0.5 seconds, then slide left EXTREMELY fast
+    this.time.delayedCall(500, () => {
       // Slide to the left extremely fast
       this.tweens.add({
         targets: maximumText,
@@ -1664,13 +1664,13 @@ export default class Game extends Phaser.Scene {
   }
 
   createLifeDisplay() {
-    // Create life icon and text (like stars) - aligned vertically with star
-    this.lifeIcon = this.add.image(540, 45, 'life_icon');
-    this.lifeIcon.setScale(0.12); // Make it larger, same size as star
+    // Create life icon and text - level with score on left (Y=50)
+    this.lifeIcon = this.add.image(540, 50, 'life_icon');
+    this.lifeIcon.setScale(0.12); // Keep larger size
     this.lifeIcon.setDepth(102); // Higher depth than star (100)
     this.lifeIcon.setScrollFactor(0);
     
-    this.lifeText = this.add.text(580, 45, this.lives.toString(), {
+    this.lifeText = this.add.text(580, 50, this.lives.toString(), {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
