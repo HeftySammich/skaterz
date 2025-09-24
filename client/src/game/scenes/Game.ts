@@ -1711,11 +1711,11 @@ export default class Game extends Phaser.Scene {
     this.starText.setText(this.stars.toString());
     
     // Check if player earned an extra life (every 100 stars)
-    if (this.stars >= this.starLifeThreshold) {
-      this.stars -= this.starLifeThreshold; // Reset star counter
-      this.starText.setText(this.stars.toString());
+    while (this.stars >= this.starLifeThreshold) {
+      this.stars -= this.starLifeThreshold; // Deduct stars for the extra life
       this.lives++; // Add extra life
       this.updateLifeDisplay();
+      this.starText.setText(this.stars.toString()); // Update star display after deduction
       
       // Show "1UP" message
       const oneUpText = this.add.text(this.player.x, this.player.y - 100, '1UP!', {
