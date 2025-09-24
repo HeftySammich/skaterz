@@ -26,12 +26,8 @@ export default class Game extends Phaser.Scene {
   private jumpDebounce = false;
   // Stomp feature removed
   
-  // Jump animation system
-  private isJumpAnimating = false;
-  private jumpAnimationFrame = 0;
-  private jumpFrames = ['jump_frame_1', 'jump_frame_2', 'jump_frame_3']; // 3 new frames
-  // All frames use same scale as idle sprite
-  private jumpFrameScale = 0.4;
+  // Jump sprite - no animation, just a single image when jumping
+  private jumpScale = 0.4;
   
   // Obstacle system
   private obstacles!: Phaser.GameObjects.Group;
@@ -150,7 +146,6 @@ export default class Game extends Phaser.Scene {
     this.trickActive = false;
     this.hasUsedTrick = false;
     this.isJumpAnimating = false;
-    this.jumpAnimationFrame = 0;
     this.backgroundTiles = []; // Clear background tiles
     this.stars = 0; // Reset stars
     this.lives = 3; // Reset lives
@@ -705,8 +700,9 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 1; // Set to 1 so they can only do ONE more jump (double jump)
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
-    // Start jump animation since player is bouncing up
-    this.startJumpAnimation();
+    // Show jump sprite since player is bouncing up
+    this.player.setTexture('jump_static');
+    this.player.setScale(this.jumpScale);
     
     // Restore more stamina as reward for successful stomp
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
@@ -1076,32 +1072,7 @@ export default class Game extends Phaser.Scene {
 
   // calculateJumpFrameScales removed - all frames now use same scale
 
-  startJumpAnimation() {
-    // Play the 3-frame jump animation sequence much more slowly
-    this.isJumpAnimating = true;
-    this.jumpAnimationFrame = 0;
-    
-    // Show first frame immediately
-    this.player.setTexture(this.jumpFrames[0]);
-    this.player.setScale(this.jumpFrameScale);
-    
-    // Show second frame after a delay
-    this.time.delayedCall(200, () => {
-      if (!this.isGrounded) { // Only continue if still airborne
-        this.player.setTexture(this.jumpFrames[1]);
-        this.player.setScale(this.jumpFrameScale);
-        
-        // Show third frame (last frame) after another delay
-        this.time.delayedCall(200, () => {
-          if (!this.isGrounded) { // Only show last frame if still airborne
-            this.player.setTexture(this.jumpFrames[2]);
-            this.player.setScale(this.jumpFrameScale);
-            // Last frame will stay until handleLanding() is called
-          }
-        });
-      }
-    });
-  }
+  // No animation needed - just show jump sprite immediately
 
   handleLanding() {
     this.isGrounded = true;
@@ -1109,7 +1080,6 @@ export default class Game extends Phaser.Scene {
     this.trickActive = false;
     this.hasUsedTrick = false; // Reset trick when landing
     this.jumpCount = 0;
-    this.isJumpAnimating = false; // Reset animation state
     // Stomp feature removed
     
     // Return to normal gravity and ALWAYS go back to idle sprite when landing
@@ -1133,8 +1103,9 @@ export default class Game extends Phaser.Scene {
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
-      // Start jump animation with new frames
-      this.startJumpAnimation();
+      // Show jump sprite - it stays until landing
+      this.player.setTexture('jump_static');
+      this.player.setScale(this.jumpScale);
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
@@ -1155,8 +1126,9 @@ export default class Game extends Phaser.Scene {
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      // Start jump animation for double jump too
-      this.startJumpAnimation();
+      // Keep jump sprite for double jump
+      this.player.setTexture('jump_static');
+      this.player.setScale(this.jumpScale);
       this.hasDoubleJumped = true;
       this.trickActive = true;
       this.jumpCount = 2;
