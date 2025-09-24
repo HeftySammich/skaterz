@@ -25,6 +25,11 @@ export default class Game extends Phaser.Scene {
   private maxJumps = 2; // Regular jump + trick jump
   private jumpDebounce = false;
   
+  // Jump animation system
+  private isJumpAnimating = false;
+  private jumpAnimationFrame = 0;
+  private jumpFrames = ['jump_frame_1', 'jump_frame_2', 'jump_frame_3', 'jump_frame_4', 'jump_frame_5'];
+  
   // Obstacle system
   private obstacles!: Phaser.GameObjects.Group;
   private obstacleTypes = ['obstacle_cone', 'obstacle_trash', 'obstacle_crash', 'obstacle_zombie', 'obstacle_skulls'];
@@ -140,6 +145,8 @@ export default class Game extends Phaser.Scene {
     this.hasDoubleJumped = false;
     this.trickActive = false;
     this.hasUsedTrick = false;
+    this.isJumpAnimating = false;
+    this.jumpAnimationFrame = 0;
     this.backgroundTiles = []; // Clear background tiles
     this.stars = 0; // Reset stars
     this.lives = 3; // Reset lives
@@ -692,8 +699,8 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 1; // Set to 1 so they can only do ONE more jump (double jump)
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
-    // Set jumping texture since player is now airborne
-    this.player.setTexture('skater_jump');
+    // Start jump animation since player is now airborne
+    this.startJumpAnimation();
     
     // Restore more stamina as reward for successful stomp
     this.stamina = Math.min(this.maxStamina, this.stamina + 35);
@@ -1061,16 +1068,42 @@ export default class Game extends Phaser.Scene {
     }
   }
 
+  startJumpAnimation() {
+    // Start the 5-frame jump animation sequence
+    this.isJumpAnimating = true;
+    this.jumpAnimationFrame = 0;
+    this.player.setTexture(this.jumpFrames[0]);
+    this.player.setScale(0.4); // Match current character scale
+    
+    // Animate through all 5 frames over 500ms (100ms per frame)
+    this.time.addEvent({
+      delay: 100,
+      callback: () => {
+        this.jumpAnimationFrame++;
+        if (this.jumpAnimationFrame < this.jumpFrames.length) {
+          this.player.setTexture(this.jumpFrames[this.jumpAnimationFrame]);
+          this.player.setScale(0.4); // Ensure consistent scaling
+        } else {
+          // Animation complete - hold on last frame until landing
+          this.isJumpAnimating = false;
+        }
+      },
+      repeat: this.jumpFrames.length - 2, // Repeat 4 times (frames 2-5)
+    });
+  }
+
   handleLanding() {
     this.isGrounded = true;
     this.hasDoubleJumped = false;
     this.trickActive = false;
     this.hasUsedTrick = false; // Reset trick when landing
     this.jumpCount = 0;
+    this.isJumpAnimating = false; // Reset animation state
     
     // Return to normal gravity and skating texture
     this.physics.world.gravity.y = this.GRAVITY;
     this.player.setTexture('skater_idle');
+    this.player.setScale(0.4); // Ensure consistent scaling
     
     // Clear ALL vertical velocity to prevent bouncing
     this.player.setVelocityY(0);
@@ -1088,7 +1121,7 @@ export default class Game extends Phaser.Scene {
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
-      this.player.setTexture('skater_jump');
+      this.startJumpAnimation(); // Start animation instead of single texture
       this.isGrounded = false;
       this.jumpCount = 1;
       this.hasDoubleJumped = false;
@@ -1109,7 +1142,7 @@ export default class Game extends Phaser.Scene {
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      this.player.setTexture('skater_trick');
+      this.startJumpAnimation(); // Use animation for double jump too
       this.hasDoubleJumped = true;
       this.trickActive = true;
       this.jumpCount = 2;
