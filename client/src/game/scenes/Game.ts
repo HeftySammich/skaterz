@@ -678,7 +678,7 @@ export default class Game extends Phaser.Scene {
     
     // Visual feedback for star collection
     const starBurst = this.add.image(this.player.x, this.player.y - 50, starReward === 1 ? 'star_single' : 'star_ten');
-    starBurst.setScale(0.1);
+    starBurst.setScale(0.15);
     starBurst.setDepth(16);
     this.tweens.add({
       targets: starBurst,
@@ -703,7 +703,9 @@ export default class Game extends Phaser.Scene {
     this.scoreText = this.add.text(50, 50, 'Score: 0', {
       fontSize: '24px',
       color: '#ffffff',
-      fontFamily: '"Press Start 2P", monospace'
+      fontFamily: '"Press Start 2P", monospace',
+      stroke: '#000000',
+      strokeThickness: 4
     });
     this.scoreText.setDepth(100);
     this.scoreText.setScrollFactor(0); // Keep fixed on screen
@@ -1555,7 +1557,7 @@ export default class Game extends Phaser.Scene {
     const starCount = Phaser.Math.Between(3, 5);
     for (let i = 0; i < starCount; i++) {
       const star = this.starPickups.create(baseX + (i * 80), baseY, 'star_single');
-      star.setScale(0.08);
+      star.setScale(0.12);
       star.setDepth(9);
       (star as any).value = 1;
       
@@ -1573,7 +1575,7 @@ export default class Game extends Phaser.Scene {
     // 30% chance to add a 10-star at the end of the line
     if (Math.random() < 0.3) {
       const bigStar = this.starPickups.create(baseX + (starCount * 80), baseY, 'star_ten');
-      bigStar.setScale(0.1);
+      bigStar.setScale(0.15);
       bigStar.setDepth(9);
       (bigStar as any).value = 10;
       
