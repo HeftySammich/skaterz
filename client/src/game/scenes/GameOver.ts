@@ -7,6 +7,7 @@ export default class GameOver extends Phaser.Scene {
   private cansCollected = 0;
   private starsCollected = 0;
   private enemiesDefeated = 0;
+  private selectedOption = 0; // 0 = Play Again, 1 = Main Menu
 
   constructor() {
     super('GameOver');
@@ -19,6 +20,7 @@ export default class GameOver extends Phaser.Scene {
     this.cansCollected = data.cans || 0;
     this.starsCollected = data.stars || 0;
     this.enemiesDefeated = data.enemies || 0;
+    this.selectedOption = 0; // Reset selection
   }
 
   create() {
@@ -44,6 +46,8 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
 
+    // Stats in order: Score, Time, Enemies, Sandwiches, Energy Drinks, Stars
+    
     // Final score
     const finalScoreText = this.add.text(320, 400, `SCORE: ${Math.floor(this.finalScore)}`, {
       fontFamily: '"Press Start 2P", monospace',
@@ -58,7 +62,7 @@ export default class GameOver extends Phaser.Scene {
     const seconds = Math.floor((this.survivalTime % 60000) / 1000);
     const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     
-    this.add.text(320, 460, `TIME: ${timeText}`, {
+    this.add.text(320, 450, `TIME: ${timeText}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ffffff',
@@ -66,17 +70,8 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Stars collected - most important stat!
-    this.add.text(320, 510, `STARS: ${this.starsCollected}`, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '22px',
-      color: '#ffff00',
-      stroke: '#000000',
-      strokeThickness: 4
-    }).setOrigin(0.5);
-    
     // Enemies defeated
-    this.add.text(320, 555, `ENEMIES: ${this.enemiesDefeated}`, {
+    this.add.text(320, 495, `ENEMIES: ${this.enemiesDefeated}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ff6600',
@@ -84,20 +79,29 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Sandwiches collected
-    this.add.text(320, 595, `SANDWICHES: ${this.sandwichesCollected}`, {
+    // Sandwiches collected - white font as requested
+    this.add.text(320, 535, `SANDWICHES: ${this.sandwichesCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '18px',
-      color: '#00ff00',
+      color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
     
     // Energy drinks collected  
-    this.add.text(320, 635, `ENERGY DRINKS: ${this.cansCollected}`, {
+    this.add.text(320, 575, `ENERGY DRINKS: ${this.cansCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '18px',
       color: '#00ffff',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    
+    // Stars collected - larger yellow font
+    this.add.text(320, 625, `STARS: ${this.starsCollected}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '24px',
+      color: '#ffff00',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
@@ -107,7 +111,7 @@ export default class GameOver extends Phaser.Scene {
     let highScoreText;
     if (this.finalScore > highScore) {
       this.setHighScore(this.finalScore);
-      highScoreText = this.add.text(320, 650, 'NEW HIGH SCORE!', {
+      highScoreText = this.add.text(320, 685, 'NEW HIGH SCORE!', {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '22px',
         color: '#ffff00',
@@ -125,7 +129,7 @@ export default class GameOver extends Phaser.Scene {
         repeat: -1
       });
     } else {
-      highScoreText = this.add.text(320, 650, `HIGH SCORE: ${Math.floor(highScore)}`, {
+      highScoreText = this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '18px',
         color: '#ffffff',
@@ -134,50 +138,100 @@ export default class GameOver extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    // Restart instructions
-    const restartText = this.add.text(320, 750, 'PRESS SPACE TO RESTART', {
+    // Menu options
+    const playAgainText = this.add.text(320, 780, 'PLAY AGAIN', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '16px',
+      fontSize: '20px',
       color: '#00ff00',
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
     
-    this.add.text(320, 820, 'PRESS ESC FOR MAIN MENU', {
+    const mainMenuText = this.add.text(320, 830, 'MAIN MENU', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '16px',
-      color: '#00ff00',
+      fontSize: '20px',
+      color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
     
-    // Flash restart text
-    this.tweens.add({
-      targets: restartText,
-      alpha: 0.3,
-      duration: 800,
-      ease: 'Sine.inOut',
-      yoyo: true,
-      repeat: -1
-    });
+    // Selection indicator
+    const selector = this.add.text(200, 780, '>', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '24px',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    
+    // Update selector position
+    const updateSelector = () => {
+      if (this.selectedOption === 0) {
+        selector.setY(780);
+        playAgainText.setColor('#00ff00');
+        mainMenuText.setColor('#ffffff');
+      } else {
+        selector.setY(830);
+        playAgainText.setColor('#ffffff');
+        mainMenuText.setColor('#00ff00');
+      }
+    };
+    
+    updateSelector();
     
     console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
 
-    // Input handling
-    this.input.keyboard?.addKey('SPACE').on('down', () => {
-      console.log('[DEBUG GAME OVER] Restarting game...');
+    // Input handling - keyboard
+    const upKey = this.input.keyboard?.addKey('UP');
+    const downKey = this.input.keyboard?.addKey('DOWN');
+    const spaceKey = this.input.keyboard?.addKey('SPACE');
+    const enterKey = this.input.keyboard?.addKey('ENTER');
+    
+    upKey?.on('down', () => {
+      this.selectedOption = 0;
+      updateSelector();
+    });
+    
+    downKey?.on('down', () => {
+      this.selectedOption = 1;
+      updateSelector();
+    });
+    
+    const selectOption = () => {
+      if (this.selectedOption === 0) {
+        console.log('[DEBUG GAME OVER] Starting new game...');
+        this.scene.start('Game');
+      } else {
+        console.log('[DEBUG GAME OVER] Returning to main menu...');
+        this.scene.start('MainMenu');
+      }
+    };
+    
+    spaceKey?.on('down', selectOption);
+    enterKey?.on('down', selectOption);
+    
+    // Touch/click handling for menu options
+    playAgainText.setInteractive({ useHandCursor: true });
+    mainMenuText.setInteractive({ useHandCursor: true });
+    
+    playAgainText.on('pointerdown', () => {
+      console.log('[DEBUG GAME OVER] Play Again selected...');
       this.scene.start('Game');
     });
     
-    this.input.keyboard?.addKey('ESC').on('down', () => {
-      console.log('[DEBUG GAME OVER] Returning to main menu...');
+    playAgainText.on('pointerover', () => {
+      this.selectedOption = 0;
+      updateSelector();
+    });
+    
+    mainMenuText.on('pointerdown', () => {
+      console.log('[DEBUG GAME OVER] Main Menu selected...');
       this.scene.start('MainMenu');
     });
-
-    // Touch/click restart
-    this.input.on('pointerdown', () => {
-      console.log('[DEBUG GAME OVER] Touch restart...');
-      this.scene.start('Game');
+    
+    mainMenuText.on('pointerover', () => {
+      this.selectedOption = 1;
+      updateSelector();
     });
   }
 
