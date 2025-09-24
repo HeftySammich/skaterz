@@ -1084,6 +1084,7 @@ export default class Game extends Phaser.Scene {
     
     // Return to normal gravity and ALWAYS go back to idle sprite when landing
     this.physics.world.gravity.y = this.GRAVITY;
+    console.log('[DEBUG] handleLanding() - Setting back to idle sprite');
     this.player.setTexture('skater_idle'); // This is when we return to idle
     this.player.setScale(0.4); // Ensure consistent scaling
     
@@ -1104,6 +1105,7 @@ export default class Game extends Phaser.Scene {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
       // Show jump sprite - it stays until landing
+      console.log('[DEBUG] Setting jump sprite for first jump');
       this.player.setTexture('jump_static');
       this.player.setScale(this.jumpScale);
       this.isGrounded = false;
@@ -1127,6 +1129,7 @@ export default class Game extends Phaser.Scene {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
       // Keep jump sprite for double jump
+      console.log('[DEBUG] Setting jump sprite for double jump');
       this.player.setTexture('jump_static');
       this.player.setScale(this.jumpScale);
       this.hasDoubleJumped = true;
@@ -1171,7 +1174,8 @@ export default class Game extends Phaser.Scene {
       // Apply small upward boost
       this.player.setVelocityY(this.SWIPE_TRICK_VELOCITY);
       
-      // Set trick texture (will be replaced with animation later)
+      // ISSUE: This changes texture to trick sprite while airborne!
+      console.log('[DEBUG] performTrick() - Setting to trick texture (this might be the problem!)');
       this.player.setTexture('skater_trick');
       this.trickActive = true;
       
@@ -1203,6 +1207,12 @@ export default class Game extends Phaser.Scene {
         this.physics.world.gravity.y = this.GRAVITY;
         this.trickActive = false;
         this.trickParticles.stop();
+        // Check if we should restore jump sprite if still airborne
+        if (!this.isGrounded) {
+          console.log('[DEBUG] Trick ended but still airborne - restoring jump sprite');
+          this.player.setTexture('jump_static');
+          this.player.setScale(this.jumpScale);
+        }
       });
       
 // console.log('Swipe trick performed!');
