@@ -17,8 +17,8 @@ export class HowToPlay extends Phaser.Scene {
     bg.setDisplaySize(640, 960);
     
     // Title
-    this.add.text(320, 80, 'HOW TO PLAY', {
-      fontSize: '28px',
+    this.add.text(320, 60, 'HOW TO PLAY', {
+      fontSize: '24px',
       color: '#ffecb3',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -27,8 +27,8 @@ export class HowToPlay extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Game Goal
-    this.add.text(320, 150, 'SURVIVE AS LONG AS POSSIBLE!\nCOLLECT STARS, AVOID OBSTACLES', {
-      fontSize: '16px',
+    this.add.text(320, 130, 'SURVIVE AS LONG AS POSSIBLE!\nCOLLECT STARS, AVOID OBSTACLES', {
+      fontSize: '14px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -36,14 +36,14 @@ export class HowToPlay extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0.5);
 
-    // Collectibles Section with proper spacing from edges
-    let yPos = 240;
+    // Collectibles Section with much more spacing
+    let yPos = 220;
     
     // Star (first item, using star counter icon)
-    const star = this.add.image(120, yPos, 'star_counter_icon');
-    star.setScale(0.12);
-    this.add.text(200, yPos, 'STARS\nCOLLECT 100 FOR EXTRA LIFE', {
-      fontSize: '16px',
+    const star = this.add.image(100, yPos, 'star_counter_icon');
+    star.setScale(0.10);
+    this.add.text(180, yPos, 'STARS\nCOLLECT 100 FOR EXTRA LIFE', {
+      fontSize: '14px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'left',
@@ -51,13 +51,13 @@ export class HowToPlay extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0, 0.5);
 
-    yPos += 90;
+    yPos += 110; // Increased spacing
     
     // Sandwich (second item)
-    const sandwich = this.add.image(120, yPos, 'sandwich');
-    sandwich.setScale(0.15);
-    this.add.text(200, yPos, 'SANDWICH\nRESTORES HEALTH', {
-      fontSize: '16px',
+    const sandwich = this.add.image(100, yPos, 'sandwich');
+    sandwich.setScale(0.13);
+    this.add.text(180, yPos, 'SANDWICH\nRESTORES HEALTH', {
+      fontSize: '14px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'left',
@@ -65,13 +65,13 @@ export class HowToPlay extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0, 0.5);
 
-    yPos += 90;
+    yPos += 110; // Increased spacing
     
     // Energy Drink (third item)
-    const energyDrink = this.add.image(120, yPos, 'energy_drink');
-    energyDrink.setScale(0.15);
-    this.add.text(200, yPos, 'ENERGY DRINK\nSTAMINA BOOST + INVINCIBLE', {
-      fontSize: '16px',
+    const energyDrink = this.add.image(100, yPos, 'energy_drink');
+    energyDrink.setScale(0.13);
+    this.add.text(180, yPos, 'ENERGY DRINK\nSTAMINA BOOST + INVINCIBLE', {
+      fontSize: '14px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'left',
@@ -80,7 +80,7 @@ export class HowToPlay extends Phaser.Scene {
     }).setOrigin(0, 0.5);
 
     // Controls Section
-    yPos += 120;
+    yPos += 130; // More spacing before controls
     this.add.text(320, yPos, 'CONTROLS', {
       fontSize: '20px',
       color: '#ffecb3',
@@ -90,9 +90,9 @@ export class HowToPlay extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
 
-    yPos += 50;
+    yPos += 60;
     this.add.text(320, yPos, 'TAP/SPACE: JUMP\nSWIPE UP: TRICK (IN AIR)\nSTOMP ON ENEMIES TO DEFEAT', {
-      fontSize: '16px',
+      fontSize: '14px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -101,7 +101,7 @@ export class HowToPlay extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Back Button
-    const backText = this.add.text(320, 800, 'BACK TO OPTIONS', {
+    const backText = this.add.text(320, 850, 'BACK TO OPTIONS', {
       fontSize: '20px',
       color: '#00ff00',
       fontFamily: '"Press Start 2P", monospace',
