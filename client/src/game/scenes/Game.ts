@@ -145,7 +145,6 @@ export default class Game extends Phaser.Scene {
     this.hasDoubleJumped = false;
     this.trickActive = false;
     this.hasUsedTrick = false;
-    this.isJumpAnimating = false;
     this.backgroundTiles = []; // Clear background tiles
     this.stars = 0; // Reset stars
     this.lives = 3; // Reset lives
@@ -1082,10 +1081,9 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 0;
     // Stomp feature removed
     
-    // Return to normal gravity and ALWAYS go back to idle sprite when landing
+    // Return to normal gravity and restart skate animation when landing
     this.physics.world.gravity.y = this.GRAVITY;
-    console.log('[DEBUG] handleLanding() - Setting back to idle sprite');
-    this.player.setTexture('skater_idle'); // This is when we return to idle
+    this.player.play('skate'); // Restart the skate animation
     this.player.setScale(0.4); // Ensure consistent scaling
     
     // Clear ALL vertical velocity to prevent bouncing
@@ -1104,8 +1102,8 @@ export default class Game extends Phaser.Scene {
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
-      // Show jump sprite - it stays until landing
-      console.log('[DEBUG] Setting jump sprite for first jump');
+      // Stop animation and show jump sprite - it stays until landing
+      this.player.stop(); // STOP the skate animation!
       this.player.setTexture('jump_static');
       this.player.setScale(this.jumpScale);
       this.isGrounded = false;
@@ -1128,8 +1126,8 @@ export default class Game extends Phaser.Scene {
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      // Keep jump sprite for double jump
-      console.log('[DEBUG] Setting jump sprite for double jump');
+      // Stop animation and keep jump sprite for double jump
+      this.player.stop(); // STOP the skate animation!
       this.player.setTexture('jump_static');
       this.player.setScale(this.jumpScale);
       this.hasDoubleJumped = true;
@@ -2043,10 +2041,7 @@ export default class Game extends Phaser.Scene {
       }
     }
     
-    // Track near-ground behavior for debugging
-    if (!this.isGrounded && this.player.y > PLAYER_GROUND_Y - 50 && this.player.y < PLAYER_GROUND_Y + 10) {
-// console.log(`[NEAR GROUND] Y=${Math.round(this.player.y)}, VelY=${Math.round(body.velocity.y)}, Distance to ground=${Math.round(PLAYER_GROUND_Y - this.player.y)}`);
-    }
+    // Jump tracking removed - no longer needed
     
     // Keep zombie absolutely stable on ground when grounded
     if (this.isGrounded) {
