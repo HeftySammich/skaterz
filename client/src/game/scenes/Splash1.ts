@@ -10,54 +10,73 @@ export class Splash1 extends Phaser.Scene {
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
     
-    // Display the Soul Arcade Advance logo
+    // Display the Soul Arcade Advance logo - make it bigger
     const logo = this.add.image(centerX, centerY, 'soul_arcade_logo');
     logo.setOrigin(0.5, 0.5);
     
-    // Scale the logo to fit nicely on screen
-    const maxWidth = 500;
-    const maxHeight = 400;
+    // Make the logo bigger - use more of the screen
+    const maxWidth = 600;  // Increased from 500
+    const maxHeight = 500; // Increased from 400
     const scale = Math.min(maxWidth / logo.width, maxHeight / logo.height);
     logo.setScale(scale);
     
     // Wait 2 seconds then add shine effect
     this.time.delayedCall(2000, () => {
-      // Create a white rectangle for shine effect
-      const shine = this.add.graphics();
-      shine.fillStyle(0xffffff, 0.8);
+      // Create a duplicate of the logo for the shine effect
+      const shineLogo = this.add.image(centerX, centerY, 'soul_arcade_logo');
+      shineLogo.setOrigin(0.5, 0.5);
+      shineLogo.setScale(scale);
+      shineLogo.setAlpha(0); // Start invisible
       
-      // Create a diagonal shine bar
-      const shineWidth = 100;
-      const shineHeight = logo.displayHeight * 1.5;
-      shine.fillRect(0, -shineHeight/2, shineWidth, shineHeight);
+      // Use additive blend mode so only the colored parts (letters) get brightened
+      // Black stays black since black + anything = that color
+      shineLogo.setBlendMode(Phaser.BlendModes.ADD);
+      shineLogo.setTint(0xffffff); // White tint for shine
       
-      // Position shine off-screen to the left initially
-      shine.x = logo.x - logo.displayWidth/2 - shineWidth;
-      shine.y = logo.y;
-      shine.rotation = -0.3; // Slight diagonal angle
+      // Create a gradient mask for the shine sweep
+      const maskGraphics = this.make.graphics({});
+      const shineWidth = 150;
       
-      // Create a mask so shine only appears over the logo
-      const maskShape = this.make.graphics({});
-      maskShape.fillStyle(0xffffff);
-      maskShape.fillRect(
-        logo.x - logo.displayWidth/2, 
-        logo.y - logo.displayHeight/2, 
-        logo.displayWidth, 
-        logo.displayHeight
-      );
+      // Start position - off the left side
+      let maskX = logo.x - logo.displayWidth/2 - shineWidth;
       
-      const mask = maskShape.createGeometryMask();
-      shine.setMask(mask);
+      // Create initial mask
+      maskGraphics.fillStyle(0xffffff);
+      maskGraphics.fillRect(maskX, logo.y - logo.displayHeight/2, shineWidth, logo.displayHeight);
       
-      // Animate the shine moving across the logo
+      const mask = maskGraphics.createGeometryMask();
+      shineLogo.setMask(mask);
+      
+      // Make the shine visible
+      shineLogo.setAlpha(0.6);
+      
+      // Animate the mask moving across
       this.tweens.add({
-        targets: shine,
+        targets: { x: maskX },
         x: logo.x + logo.displayWidth/2 + shineWidth,
-        duration: 600,
+        duration: 800,
         ease: 'Power2',
+        onUpdate: (tween) => {
+          const value = tween.targets[0] as any;
+          maskGraphics.clear();
+          maskGraphics.fillStyle(0xffffff);
+          // Create a gradient effect by drawing multiple rectangles with decreasing alpha
+          const gradientWidth = shineWidth;
+          const strips = 10;
+          for (let i = 0; i < strips; i++) {
+            const alpha = 1 - (i / strips);
+            maskGraphics.fillStyle(0xffffff, alpha);
+            maskGraphics.fillRect(
+              value.x + (i * gradientWidth/strips), 
+              logo.y - logo.displayHeight/2, 
+              gradientWidth/strips, 
+              logo.displayHeight
+            );
+          }
+        },
         onComplete: () => {
-          shine.destroy();
-          maskShape.destroy();
+          shineLogo.destroy();
+          maskGraphics.destroy();
           
           // Transition to next splash screen after shine completes
           this.time.delayedCall(500, () => {
