@@ -1077,29 +1077,29 @@ export default class Game extends Phaser.Scene {
   // calculateJumpFrameScales removed - all frames now use same scale
 
   startJumpAnimation() {
-    // Play the 3-frame jump animation sequence more slowly
+    // Play the 3-frame jump animation sequence much more slowly
     this.isJumpAnimating = true;
     this.jumpAnimationFrame = 0;
+    
+    // Show first frame immediately
     this.player.setTexture(this.jumpFrames[0]);
     this.player.setScale(this.jumpFrameScale);
     
-    // Animate through first 2 frames with longer delay (150ms per frame)
-    this.time.addEvent({
-      delay: 150,
-      callback: () => {
-        this.jumpAnimationFrame++;
-        if (this.jumpAnimationFrame < this.jumpFrames.length - 1) {
-          // Show frame 2 (index 1)
-          this.player.setTexture(this.jumpFrames[this.jumpAnimationFrame]);
-          this.player.setScale(this.jumpFrameScale);
-        } else if (this.jumpAnimationFrame === this.jumpFrames.length - 1) {
-          // Show the last frame (index 2) and hold it until landing
-          this.player.setTexture(this.jumpFrames[this.jumpAnimationFrame]);
-          this.player.setScale(this.jumpFrameScale);
-          this.isJumpAnimating = false;
-        }
-      },
-      repeat: 1, // Repeat once to show frames 2 and 3
+    // Show second frame after a delay
+    this.time.delayedCall(200, () => {
+      if (!this.isGrounded) { // Only continue if still airborne
+        this.player.setTexture(this.jumpFrames[1]);
+        this.player.setScale(this.jumpFrameScale);
+        
+        // Show third frame (last frame) after another delay
+        this.time.delayedCall(200, () => {
+          if (!this.isGrounded) { // Only show last frame if still airborne
+            this.player.setTexture(this.jumpFrames[2]);
+            this.player.setScale(this.jumpFrameScale);
+            // Last frame will stay until handleLanding() is called
+          }
+        });
+      }
     });
   }
 
@@ -1112,9 +1112,9 @@ export default class Game extends Phaser.Scene {
     this.isJumpAnimating = false; // Reset animation state
     // Stomp feature removed
     
-    // Return to normal gravity and skating texture
+    // Return to normal gravity and ALWAYS go back to idle sprite when landing
     this.physics.world.gravity.y = this.GRAVITY;
-    this.player.setTexture('skater_idle');
+    this.player.setTexture('skater_idle'); // This is when we return to idle
     this.player.setScale(0.4); // Ensure consistent scaling
     
     // Clear ALL vertical velocity to prevent bouncing
