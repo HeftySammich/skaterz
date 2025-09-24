@@ -5,16 +5,18 @@ export default class GameOver extends Phaser.Scene {
   private survivalTime = 0;
   private sandwichesCollected = 0;
   private cansCollected = 0;
+  private starsCollected = 0;
 
   constructor() {
     super('GameOver');
   }
 
-  init(data: { score: number, time: number, sandwiches?: number, cans?: number }) {
+  init(data: { score: number, time: number, sandwiches?: number, cans?: number, stars?: number }) {
     this.finalScore = data.score || 0;
     this.survivalTime = data.time || 0;
     this.sandwichesCollected = data.sandwiches || 0;
     this.cansCollected = data.cans || 0;
+    this.starsCollected = data.stars || 0;
   }
 
   create() {
@@ -62,19 +64,28 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Sandwiches collected
-    this.add.text(320, 520, `SANDWICHES: ${this.sandwichesCollected}`, {
+    // Stars collected - most important stat!
+    this.add.text(320, 520, `STARS: ${this.starsCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '20px',
+      fontSize: '22px',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    
+    // Sandwiches collected
+    this.add.text(320, 570, `SANDWICHES: ${this.sandwichesCollected}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '18px',
       color: '#00ff00',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
     
     // Energy drinks collected  
-    this.add.text(320, 580, `ENERGY DRINKS: ${this.cansCollected}`, {
+    this.add.text(320, 620, `ENERGY DRINKS: ${this.cansCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '20px',
+      fontSize: '18px',
       color: '#00ffff',
       stroke: '#000000',
       strokeThickness: 4

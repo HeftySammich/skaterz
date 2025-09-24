@@ -646,7 +646,8 @@ export default class Game extends Phaser.Scene {
     playerBody.setVelocityX(Math.min(currentVelX + 80, 450));
     
     // Reset jump count to allow another jump AND trick
-    this.jumpCount = 0;
+    this.isGrounded = false; // Important: player is now airborne after bounce
+    this.jumpCount = 0; // Reset to 0 so they can jump again
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
     
@@ -1005,7 +1006,8 @@ export default class Game extends Phaser.Scene {
         score: this.score, 
         time: survivalTime,
         sandwiches: this.sandwichesCollected,
-        cans: this.cansCollected
+        cans: this.cansCollected,
+        stars: this.stars // Add stars collected
       });
     }
   }
@@ -1665,12 +1667,12 @@ export default class Game extends Phaser.Scene {
 
   createLifeDisplay() {
     // Create life icon and text - perfectly aligned with score
-    this.lifeIcon = this.add.image(540, 54, 'life_icon');
+    this.lifeIcon = this.add.image(540, 58, 'life_icon');
     this.lifeIcon.setScale(0.12); // Keep larger size
     this.lifeIcon.setDepth(102); // Higher depth than star (100)
     this.lifeIcon.setScrollFactor(0);
     
-    this.lifeText = this.add.text(580, 54, this.lives.toString(), {
+    this.lifeText = this.add.text(580, 58, this.lives.toString(), {
       fontSize: '24px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
