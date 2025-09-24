@@ -17,7 +17,7 @@ export class HowToPlay extends Phaser.Scene {
     bg.setDisplaySize(640, 960);
     
     // Title
-    this.add.text(320, 60, 'HOW TO PLAY', {
+    const title = this.add.text(320, 60, 'HOW TO PLAY', {
       fontSize: '24px',
       color: '#ffecb3',
       fontFamily: '"Press Start 2P", monospace',
@@ -25,9 +25,10 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    title.setShadow(3, 3, '#000000', 5, true, true);
 
     // Game Goal
-    this.add.text(320, 130, 'SURVIVE AS LONG AS POSSIBLE!\nCOLLECT STARS, AVOID OBSTACLES', {
+    const goalText = this.add.text(320, 130, 'SURVIVE AS LONG AS POSSIBLE!\nCOLLECT STARS, AVOID OBSTACLES', {
       fontSize: '14px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -35,6 +36,7 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0.5);
+    goalText.setShadow(2, 2, '#000000', 4, true, true);
 
     // Collectibles Section with much more spacing
     let yPos = 220;
@@ -42,7 +44,7 @@ export class HowToPlay extends Phaser.Scene {
     // Star (first item, using star counter icon)
     const star = this.add.image(100, yPos, 'star_counter_icon');
     star.setScale(0.10);
-    this.add.text(180, yPos, 'STARS\nCOLLECT 100 FOR EXTRA LIFE', {
+    const starText = this.add.text(180, yPos, 'STARS\nCOLLECT 100 FOR EXTRA LIFE', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -50,13 +52,14 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0, 0.5);
+    starText.setShadow(2, 2, '#000000', 3, true, true);
 
     yPos += 110; // Increased spacing
     
     // Sandwich (second item)
     const sandwich = this.add.image(100, yPos, 'sandwich');
     sandwich.setScale(0.13);
-    this.add.text(180, yPos, 'SANDWICH\nRESTORES HEALTH', {
+    const sandwichText = this.add.text(180, yPos, 'SANDWICH\nRESTORES HEALTH', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -64,13 +67,14 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0, 0.5);
+    sandwichText.setShadow(2, 2, '#000000', 3, true, true);
 
     yPos += 120; // Slightly more spacing before energy drink
     
     // Energy Drink (third item - lowered more)
     const energyDrink = this.add.image(100, yPos, 'energy_drink');
     energyDrink.setScale(0.13);
-    this.add.text(180, yPos, 'ENERGY DRINK\nSTAMINA BOOST + INVINCIBLE', {
+    const drinkText = this.add.text(180, yPos, 'ENERGY DRINK\nSTAMINA BOOST + INVINCIBLE', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -78,10 +82,11 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0, 0.5);
+    drinkText.setShadow(2, 2, '#000000', 3, true, true);
 
     // Controls Section
     yPos += 130; // More spacing before controls
-    this.add.text(320, yPos, 'CONTROLS', {
+    const controlsTitle = this.add.text(320, yPos, 'CONTROLS', {
       fontSize: '20px',
       color: '#ffecb3',
       fontFamily: '"Press Start 2P", monospace',
@@ -89,9 +94,10 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    controlsTitle.setShadow(2, 2, '#000000', 4, true, true);
 
     yPos += 60;
-    this.add.text(320, yPos, 'TAP/SPACE: JUMP\nSWIPE UP: TRICK (IN AIR)\nSTOMP ON ENEMIES TO DEFEAT', {
+    const controlsText = this.add.text(320, yPos, 'TAP/SPACE: JUMP\nSWIPE UP: TRICK (IN AIR)\nSTOMP ON ENEMIES TO DEFEAT', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -99,6 +105,7 @@ export class HowToPlay extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0.5);
+    controlsText.setShadow(2, 2, '#000000', 3, true, true);
 
     // Back Button
     const backText = this.add.text(320, 850, 'BACK TO OPTIONS', {

@@ -44,15 +44,17 @@ export default class GameOver extends Phaser.Scene {
       stroke: '#ffffff',
       strokeThickness: 6
     }).setOrigin(0.5);
+    gameOverText.setShadow(3, 3, '#000000', 5, true, true);
 
     // Results text
-    this.add.text(320, 320, 'RESULTS', {
+    const resultsText = this.add.text(320, 320, 'RESULTS', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '28px',
       color: '#ffff00',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    resultsText.setShadow(2, 2, '#000000', 4, true, true);
 
     // Stats in order: Score, Time, Enemies, Sandwiches, Energy Drinks, Stars
     
@@ -64,55 +66,61 @@ export default class GameOver extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    finalScoreText.setShadow(2, 2, '#000000', 3, true, true);
     
     // Survival time
     const minutes = Math.floor(this.survivalTime / 60000);
     const seconds = Math.floor((this.survivalTime % 60000) / 1000);
     const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     
-    this.add.text(320, 450, `TIME: ${timeText}`, {
+    const timeTextEl = this.add.text(320, 450, `TIME: ${timeText}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    timeTextEl.setShadow(2, 2, '#000000', 3, true, true);
     
     // Enemies defeated
-    this.add.text(320, 495, `ENEMIES: ${this.enemiesDefeated}`, {
+    const enemiesText = this.add.text(320, 495, `ENEMIES: ${this.enemiesDefeated}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ff6600',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    enemiesText.setShadow(2, 2, '#000000', 3, true, true);
     
     // Sandwiches collected - white font as requested
-    this.add.text(320, 535, `SANDWICHES: ${this.sandwichesCollected}`, {
+    const sandwichesText = this.add.text(320, 535, `SANDWICHES: ${this.sandwichesCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '18px',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    sandwichesText.setShadow(2, 2, '#000000', 3, true, true);
     
     // Energy drinks collected  
-    this.add.text(320, 575, `ENERGY DRINKS: ${this.cansCollected}`, {
+    const energyText = this.add.text(320, 575, `ENERGY DRINKS: ${this.cansCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '18px',
       color: '#00ffff',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    energyText.setShadow(2, 2, '#000000', 3, true, true);
     
     // Stars collected - larger yellow font
-    this.add.text(320, 625, `STARS: ${this.starsCollected}`, {
+    const starsText = this.add.text(320, 625, `STARS: ${this.starsCollected}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '24px',
       color: '#ffff00',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    starsText.setShadow(2, 2, '#000000', 3, true, true);
 
     // Check and show high score info
     this.checkHighScoreDisplay();
@@ -136,21 +144,23 @@ export default class GameOver extends Phaser.Scene {
         this.isNewHighScore = this.finalScore > highScore;
         
         if (this.isNewHighScore) {
-          this.add.text(320, 685, 'NEW HIGH SCORE!', {
+          const newHighScoreText = this.add.text(320, 685, 'NEW HIGH SCORE!', {
             fontFamily: '"Press Start 2P", monospace',
             fontSize: '22px',
             color: '#ffff00',
             stroke: '#000000',
             strokeThickness: 4
           }).setOrigin(0.5);
+          newHighScoreText.setShadow(2, 2, '#000000', 4, true, true);
         } else {
-          this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
+          const highScoreText = this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
             fontFamily: '"Press Start 2P", monospace',
             fontSize: '18px',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3
           }).setOrigin(0.5);
+          highScoreText.setShadow(2, 2, '#000000', 3, true, true);
         }
       } else {
         // Fallback to localStorage if API fails
@@ -159,21 +169,23 @@ export default class GameOver extends Phaser.Scene {
         
         if (this.isNewHighScore) {
           this.setHighScore(this.finalScore);
-          this.add.text(320, 685, 'NEW HIGH SCORE!', {
+          const newHighScoreText = this.add.text(320, 685, 'NEW HIGH SCORE!', {
             fontFamily: '"Press Start 2P", monospace',
             fontSize: '22px',
             color: '#ffff00',
             stroke: '#000000',
             strokeThickness: 4
           }).setOrigin(0.5);
+          newHighScoreText.setShadow(2, 2, '#000000', 4, true, true);
         } else {
-          this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
+          const highScoreText = this.add.text(320, 685, `HIGH SCORE: ${Math.floor(highScore)}`, {
             fontFamily: '"Press Start 2P", monospace',
             fontSize: '18px',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 3
           }).setOrigin(0.5);
+          highScoreText.setShadow(2, 2, '#000000', 3, true, true);
         }
       }
     } catch (error) {
@@ -217,6 +229,7 @@ export default class GameOver extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    this.playAgainText.setShadow(2, 2, '#000000', 3, true, true);
     
     this.mainMenuText = this.add.text(320, 800, 'MAIN MENU', {
       fontFamily: '"Press Start 2P", monospace',
@@ -225,6 +238,7 @@ export default class GameOver extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    this.mainMenuText.setShadow(2, 2, '#000000', 3, true, true);
     
     // Selection indicator
     this.selector = this.add.text(200, 760, '>', {
@@ -234,6 +248,7 @@ export default class GameOver extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    this.selector.setShadow(2, 2, '#000000', 3, true, true);
     
     this.updateSelector();
     this.setupMenuInteraction();

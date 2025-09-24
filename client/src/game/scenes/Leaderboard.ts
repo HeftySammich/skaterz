@@ -28,7 +28,7 @@ export default class Leaderboard extends Phaser.Scene {
     bg.setDisplaySize(640, 960);
     
     // Title
-    this.add.text(320, 120, 'LEADERBOARD', {
+    const titleText = this.add.text(320, 120, 'LEADERBOARD', {
       fontSize: '28px',
       color: '#ffecb3',
       fontFamily: '"Press Start 2P", monospace',
@@ -36,6 +36,7 @@ export default class Leaderboard extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
+    titleText.setShadow(3, 3, '#000000', 5, true, true);
 
     // Loading text (will be replaced)
     const loadingText = this.add.text(320, 350, 'LOADING...', {
@@ -46,9 +47,10 @@ export default class Leaderboard extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
+    loadingText.setShadow(2, 2, '#000000', 3, true, true);
 
     // Back instruction
-    this.add.text(320, 850, 'GO BACK', {
+    const backText = this.add.text(320, 850, 'GO BACK', {
       fontSize: '22px',
       color: '#e2e28e',
       fontFamily: '"Press Start 2P", monospace',
@@ -56,6 +58,7 @@ export default class Leaderboard extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0.5);
+    backText.setShadow(2, 2, '#000000', 3, true, true);
 
     // Set up input
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -92,7 +95,7 @@ export default class Leaderboard extends Phaser.Scene {
 
   displayLeaderboard() {
     if (this.leaderboardData.length === 0) {
-      this.add.text(320, 350, 'NO SCORES YET!\nBE THE FIRST!', {
+      const noScoresText = this.add.text(320, 350, 'NO SCORES YET!\nBE THE FIRST!', {
         fontSize: '18px',
         color: '#b9c0cf',
         fontFamily: '"Press Start 2P", monospace',
@@ -100,6 +103,7 @@ export default class Leaderboard extends Phaser.Scene {
         stroke: '#000000',
         strokeThickness: 3
       }).setOrigin(0.5);
+      noScoresText.setShadow(2, 2, '#000000', 3, true, true);
       return;
     }
 
@@ -121,30 +125,33 @@ export default class Leaderboard extends Phaser.Scene {
         entry.playerName.substring(0, 12) + '...' : 
         entry.playerName;
 
-      this.add.text(80, yPosition, `${rank}.`, {
+      const rankText = this.add.text(80, yPosition, `${rank}.`, {
         fontSize: '16px',
         color: rankColor,
         fontFamily: '"Press Start 2P", monospace',
         stroke: '#000000',
         strokeThickness: 2
       }).setOrigin(0, 0.5);
+      rankText.setShadow(2, 2, '#000000', 2, true, true);
 
-      this.add.text(130, yPosition, nameText, {
+      const nameTextEl = this.add.text(130, yPosition, nameText, {
         fontSize: '16px',
         color: rankColor,
         fontFamily: '"Press Start 2P", monospace',
         stroke: '#000000',
         strokeThickness: 2
       }).setOrigin(0, 0.5);
+      nameTextEl.setShadow(2, 2, '#000000', 2, true, true);
 
       // Score (right aligned)
-      this.add.text(560, yPosition, Math.floor(entry.score).toString(), {
+      const scoreText = this.add.text(560, yPosition, Math.floor(entry.score).toString(), {
         fontSize: '16px',
         color: rankColor,
         fontFamily: '"Press Start 2P", monospace',
         stroke: '#000000',
         strokeThickness: 2
       }).setOrigin(1, 0.5);
+      scoreText.setShadow(2, 2, '#000000', 2, true, true);
 
       yPosition += lineHeight;
     });
