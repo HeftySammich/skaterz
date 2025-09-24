@@ -791,7 +791,7 @@ export default class Game extends Phaser.Scene {
 // console.log(`Spawning obstacle - gameTime: ${gameTime}ms, difficulty: ${difficulty}`);
     
     // Add warning time for arrow indicator
-    const warningTime = 1500; // 1.5 seconds warning for obstacles
+    const warningTime = 2000; // 2 seconds warning for obstacles (same as enemies/pickups)
     const playerSpeed = 5.5; // pixels per frame
     const warningDistance = (playerSpeed * 60 * warningTime) / 1000;
     
@@ -1172,12 +1172,22 @@ export default class Game extends Phaser.Scene {
       const isBlue = Math.floor(time / flashSpeed) % 2 === 0;
       color = isBlue ? 0x00ffff : 0xff00ff; // Neon blue or magenta
       this.stamina = this.maxStamina; // Keep stamina at max during boost
+      
+      // Also make the skater flash the same colors as the power up bar
+      if (!this.invulnerable) {
+        this.player.setTint(color);
+      }
     } else {
       // Normal color based on stamina level
       if (this.stamina < 33.33) {
         color = 0xff0000;  // Red
       } else if (this.stamina < 66.66) {
         color = 0xffaa00;  // Orange
+      }
+      
+      // Clear skater color effect when not boosting (and not taking damage)
+      if (!this.invulnerable) {
+        this.player.clearTint();
       }
     }
     
@@ -1480,9 +1490,13 @@ export default class Game extends Phaser.Scene {
       this.staminaBoostTimer.remove();
     }
     
-    // Set timer to deactivate boost after 5 seconds
-    this.staminaBoostTimer = this.time.delayedCall(5000, () => {
+    // Set timer to deactivate boost after 10 seconds
+    this.staminaBoostTimer = this.time.delayedCall(10000, () => {
       this.staminaBoostActive = false;
+      // Clear the skater color effect when boost expires
+      if (!this.invulnerable) {
+        this.player.clearTint();
+      }
 // console.log('[ENERGY DRINK] Stamina boost expired');
     });
     
@@ -1497,7 +1511,7 @@ export default class Game extends Phaser.Scene {
     // Remove energy drink
     energyDrink.destroy();
     
-// console.log(`Energy drink collected! Stamina boost active for 5 seconds, Total: ${this.cansCollected}`);
+// console.log(`Energy drink collected! Stamina boost active for 10 seconds, Total: ${this.cansCollected}`);
   }
   
   collectSandwich(sandwich: any) {
