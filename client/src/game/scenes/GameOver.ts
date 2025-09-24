@@ -340,18 +340,27 @@ export default class GameOver extends Phaser.Scene {
     
     // Handle letter keys for name input
     this.input.keyboard?.on('keydown', (event: any) => {
+      console.log('Key pressed:', event.key, 'showingNameInput:', this.showingNameInput);
       if (this.showingNameInput) {
+        console.log('Processing name input key:', event.key);
         if (event.key === 'Enter') {
+          console.log('Enter pressed - saving score');
           this.saveScore();
         } else if (event.key === 'Backspace') {
+          console.log('Backspace pressed - removing character');
           this.nameInputText = this.nameInputText.slice(0, -1);
           this.updateNameDisplay();
         } else if (event.key.length === 1 && this.nameInputText.length < this.maxNameLength) {
           // Only accept letters, numbers, and some symbols
           if (event.key.match(/[a-zA-Z0-9 !@#$%^&*()_+-=\[\]{}|;:,.<>?]/)) {
+            console.log('Adding character:', event.key, 'to name:', this.nameInputText);
             this.nameInputText += event.key.toUpperCase();
             this.updateNameDisplay();
+          } else {
+            console.log('Character not accepted:', event.key);
           }
+        } else {
+          console.log('Name input conditions not met. Length:', this.nameInputText.length, 'Max:', this.maxNameLength);
         }
       } else {
         // Menu navigation
@@ -369,8 +378,11 @@ export default class GameOver extends Phaser.Scene {
   }
   
   updateNameDisplay() {
+    console.log('Updating name display:', this.nameInputText + '_');
     if (this.nameDisplay) {
       this.nameDisplay.setText(this.nameInputText + '_');
+    } else {
+      console.log('nameDisplay is null!');
     }
   }
   

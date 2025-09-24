@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ComboTracker, createComboSystem } from '../systems/combo';
 import { setupControls } from '../systems/controls';
 // All visual asset imports removed - clean slate for new assets
 
@@ -78,6 +79,11 @@ export default class Game extends Phaser.Scene {
   private energyDrinkTimer!: Phaser.Time.TimerEvent;
   private staminaBoostActive = false;
   private staminaBoostTimer?: Phaser.Time.TimerEvent;
+  
+  // Combo system
+  private comboTracker!: ComboTracker;
+  private wasGrounded = true;
+  private comboUI: Phaser.GameObjects.Text | null = null;
   
   // Star collection system
   private stars = 0;
@@ -238,6 +244,28 @@ export default class Game extends Phaser.Scene {
 
     // Initialize game timing
     this.gameStartTime = this.time.now;
+    
+    // Initialize combo system
+    this.comboTracker = createComboSystem(this);
+    this.wasGrounded = true;
+    this.setupComboUI();
+    
+    // Setup combo event listeners
+    this.comboTracker.on('comboActivated', (data: any) => {
+      console.log('[COMBO] Combo activated with multiplier:', data.multiplier);
+      this.updateComboUI();
+    });
+    
+    this.comboTracker.on('comboUpdated', (data: any) => {
+      this.updateComboUI();
+    });
+    
+    this.comboTracker.on('comboEnded', (data: any) => {
+      console.log(`[COMBO] Combo ended! Stars earned: ${data.starsEarned}`);
+      this.collectStars(data.starsEarned);
+      this.showComboEndEffect(data);
+      this.updateComboUI();
+    });
     
     // Create tutorial instructions in the middle of the screen
     const tutorialContainer = this.add.container(320, 480);
@@ -614,6 +642,11 @@ export default class Game extends Phaser.Scene {
   stompEnemy(enemy: Phaser.GameObjects.Sprite) {
     // Increment enemies defeated counter
     this.enemiesDefeated++;
+    
+    // Register enemy kill with combo system
+    if (this.comboTracker) {
+      this.comboTracker.registerEnemyKill(this.player.x, this.isGrounded);
+    }
     
     // Create explosion at enemy position
     const explosion = this.explosions.create(enemy.x, enemy.y, 'explosion') as Phaser.Physics.Arcade.Sprite;
@@ -1120,6 +1153,11 @@ export default class Game extends Phaser.Scene {
       // Set trick texture (will be replaced with animation later)
       this.player.setTexture('skater_trick');
       this.trickActive = true;
+      
+      // Register trick with combo system
+      if (this.comboTracker) {
+        this.comboTracker.registerTrick(this.player.x, this.isGrounded);
+      }
       this.hasUsedTrick = true; // Mark trick as used
       
       // Consume less stamina for tricks (unless boost is active)
@@ -1985,5 +2023,70 @@ export default class Game extends Phaser.Scene {
       this.player.setVelocityY(0);
       body.velocity.y = 0;
     }
+    
+    // Update combo system with ground state
+    if (this.comboTracker) {
+      const starsEarned = this.comboTracker.updateAirState(this.player.x, this.wasGrounded, this.isGrounded);
+      this.wasGrounded = this.isGrounded;
+    }
+  }
+  
+  setupComboUI() {
+    // Create combo UI text (initially hidden)
+    this.comboUI = this.add.text(320, 150, '', {
+      fontSize: '18px',
+      color: '#ffff00',
+      fontFamily: '"Press Start 2P", monospace',
+      stroke: '#000000',
+      strokeThickness: 3,
+      align: 'center'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+    this.comboUI.setVisible(false);
+  }
+  
+  updateComboUI() {
+    if (!this.comboUI || !this.comboTracker) return;
+    
+    const state = this.comboTracker.getComboState();
+    
+    if (state.status === 'inactive') {
+      this.comboUI.setVisible(false);
+    } else if (state.status === 'pending') {
+      this.comboUI.setVisible(true);
+      this.comboUI.setText(`${state.airEventCount}/3 EVENTS`);
+      this.comboUI.setColor('#ffffff');
+    } else if (state.status === 'active') {
+      this.comboUI.setVisible(true);
+      const distance = Math.floor(this.player.x - state.startX);
+      this.comboUI.setText(`COMBO x${state.multiplier}\nDISTANCE: ${distance}`);
+      this.comboUI.setColor('#00ff00');
+    }
+  }
+  
+  showComboEndEffect(data: any) {
+    if (!data.starsEarned || data.starsEarned <= 0) return;
+    
+    // Show combo end effect with stars earned
+    const comboEndText = this.add.text(320, 200, `COMBO!\n+${data.starsEarned} STARS`, {
+      fontSize: '24px',
+      color: '#ffff00',
+      fontFamily: '"Press Start 2P", monospace',
+      stroke: '#000000',
+      strokeThickness: 4,
+      align: 'center'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(102);
+    
+    // Animate the effect
+    this.tweens.add({
+      targets: comboEndText,
+      y: comboEndText.y - 50,
+      alpha: 0,
+      scale: 1.5,
+      duration: 2000,
+      ease: 'Power2',
+      onComplete: () => {
+        comboEndText.destroy();
+      }
+    });
   }
 }
