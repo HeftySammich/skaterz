@@ -104,7 +104,7 @@ export default class Preload extends Phaser.Scene {
       repeat: 0
     });
 
-    console.log('Zombie skater loaded with animations');
+// console.log('Zombie skater loaded with animations');
     
     // Start with splash screens
     this.scene.start('Splash1');

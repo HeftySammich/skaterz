@@ -179,7 +179,7 @@ export default class GameOver extends Phaser.Scene {
     
     updateSelector();
     
-    console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
+// console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
 
     // Input handling - keyboard
     const upKey = this.input.keyboard?.addKey('UP');
@@ -199,10 +199,10 @@ export default class GameOver extends Phaser.Scene {
     
     const selectOption = () => {
       if (this.selectedOption === 0) {
-        console.log('[DEBUG GAME OVER] Starting new game...');
+// console.log('[DEBUG GAME OVER] Starting new game...');
         this.scene.start('Game');
       } else {
-        console.log('[DEBUG GAME OVER] Returning to main menu...');
+// console.log('[DEBUG GAME OVER] Returning to main menu...');
         this.scene.start('MainMenu');
       }
     };
@@ -215,7 +215,7 @@ export default class GameOver extends Phaser.Scene {
     mainMenuText.setInteractive({ useHandCursor: true });
     
     playAgainText.on('pointerdown', () => {
-      console.log('[DEBUG GAME OVER] Play Again selected...');
+// console.log('[DEBUG GAME OVER] Play Again selected...');
       this.scene.start('Game');
     });
     
@@ -225,7 +225,7 @@ export default class GameOver extends Phaser.Scene {
     });
     
     mainMenuText.on('pointerdown', () => {
-      console.log('[DEBUG GAME OVER] Main Menu selected...');
+// console.log('[DEBUG GAME OVER] Main Menu selected...');
       this.scene.start('MainMenu');
     });
     

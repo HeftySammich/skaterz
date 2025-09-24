@@ -114,7 +114,7 @@ export default class Game extends Phaser.Scene {
 
   create() {
     // Reset all game state variables
-    console.log('[DEBUG GAME INIT] Starting game scene...');
+// console.log('[DEBUG GAME INIT] Starting game scene...');
     this.gameOverTriggered = false;
     this.health = 100; // Reset to full health
     this.stamina = 100; // Reset to full stamina
@@ -143,7 +143,7 @@ export default class Game extends Phaser.Scene {
     this.staminaBoostActive = false; // Reset stamina boost
     this.lastDistanceScoreMilestone = 0; // Reset distance tracking
     
-    console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
+// console.log(`[DEBUG GAME INIT] Health: ${this.health}, Stamina: ${this.stamina}, Invulnerable: ${this.invulnerable}`);
     
     // Create seamless background world
     this.world = this.createSeamlessWorld();
@@ -180,35 +180,35 @@ export default class Game extends Phaser.Scene {
 
     // Add collision detection for obstacles using overlap for guaranteed detection
     this.physics.add.overlap(this.player, this.obstacles, (player: any, obstacle: any) => {
-      console.log(`[DEBUG COLLISION] Obstacle collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}, Health: ${this.health}`);
+// console.log(`[DEBUG COLLISION] Obstacle collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}, Health: ${this.health}`);
       if (!this.invulnerable && !this.gameOverTriggered) {
-        console.log(`[DEBUG COLLISION] Taking damage from obstacle...`);
+// console.log(`[DEBUG COLLISION] Taking damage from obstacle...`);
         this.takeDamage(25); // Take 25 damage from obstacles
         this.obstacles.remove(obstacle); // Remove from physics group first
         obstacle.destroy(); // Then destroy the sprite
       } else {
-        console.log(`[DEBUG COLLISION] Damage blocked - Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}`);
+// console.log(`[DEBUG COLLISION] Damage blocked - Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}`);
       }
     }, undefined, this);
     
     // Add collision detection for enemies - stomp them from above
     this.physics.add.overlap(this.player, this.enemies, (player: any, enemy: any) => {
       const playerBody = player.body as Phaser.Physics.Arcade.Body;
-      console.log(`[DEBUG COLLISION] Enemy collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}`);
+// console.log(`[DEBUG COLLISION] Enemy collision detected! Invulnerable: ${this.invulnerable}, GameOver: ${this.gameOverTriggered}`);
       
       // Check if player is falling and above the enemy (stomping)
       if (playerBody.velocity.y > 0 && player.y < enemy.y - 20) {
-        console.log(`[DEBUG COLLISION] Stomping enemy!`);
+// console.log(`[DEBUG COLLISION] Stomping enemy!`);
         this.stompEnemy(enemy);
         this.bouncePlayer();
       } else if (!this.invulnerable && !this.gameOverTriggered) {
         // Hit enemy from side or below - take damage
-        console.log(`[DEBUG COLLISION] Taking damage from enemy...`);
+// console.log(`[DEBUG COLLISION] Taking damage from enemy...`);
         this.takeDamage(35); // Take 35 damage from enemies
         this.enemies.remove(enemy); // Remove from physics group first
         enemy.destroy(); // Then destroy enemy
       } else {
-        console.log(`[DEBUG COLLISION] Enemy damage blocked - Invulnerable: ${this.invulnerable}`);
+// console.log(`[DEBUG COLLISION] Enemy damage blocked - Invulnerable: ${this.invulnerable}`);
       }
     }, undefined, this);
     
@@ -222,7 +222,7 @@ export default class Game extends Phaser.Scene {
       this.collectEnergyDrink(energyDrink);
     }, undefined, this);
     
-    console.log('Collision detection set up between player and obstacles/enemies');
+// console.log('Collision detection set up between player and obstacles/enemies');
 
     // No ground collision for obstacles - they're positioned at ground level
 
@@ -288,18 +288,18 @@ export default class Game extends Phaser.Scene {
       delay: 1000,
       callback: () => {
         const body = this.player.body as Phaser.Physics.Arcade.Body;
-        console.log('=== POSITION TRACKER (1 SEC) ===');
-        console.log(`Position: X=${Math.round(this.player.x)}, Y=${Math.round(this.player.y)}`);
-        console.log(`Velocity: X=${Math.round(body.velocity.x)}, Y=${Math.round(body.velocity.y)}`);
-        console.log(`State: Grounded=${this.isGrounded}, JumpCount=${this.jumpCount}`);
-        console.log(`Physics: Gravity=${this.physics.world.gravity.y}, Touching.down=${body.touching.down}`);
-        console.log(`Stamina: ${Math.round(this.stamina)}/${this.maxStamina}`);
-        console.log('================================');
+// console.log('=== POSITION TRACKER (1 SEC) ===');
+// console.log(`Position: X=${Math.round(this.player.x)}, Y=${Math.round(this.player.y)}`);
+// console.log(`Velocity: X=${Math.round(body.velocity.x)}, Y=${Math.round(body.velocity.y)}`);
+// console.log(`State: Grounded=${this.isGrounded}, JumpCount=${this.jumpCount}`);
+// console.log(`Physics: Gravity=${this.physics.world.gravity.y}, Touching.down=${body.touching.down}`);
+// console.log(`Stamina: ${Math.round(this.stamina)}/${this.maxStamina}`);
+// console.log('================================');
       },
       loop: true
     });
     
-    console.log('Game scene loaded with enhanced zombie skater mechanics');
+// console.log('Game scene loaded with enhanced zombie skater mechanics');
   }
 
   createSeamlessWorld() {
@@ -376,7 +376,7 @@ export default class Game extends Phaser.Scene {
     // Start skating animation
     this.player.play('skate');
     
-    console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=${PLAYER_GROUND_Y}`);
+// console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=${PLAYER_GROUND_Y}`);
   }
 
   createParticleEffects() {
@@ -425,7 +425,7 @@ export default class Game extends Phaser.Scene {
   }
 
   createEnemySystem() {
-    console.log('[DEBUG ENEMY SYSTEM] Creating enemy system...');
+// console.log('[DEBUG ENEMY SYSTEM] Creating enemy system...');
     
     // Create physics groups for enemies and explosions
     this.enemies = this.physics.add.group({
@@ -443,14 +443,14 @@ export default class Game extends Phaser.Scene {
     
     // Start spawning enemies with a longer delay to give player time (easier start)
     this.time.delayedCall(12000, () => {
-      console.log('[DEBUG ENEMY SYSTEM] Starting enemy spawning...');
+// console.log('[DEBUG ENEMY SYSTEM] Starting enemy spawning...');
       this.enemyTimer = this.time.addEvent({
         delay: 5000, // Start with enemies spawning every 5 seconds
         callback: this.spawnEnemy,
         callbackScope: this,
         loop: true
       });
-      console.log('[DEBUG ENEMY SYSTEM] Enemy timer created with delay: 5000ms');
+// console.log('[DEBUG ENEMY SYSTEM] Enemy timer created with delay: 5000ms');
     });
     
     // Update enemy spawn rate based on difficulty every 30 seconds
@@ -463,24 +463,24 @@ export default class Game extends Phaser.Scene {
         
         // Increase speed slightly every 30 seconds
         this.speedMultiplier += 0.1; // 10% faster each 30 seconds
-        console.log(`[SPEED INCREASE] Speed multiplier now ${this.speedMultiplier.toFixed(1)}x at difficulty ${difficulty}`);
+// console.log(`[SPEED INCREASE] Speed multiplier now ${this.speedMultiplier.toFixed(1)}x at difficulty ${difficulty}`);
       },
       callbackScope: this,
       loop: true
     });
     
-    console.log('[DEBUG ENEMY SYSTEM] Enemy system initialized (spawning starts in 5s)');
+// console.log('[DEBUG ENEMY SYSTEM] Enemy system initialized (spawning starts in 5s)');
   }
   
   spawnEnemy() {
     const gameTime = this.time.now - this.gameStartTime;
     const difficulty = this.getDifficulty(gameTime);
     
-    console.log(`[DEBUG ENEMY SPAWN] Called at gameTime=${gameTime}ms`);
+// console.log(`[DEBUG ENEMY SPAWN] Called at gameTime=${gameTime}ms`);
     
     // Don't spawn enemies in the first 10 seconds (easier start)
     if (gameTime < 10000) {
-      console.log(`[DEBUG ENEMY SPAWN] Too early, waiting...`);
+// console.log(`[DEBUG ENEMY SPAWN] Too early, waiting...`);
       return;
     }
     
@@ -521,12 +521,12 @@ export default class Game extends Phaser.Scene {
     const timeSinceLastEnergyDrink = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
     
     if (timeSinceLastSandwich < 3 && Math.abs(enemyY - this.lastSandwichY) < 100) {
-      console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
+// console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
       return;
     }
     
     if (timeSinceLastEnergyDrink < 3 && Math.abs(enemyY - this.lastEnergyDrinkY) < 100) {
-      console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
+// console.log(`[DEBUG ENEMY SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
       return;
     }
     
@@ -547,9 +547,9 @@ export default class Game extends Phaser.Scene {
     arrow.y = enemyY; // This is already the correct Y position in world coords
     
     // DEBUG: Log arrow creation details
-    console.log(`[DEBUG ARROW] Created arrow at viewport position (${arrow.x}, ${arrow.y})`);
-    console.log(`[DEBUG ARROW] Enemy will spawn at world Y=${enemyY}`);
-    console.log(`[DEBUG ARROW] Arrow properties: scale=${arrow.scale}, depth=${arrow.depth}, scrollFactor=${arrow.scrollFactorX},${arrow.scrollFactorY}`);
+// console.log(`[DEBUG ARROW] Created arrow at viewport position (${arrow.x}, ${arrow.y})`);
+// console.log(`[DEBUG ARROW] Enemy will spawn at world Y=${enemyY}`);
+// console.log(`[DEBUG ARROW] Arrow properties: scale=${arrow.scale}, depth=${arrow.depth}, scrollFactor=${arrow.scrollFactorX},${arrow.scrollFactorY}`);
     
     // Flash the arrow for visibility
     this.tweens.add({
@@ -575,15 +575,15 @@ export default class Game extends Phaser.Scene {
       enemy.setAlpha(1); // Full opacity
       
       // DEBUG: Log enemy creation details
-      console.log(`[DEBUG ENEMY] Created ${enemyType} at world position (${adjustedSpawnX}, ${enemyY})`);
-      console.log(`[DEBUG ENEMY] Player position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`);
-      console.log(`[DEBUG ENEMY] Distance from player: ${adjustedSpawnX - this.player.x}px`);
-      console.log(`[DEBUG ENEMY] Enemy properties: scale=${enemy.scale}, depth=${enemy.depth}, visible=${enemy.visible}, alpha=${enemy.alpha}`);
-      console.log(`[DEBUG ENEMY] Enemy texture: ${enemy.texture.key}, frame: ${enemy.frame.name}`);
-      console.log(`[DEBUG ENEMY] Enemy dimensions: width=${enemy.width}, height=${enemy.height}`);
-      console.log(`[DEBUG ENEMY] Camera scrollX: ${this.cameras.main.scrollX}`);
+// console.log(`[DEBUG ENEMY] Created ${enemyType} at world position (${adjustedSpawnX}, ${enemyY})`);
+// console.log(`[DEBUG ENEMY] Player position: (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`);
+// console.log(`[DEBUG ENEMY] Distance from player: ${adjustedSpawnX - this.player.x}px`);
+// console.log(`[DEBUG ENEMY] Enemy properties: scale=${enemy.scale}, depth=${enemy.depth}, visible=${enemy.visible}, alpha=${enemy.alpha}`);
+// console.log(`[DEBUG ENEMY] Enemy texture: ${enemy.texture.key}, frame: ${enemy.frame.name}`);
+// console.log(`[DEBUG ENEMY] Enemy dimensions: width=${enemy.width}, height=${enemy.height}`);
+// console.log(`[DEBUG ENEMY] Camera scrollX: ${this.cameras.main.scrollX}`);
       const screenX = adjustedSpawnX - this.cameras.main.scrollX;
-      console.log(`[DEBUG ENEMY] Enemy screen position: ${Math.round(screenX)}px from left edge`);
+// console.log(`[DEBUG ENEMY] Enemy screen position: ${Math.round(screenX)}px from left edge`);
       
       // Store reference to arrow on enemy so we can remove it when enemy appears
       (enemy as any).arrow = arrow;
@@ -605,10 +605,10 @@ export default class Game extends Phaser.Scene {
         ease: 'Sine.easeInOut'
       });
       
-      console.log(`[ENEMY] Spawned ${enemyType} at (${spawnX}, ${enemyY}) after warning`);
+// console.log(`[ENEMY] Spawned ${enemyType} at (${spawnX}, ${enemyY}) after warning`);
     });
     
-    console.log(`[ARROW] Indicator shown at Y=${enemyY}, enemy will spawn at X=${spawnX} in 2 seconds`);
+// console.log(`[ARROW] Indicator shown at Y=${enemyY}, enemy will spawn at X=${spawnX} in 2 seconds`);
   }
   
   stompEnemy(enemy: Phaser.GameObjects.Sprite) {
@@ -642,7 +642,7 @@ export default class Game extends Phaser.Scene {
     this.jumpParticles.setPosition(enemy.x, enemy.y);
     this.jumpParticles.explode(10);
     
-    console.log('Enemy stomped!');
+// console.log('Enemy stomped!');
   }
   
   bouncePlayer() {
@@ -689,7 +689,7 @@ export default class Game extends Phaser.Scene {
       onComplete: () => starBurst.destroy()
     });
     
-    console.log('Player bounced high off enemy!');
+// console.log('Player bounced high off enemy!');
   }
 
   createObstacleSystem() {
@@ -771,7 +771,7 @@ export default class Game extends Phaser.Scene {
     this.starText.setOrigin(0, 0.5);
 
     // Start spawning obstacles
-    console.log('Setting up obstacle spawning timer');
+// console.log('Setting up obstacle spawning timer');
     this.obstacleTimer = this.time.addEvent({
       delay: 2000, // Start after 2 seconds
       callback: this.spawnObstacle,
@@ -779,14 +779,14 @@ export default class Game extends Phaser.Scene {
       loop: true
     });
     
-    console.log('Obstacle system initialized');
+// console.log('Obstacle system initialized');
   }
 
   spawnObstacle() {
     const gameTime = this.time.now - this.gameStartTime;
     const difficulty = this.getDifficulty(gameTime);
     
-    console.log(`Spawning obstacle - gameTime: ${gameTime}ms, difficulty: ${difficulty}`);
+// console.log(`Spawning obstacle - gameTime: ${gameTime}ms, difficulty: ${difficulty}`);
     
     // Add warning time for arrow indicator
     const warningTime = 1500; // 1.5 seconds warning for obstacles
@@ -800,11 +800,11 @@ export default class Game extends Phaser.Scene {
     
     const spawnX = this.player.x + spawnDistance;
     
-    console.log(`Spawn location: playerX=${this.player.x}, spawnX=${spawnX}, distance=${spawnDistance}`);
+// console.log(`Spawn location: playerX=${this.player.x}, spawnX=${spawnX}, distance=${spawnDistance}`);
     
     // Skip if too close to last obstacle
     if (spawnX - this.lastObstacleX < minDistance) {
-      console.log(`Skipping spawn - too close to last obstacle`);
+// console.log(`Skipping spawn - too close to last obstacle`);
       return;
     }
     
@@ -813,7 +813,7 @@ export default class Game extends Phaser.Scene {
     // Choose obstacle type based on difficulty
     const obstacleType = this.chooseObstacleType(difficulty);
     
-    console.log(`Creating obstacle: ${obstacleType} at x=${spawnX}`);
+// console.log(`Creating obstacle: ${obstacleType} at x=${spawnX}`);
     
     // Create arrow indicator for ground obstacle
     const arrow = this.arrowIndicators.create(590, OBSTACLE_GROUND_Y - 50, 'arrow_indicator') as Phaser.GameObjects.Sprite;
@@ -832,7 +832,7 @@ export default class Game extends Phaser.Scene {
       repeat: -1
     });
     
-    console.log(`[DEBUG ARROW] Created arrow for obstacle at viewport Y=${arrow.y}`);
+// console.log(`[DEBUG ARROW] Created arrow for obstacle at viewport Y=${arrow.y}`);
     
     // Spawn obstacle after warning delay
     this.time.delayedCall(warningTime, () => {
@@ -843,7 +843,7 @@ export default class Game extends Phaser.Scene {
       // The obstacle should appear just off-screen when the delay ends
       const adjustedSpawnX = this.player.x + 700; // Spawn just ahead of visible area
       
-      console.log(`[DEBUG OBSTACLE] Spawning at adjusted position: ${adjustedSpawnX} (was ${spawnX})`);
+// console.log(`[DEBUG OBSTACLE] Spawning at adjusted position: ${adjustedSpawnX} (was ${spawnX})`);
       
       // Spawn single obstacle or pattern based on difficulty
       if (difficulty > 3 && Math.random() < 0.3) {
@@ -860,7 +860,7 @@ export default class Game extends Phaser.Scene {
   getDifficulty(gameTime: number): number {
     // Difficulty increases every 30 seconds, maxes at level 10
     const level = Math.min(Math.floor(gameTime / 30000), 10);
-    console.log(`[DIFFICULTY] Level ${level} at ${Math.floor(gameTime/1000)}s`);
+// console.log(`[DIFFICULTY] Level ${level} at ${Math.floor(gameTime/1000)}s`);
     return level;
   }
 
@@ -919,15 +919,15 @@ export default class Game extends Phaser.Scene {
     // Offset up to bridge the gap between player at 850 and obstacle at 956 (106px gap)
     body.setOffset(obstacle.width * 0.1, -110);
     
-    console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
-    console.log(`Total obstacles: ${this.obstacles.children.size}`);
+// console.log(`Created ground obstacle: ${type} at (${x}, ${OBSTACLE_GROUND_Y}) sitting on ground`);
+// console.log(`Total obstacles: ${this.obstacles.children.size}`);
   }
 
   spawnObstaclePattern(x: number, type: string) {
     // Create obstacle patterns for higher difficulty
     const patternType = Phaser.Math.Between(1, 3);
     
-    console.log(`[DEBUG OBSTACLE] Creating pattern type ${patternType} at x=${x}`);
+// console.log(`[DEBUG OBSTACLE] Creating pattern type ${patternType} at x=${x}`);
     
     switch (patternType) {
       case 1: // Double obstacle
@@ -988,13 +988,13 @@ export default class Game extends Phaser.Scene {
       loop: true
     });
     
-    console.log(`[DEBUG ENEMY SYSTEM] Updated enemy spawn rate to ${newDelay}ms for difficulty ${difficulty}`);
+// console.log(`[DEBUG ENEMY SYSTEM] Updated enemy spawn rate to ${newDelay}ms for difficulty ${difficulty}`);
   }
 
   gameOver() {
     const survivalTime = this.time.now - this.gameStartTime;
-    console.log(`[DEBUG GAME OVER] Final Score: ${this.score}, Survival Time: ${survivalTime}ms`);
-    console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Lives remaining: ${this.lives}`);
+// console.log(`[DEBUG GAME OVER] Final Score: ${this.score}, Survival Time: ${survivalTime}ms`);
+// console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Lives remaining: ${this.lives}`);
     
     // Check if player has lives left
     if (this.lives > 0) {
@@ -1002,10 +1002,10 @@ export default class Game extends Phaser.Scene {
       this.lives--;
       this.updateLifeDisplay();
       this.respawnPlayer();
-      console.log(`[RESPAWN] Using life, ${this.lives} lives remaining`);
+// console.log(`[RESPAWN] Using life, ${this.lives} lives remaining`);
     } else {
       // No lives left - actual game over
-      console.log('[GAME OVER] No lives remaining - ending game');
+// console.log('[GAME OVER] No lives remaining - ending game');
       
       // Stop all timers to prevent them from running after game over
       if (this.obstacleTimer) this.obstacleTimer.remove();
@@ -1041,11 +1041,11 @@ export default class Game extends Phaser.Scene {
     // Ensure player is exactly at ground level
     this.player.y = PLAYER_GROUND_Y;
     
-    console.log('Player landed');
+// console.log('Player landed');
   }
 
   performJump() {
-    console.log(`Jump attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, stamina=${this.stamina}`);
+// console.log(`Jump attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, stamina=${this.stamina}`);
     
     // Allow jump if grounded OR if we have reset jump count (from enemy stomp)
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
@@ -1068,7 +1068,7 @@ export default class Game extends Phaser.Scene {
       this.jumpParticles.setPosition(this.player.x, this.player.y);
       this.jumpParticles.explode(5);
       
-      console.log('First jump performed');
+// console.log('First jump performed');
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
@@ -1097,18 +1097,18 @@ export default class Game extends Phaser.Scene {
         this.trickParticles.stop(); // Stop trick particle trail
       });
       
-      console.log('Double jump performed');
+// console.log('Double jump performed');
     } else {
       if (this.stamina < this.staminaCost) {
-        console.log('Jump blocked - not enough stamina');
+// console.log('Jump blocked - not enough stamina');
       } else {
-        console.log('Jump blocked - already used both jumps');
+// console.log('Jump blocked - already used both jumps');
       }
     }
   }
   
   performTrick() {
-    console.log(`Trick attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, hasUsedTrick=${this.hasUsedTrick}, stamina=${this.stamina}`);
+// console.log(`Trick attempt: grounded=${this.isGrounded}, jumpCount=${this.jumpCount}, hasDoubleJumped=${this.hasDoubleJumped}, hasUsedTrick=${this.hasUsedTrick}, stamina=${this.stamina}`);
     
     // Can perform trick if not on ground, hasn't used trick yet, and has stamina
     if (!this.isGrounded && !this.hasUsedTrick && this.stamina >= 15) {
@@ -1144,14 +1144,14 @@ export default class Game extends Phaser.Scene {
         this.trickParticles.stop();
       });
       
-      console.log('Swipe trick performed!');
+// console.log('Swipe trick performed!');
     } else {
       if (this.isGrounded) {
-        console.log('Trick blocked - must be in air');
+// console.log('Trick blocked - must be in air');
       } else if (this.hasUsedTrick) {
-        console.log('Trick blocked - already used trick this jump');
+// console.log('Trick blocked - already used trick this jump');
       } else if (this.stamina < 15) {
-        console.log('Trick blocked - not enough stamina');
+// console.log('Trick blocked - not enough stamina');
       }
     }
   }
@@ -1203,14 +1203,14 @@ export default class Game extends Phaser.Scene {
   }
   
   takeDamage(amount: number) {
-    console.log(`[DEBUG DAMAGE] takeDamage called with amount: ${amount}, Current health: ${this.health}, Invulnerable: ${this.invulnerable}`);
+// console.log(`[DEBUG DAMAGE] takeDamage called with amount: ${amount}, Current health: ${this.health}, Invulnerable: ${this.invulnerable}`);
     if (this.invulnerable) {
-      console.log(`[DEBUG DAMAGE] Damage blocked - player is invulnerable`);
+// console.log(`[DEBUG DAMAGE] Damage blocked - player is invulnerable`);
       return;
     }
     
     const newHealth = Math.max(0, this.health - amount);
-    console.log(`[DEBUG DAMAGE] Taking ${amount} damage: ${this.health} -> ${newHealth}`);
+// console.log(`[DEBUG DAMAGE] Taking ${amount} damage: ${this.health} -> ${newHealth}`);
     this.health = newHealth;
     this.updateHealthBar();
     
@@ -1279,12 +1279,12 @@ export default class Game extends Phaser.Scene {
     const timeSinceLastEnergyDrink = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
     
     if (timeSinceLastEnemy < 3 && Math.abs(spawnY - this.lastEnemyY) < 100) {
-      console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
+// console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
       return;
     }
     
     if (timeSinceLastEnergyDrink < 3 && Math.abs(spawnY - this.lastEnergyDrinkY) < 100) {
-      console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
+// console.log(`[DEBUG SANDWICH SPAWN] Skipping - too close to recent energy drink at Y=${this.lastEnergyDrinkY}`);
       return;
     }
     
@@ -1308,7 +1308,7 @@ export default class Game extends Phaser.Scene {
       repeat: -1
     });
     
-    console.log(`[DEBUG SANDWICH] Arrow indicator shown at Y=${spawnY}, sandwich will spawn in 2 seconds`);
+// console.log(`[DEBUG SANDWICH] Arrow indicator shown at Y=${spawnY}, sandwich will spawn in 2 seconds`);
     
     // Spawn sandwich after 2 second warning
     this.time.delayedCall(2000, () => {
@@ -1332,7 +1332,7 @@ export default class Game extends Phaser.Scene {
         repeat: -1
       });
       
-      console.log(`Sandwich spawned at (${adjustedSpawnX}, ${spawnY}) - player at ${this.player.x}`);  
+// console.log(`Sandwich spawned at (${adjustedSpawnX}, ${spawnY}) - player at ${this.player.x}`);  
     });
   }
   
@@ -1368,7 +1368,7 @@ export default class Game extends Phaser.Scene {
     // Double-check cooldown (in case called directly)
     const timeSinceLastCan = (this.time.now - this.lastEnergyDrinkSpawnTime) / 1000;
     if (timeSinceLastCan < 30) {
-      console.log(`[DEBUG ENERGY DRINK] Cooldown active - ${Math.floor(30 - timeSinceLastCan)}s remaining`);
+// console.log(`[DEBUG ENERGY DRINK] Cooldown active - ${Math.floor(30 - timeSinceLastCan)}s remaining`);
       return;
     }
     
@@ -1381,12 +1381,12 @@ export default class Game extends Phaser.Scene {
     const timeSinceLastEnemy = (this.time.now - this.lastEnemySpawnTime) / 1000;
     
     if (timeSinceLastSandwich < 3 && Math.abs(spawnY - this.lastSandwichY) < 100) {
-      console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
+// console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent sandwich at Y=${this.lastSandwichY}`);
       return;
     }
     
     if (timeSinceLastEnemy < 3 && Math.abs(spawnY - this.lastEnemyY) < 100) {
-      console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
+// console.log(`[DEBUG ENERGY DRINK] Skipping - too close to recent enemy at Y=${this.lastEnemyY}`);
       return;
     }
     
@@ -1409,7 +1409,7 @@ export default class Game extends Phaser.Scene {
       repeat: -1
     });
     
-    console.log(`[DEBUG ENERGY DRINK] Arrow indicator shown at Y=${spawnY}, drink will spawn in 2 seconds`);
+// console.log(`[DEBUG ENERGY DRINK] Arrow indicator shown at Y=${spawnY}, drink will spawn in 2 seconds`);
     
     // Spawn energy drink after 2 second warning
     this.time.delayedCall(2000, () => {
@@ -1441,7 +1441,7 @@ export default class Game extends Phaser.Scene {
         repeat: -1
       });
       
-      console.log(`Energy drink spawned at (${adjustedSpawnX}, ${spawnY}) - player at ${this.player.x}`);
+// console.log(`Energy drink spawned at (${adjustedSpawnX}, ${spawnY}) - player at ${this.player.x}`);
     });
   }
   
@@ -1481,7 +1481,7 @@ export default class Game extends Phaser.Scene {
     // Set timer to deactivate boost after 5 seconds
     this.staminaBoostTimer = this.time.delayedCall(5000, () => {
       this.staminaBoostActive = false;
-      console.log('[ENERGY DRINK] Stamina boost expired');
+// console.log('[ENERGY DRINK] Stamina boost expired');
     });
     
     // Add score
@@ -1495,7 +1495,7 @@ export default class Game extends Phaser.Scene {
     // Remove energy drink
     energyDrink.destroy();
     
-    console.log(`Energy drink collected! Stamina boost active for 5 seconds, Total: ${this.cansCollected}`);
+// console.log(`Energy drink collected! Stamina boost active for 5 seconds, Total: ${this.cansCollected}`);
   }
   
   collectSandwich(sandwich: any) {
@@ -1517,7 +1517,7 @@ export default class Game extends Phaser.Scene {
     // Remove sandwich
     sandwich.destroy();
     
-    console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}, Total: ${this.sandwichesCollected}`);
+// console.log(`Sandwich collected! Health: ${this.health}/${this.maxHealth}, Total: ${this.sandwichesCollected}`);
   }
   
   createStarSystem() {
@@ -1589,7 +1589,7 @@ export default class Game extends Phaser.Scene {
       });
     }
     
-    console.log(`Star pattern spawned at (${baseX}, ${baseY})`);
+// console.log(`Star pattern spawned at (${baseX}, ${baseY})`);
   }
   
   collectStars(amount: number) {
@@ -1621,7 +1621,7 @@ export default class Game extends Phaser.Scene {
         onComplete: () => oneUpText.destroy()
       });
       
-      console.log('[EXTRA LIFE] Earned 1UP! Lives: ' + this.lives);
+// console.log('[EXTRA LIFE] Earned 1UP! Lives: ' + this.lives);
     }
     
     // Add a shine effect to the star counter instead of scaling
@@ -1656,7 +1656,7 @@ export default class Game extends Phaser.Scene {
       ease: 'Sine.inOut'
     });
     
-    console.log(`Collected ${amount} stars! Total: ${this.stars}`);
+// console.log(`Collected ${amount} stars! Total: ${this.stars}`);
   }
   
   updateBackgroundTiles() {
@@ -1771,15 +1771,12 @@ export default class Game extends Phaser.Scene {
       loop: true
     });
     
-    console.log('[RESPAWN] Player respawned with full health');
+// console.log('[RESPAWN] Player respawned with full health');
   }
 
   update() {
-    // Throttled debug logging to prevent stuttering (only log every 5 seconds)
+    // Get player body for velocity checks
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body;
-    if (Math.floor(this.time.now / 1000) % 5 === 0 && this.time.now % 1000 < 16) {
-      console.log(`[DEBUG] Player X:${Math.round(this.player.x)}, Y:${Math.round(this.player.y)}, VelX:${Math.round(playerBody.velocity.x)}, VelY:${Math.round(playerBody.velocity.y)}, Grounded:${this.isGrounded}, Stamina:${Math.round(this.stamina)}`);
-    }
     
     // Update red sky background scrolling for parallax effect
     if (this.redSkyBg) {
@@ -1805,21 +1802,9 @@ export default class Game extends Phaser.Scene {
     // Still set velocity for physics calculations
     this.player.setVelocityX(380 * this.speedMultiplier);
     
-    // Log if velocity is being blocked
-    if (Math.abs(playerBody.velocity.x) < 100) {
-      console.log('[WARNING] Player velocity blocked, using position-based movement');
-    }
+    // Removed velocity logging for performance
     
-    // Debug collision and obstacle info
-    if (this.time.now % 1000 < 16) { // Every second
-      console.log(`[OBSTACLES] Count: ${this.obstacles.children.size}, Camera X: ${Math.round(this.cameras.main.scrollX)}`);
-      this.obstacles.children.entries.forEach((obs: any, idx: number) => {
-        if (idx === 0) { // Log first obstacle only
-          const obsBody = obs.body as Phaser.Physics.Arcade.Body;
-          console.log(`[OBSTACLE] X:${Math.round(obs.x)}, Y:${Math.round(obs.y)}, Width:${obsBody.width}, Height:${obsBody.height}`);
-        }
-      });
-    }
+    // Removed debug logging for performance
     
     // Handle jumping with simple state check
     if ((Phaser.Input.Keyboard.JustDown(this.cursors.space!) || 
@@ -1877,19 +1862,11 @@ export default class Game extends Phaser.Scene {
     
     // Clean up off-screen enemies and manage arrow indicators
     this.enemies.children.entries.forEach((enemy: any, index: number) => {
-      // Debug tracking for first enemy
-      if (index === 0 && this.time.now % 1000 < 16) { // Log once per second
-        console.log(`[DEBUG ENEMY TRACKING] Enemy at world position (${Math.round(enemy.x)}, ${Math.round(enemy.y)})`);
-        console.log(`[DEBUG ENEMY TRACKING] Player at (${Math.round(this.player.x)}, ${Math.round(this.player.y)})`);
-        console.log(`[DEBUG ENEMY TRACKING] Distance from player: ${Math.round(enemy.x - this.player.x)}px`);
-        console.log(`[DEBUG ENEMY TRACKING] Enemy visible: ${enemy.visible}, alpha: ${enemy.alpha}`);
-        const screenX = enemy.x - this.cameras.main.scrollX;
-        console.log(`[DEBUG ENEMY TRACKING] Enemy screen position: ${Math.round(screenX)}px from left edge`);
-      }
+      // Removed enemy tracking debug for performance
       
       // Remove arrow when enemy is on screen (visible)
       if (enemy.arrow && enemy.x < this.player.x + 640) {
-        console.log(`[DEBUG ARROW] Destroying arrow as enemy is on screen at X=${enemy.x}`);
+// console.log(`[DEBUG ARROW] Destroying arrow as enemy is on screen at X=${enemy.x}`);
         enemy.arrow.destroy();
         enemy.arrow = null;
       }
@@ -1907,7 +1884,7 @@ export default class Game extends Phaser.Scene {
     
     // Check if player fell too far (infinite runner should never end)
     if (this.player.y > 1200) {
-      console.log('Player fell - restarting scene');
+// console.log('Player fell - restarting scene');
       this.scene.restart();
     }
     
@@ -1927,21 +1904,15 @@ export default class Game extends Phaser.Scene {
       
       // If next position would be at or below ground, land NOW
       if (nextY >= PLAYER_GROUND_Y) {
-        console.log(`*** SMOOTH LANDING ***`);
-        console.log(`Predicted landing: currentY=${this.player.y}, nextY=${nextY}, VelY=${body.velocity.y}`);
-        
         // Set to exact ground position before overshooting
         this.player.y = PLAYER_GROUND_Y;
         this.handleLanding();
-        
-        console.log(`After landing: Y=${this.player.y}, VelY=${body.velocity.y}`);
-        console.log(`*********************`);
       }
     }
     
     // Track near-ground behavior for debugging
     if (!this.isGrounded && this.player.y > PLAYER_GROUND_Y - 50 && this.player.y < PLAYER_GROUND_Y + 10) {
-      console.log(`[NEAR GROUND] Y=${Math.round(this.player.y)}, VelY=${Math.round(body.velocity.y)}, Distance to ground=${Math.round(PLAYER_GROUND_Y - this.player.y)}`);
+// console.log(`[NEAR GROUND] Y=${Math.round(this.player.y)}, VelY=${Math.round(body.velocity.y)}, Distance to ground=${Math.round(PLAYER_GROUND_Y - this.player.y)}`);
     }
     
     // Keep zombie absolutely stable on ground when grounded
