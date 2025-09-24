@@ -941,7 +941,9 @@ export default class Game extends Phaser.Scene {
     
     // Create obstacle through the physics group - this is the fix!
     const obstacle = this.obstacles.create(x, OBSTACLE_GROUND_Y, type) as Phaser.Physics.Arcade.Sprite;
-    obstacle.setScale(0.15); // Even smaller
+    // Make zombie obstacle slightly bigger than others
+    const scale = type === 'obstacle_zombie' ? 0.17 : 0.15;
+    obstacle.setScale(scale);
     obstacle.setDepth(15);
     obstacle.setOrigin(0.5, 1); // Bottom center origin so it sits ON the ground
     obstacle.setImmovable(true); // Make obstacle static
@@ -2032,9 +2034,9 @@ export default class Game extends Phaser.Scene {
   }
   
   setupComboUI() {
-    // Create combo UI text (initially hidden)
-    this.comboUI = this.add.text(320, 150, '', {
-      fontSize: '18px',
+    // Create combo UI text (initially hidden) - positioned lower and larger font
+    this.comboUI = this.add.text(320, 180, '', {
+      fontSize: '20px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
       stroke: '#000000',
@@ -2066,8 +2068,8 @@ export default class Game extends Phaser.Scene {
   showComboEndEffect(data: any) {
     if (!data.starsEarned || data.starsEarned <= 0) return;
     
-    // Show combo end effect with stars earned
-    const comboEndText = this.add.text(320, 200, `COMBO!\n+${data.starsEarned} STARS`, {
+    // Show combo end effect with stars earned - positioned lower to avoid combo UI
+    const comboEndText = this.add.text(320, 230, `COMBO!\n+${data.starsEarned} STARS`, {
       fontSize: '24px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
