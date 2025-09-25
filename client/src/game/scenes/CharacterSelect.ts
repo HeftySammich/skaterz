@@ -170,6 +170,8 @@ export default class CharacterSelect extends Phaser.Scene {
         // Music might already be destroyed
       }
       (window as any).menuMusicInstance = undefined;
+      // CRITICAL: Reset the flag so menu music can restart when returning to menu
+      (window as any).menuMusicStarted = false;
     }
     
     // Pass selected character to Game scene

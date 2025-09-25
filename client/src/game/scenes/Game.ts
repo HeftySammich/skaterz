@@ -230,6 +230,8 @@ export default class Game extends Phaser.Scene {
         // Music might already be destroyed
       }
       (window as any).menuMusicInstance = undefined;
+      // CRITICAL: Reset the flag so menu music can restart when returning to menu
+      (window as any).menuMusicStarted = false;
     }
     
     // Wait to ensure menu music is fully stopped

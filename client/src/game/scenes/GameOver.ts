@@ -131,8 +131,16 @@ export default class GameOver extends Phaser.Scene {
     // Check and show high score info
     this.checkHighScoreDisplay();
 
-    // Automatically save score with "Player 1"
+    // Automatically save score with "Player 1" and show menu options
     this.autoSubmitScore();
+    
+    // ALWAYS show menu options after a delay, even if score submission fails
+    this.time.delayedCall(500, () => {
+      // Safety check - if menu options aren't shown yet, show them now
+      if (!this.playAgainText && !this.mainMenuText) {
+        this.showMenuOptions();
+      }
+    });
     
 // console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
 
@@ -253,10 +261,10 @@ export default class GameOver extends Phaser.Scene {
       }
     } catch (error) {
       console.error('Error saving score:', error);
+    } finally {
+      // ALWAYS show menu options, even if score submission fails
+      this.showMenuOptions();
     }
-    
-    // Show menu options immediately after auto-submission
-    this.showMenuOptions();
   }
   
   // Keep for compatibility but won't be used
@@ -304,6 +312,11 @@ export default class GameOver extends Phaser.Scene {
   }
   
   showMenuOptions() {
+    // Don't create duplicate menu options
+    if (this.playAgainText || this.mainMenuText) {
+      return;
+    }
+    
     // Menu options - positioned higher since no name input
     this.playAgainText = this.add.text(320, 760, 'PLAY AGAIN', {
       fontFamily: '"Press Start 2P", monospace',
