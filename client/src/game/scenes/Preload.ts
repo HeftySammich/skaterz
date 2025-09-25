@@ -98,6 +98,10 @@ export default class Preload extends Phaser.Scene {
     this.load.audio('bite_sfx', 'assets/bite_sfx.m4a');
     this.load.audio('energy_drink_sfx', 'assets/energy_drink_sfx.wav');
     this.load.audio('enemy_explosion', 'sounds/enemy_explosion.m4a');
+    this.load.audio('combo_sfx', 'sounds/combo.m4a');
+    this.load.audio('jump_sfx', 'sounds/jump.m4a');
+    this.load.audio('new_explosion_sfx', 'sounds/new_explosion.m4a');
+    this.load.audio('new_star_sfx', 'sounds/new_star_single.m4a');
     
     // Loading silently without text
   }

@@ -131,8 +131,8 @@ export default class GameOver extends Phaser.Scene {
     // Check and show high score info
     this.checkHighScoreDisplay();
 
-    // Ask for player name to save score
-    this.showNameInput();
+    // Automatically save score with "Player 1"
+    this.autoSubmitScore();
     
 // console.log(`[DEBUG GAME OVER] Score: ${this.finalScore}, Time: ${timeText}`);
 
@@ -226,46 +226,43 @@ export default class GameOver extends Phaser.Scene {
     // Initially hidden - will be shown after name input or high score check
   }
   
-  showNameInput() {
-    this.isEnteringName = true;
+  async autoSubmitScore() {
+    if (this.hasSavedScore) return;
+    this.hasSavedScore = true;
     
-    // Name input prompt
-    this.namePromptText = this.add.text(320, 720, 'ENTER YOUR NAME:', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '18px',
-      color: '#ffff00',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-    this.namePromptText.setShadow(2, 2, '#000000', 3, true, true);
+    // Automatically use "Player 1" as the name
+    const finalName = 'Player 1';
     
-    // Name input field
-    this.nameInputText = this.add.text(320, 760, 'PLAYER', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '20px',
-      color: '#00ff00',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-    this.nameInputText.setShadow(2, 2, '#000000', 3, true, true);
-    this.playerName = 'PLAYER';
-    
-    // Instructions
-    this.instructionText = this.add.text(320, 810, 'TAP TO CONTINUE', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '14px',
-      color: '#b9c0cf',
-      stroke: '#000000',
-      strokeThickness: 2
-    }).setOrigin(0.5);
-    this.instructionText.setShadow(1, 1, '#000000', 2, true, true);
-    
-    // Click/tap to submit
-    this.input.once('pointerdown', () => {
-      if (this.isEnteringName) {
-        this.submitScore();
+    try {
+      // Submit score to database
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playerName: finalName,
+          score: Math.floor(this.finalScore)
+        })
+      });
+      
+      if (response.ok) {
+        console.log('Score saved to leaderboard');
+      } else {
+        console.error('Failed to save score to leaderboard');
       }
-    });
+    } catch (error) {
+      console.error('Error saving score:', error);
+    }
+    
+    // Show menu options immediately after auto-submission
+    this.showMenuOptions();
+  }
+  
+  // Keep for compatibility but won't be used
+  showNameInput() {
+    // This function is no longer used but kept for compatibility
+    this.autoSubmitScore();
   }
   
   async submitScore() {

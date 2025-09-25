@@ -297,6 +297,8 @@ export default class Game extends Phaser.Scene {
     // Setup combo event listeners
     this.comboTracker.on('comboActivated', (data: any) => {
       console.log('[COMBO] Combo activated with multiplier:', data.multiplier);
+      // Play combo sound effect
+      this.sound.play('combo_sfx', { volume: 0.5 });
       this.updateComboUI();
     });
     
@@ -788,8 +790,8 @@ export default class Game extends Phaser.Scene {
     // Remove enemy
     enemy.destroy();
     
-    // Play explosion sound effect
-    this.sound.play('enemy_explosion', { volume: 0.4 });
+    // Play new explosion sound effect
+    this.sound.play('new_explosion_sfx', { volume: 0.4 });
     
     // Add score
     this.score += 50;
@@ -1225,6 +1227,8 @@ export default class Game extends Phaser.Scene {
     if ((this.isGrounded || this.jumpCount === 0) && this.stamina >= this.staminaCost && !this.hasDoubleJumped) {
       // First jump - clear state and jump
       this.player.setVelocityY(this.JUMP_VELOCITY);
+      // Play jump sound for first jump only
+      this.sound.play('jump_sfx', { volume: 0.3 });
       // Stop animation and show jump sprite - it stays until landing
       this.player.stop(); // STOP the skate animation!
       const jumpSprite = this.selectedCharacter === 'kev' ? 'zombie_jump' : 'stacy_jump';
@@ -1766,7 +1770,7 @@ export default class Game extends Phaser.Scene {
       if (value === 10) {
         this.sound.play('star_cluster_sfx', { volume: 0.5 });
       } else {
-        this.sound.play('star_single_sfx', { volume: 0.4 });
+        this.sound.play('new_star_sfx', { volume: 0.4 });
       }
       
       this.collectStars(value);
