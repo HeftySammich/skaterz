@@ -204,7 +204,14 @@ export default class Game extends Phaser.Scene {
     this.controls = setupControls(this);
     
     // Stop ALL sounds including menu music before starting gameplay
-    // Use parent sound manager to ensure all sounds from all scenes stop
+    // Stop all scenes' sounds
+    this.game.scene.scenes.forEach((scene) => {
+      if (scene.sound) {
+        scene.sound.stopAll();
+      }
+    });
+    
+    // Also use the global sound manager
     this.game.sound.stopAll();
     
     // Wait a moment to ensure menu music is fully stopped
@@ -471,13 +478,9 @@ export default class Game extends Phaser.Scene {
 
   playNextBackgroundMusic() {
     // Stop current music if playing
-    if (this.currentBgMusic) {
+    if (this.currentBgMusic && this.currentBgMusic.isPlaying) {
       this.currentBgMusic.stop();
-    }
-    
-    // Randomly select first track if this is the first play
-    if (this.currentMusicIndex === 0 && Math.random() > 0.5) {
-      this.bgMusicQueue = ['undead_empire', 'broken_code'];
+      this.currentBgMusic = null;
     }
     
     // Get next track name
