@@ -1928,8 +1928,10 @@ export default class Game extends Phaser.Scene {
     this.stamina = 100;
     this.updateStaminaBar();
     
-    // Restart background music
-    this.playNextBackgroundMusic();
+    // Only restart background music if it's not already playing
+    if (!this.currentBgMusic || !this.currentBgMusic.isPlaying) {
+      this.playNextBackgroundMusic();
+    }
     
     // Reset player state
     this.gameOverTriggered = false;
