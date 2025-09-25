@@ -204,18 +204,24 @@ export default class Game extends Phaser.Scene {
     this.controls = setupControls(this);
     
     // Stop ALL sounds including menu music before starting gameplay
-    // Stop all scenes' sounds
+    // Stop all sounds globally
+    this.game.sound.stopAll();
+    
+    // Stop sounds in all scenes
     this.game.scene.scenes.forEach((scene) => {
       if (scene.sound) {
         scene.sound.stopAll();
       }
     });
     
-    // Also use the global sound manager
-    this.game.sound.stopAll();
+    // Double check all playing sounds are stopped
+    const allSounds = this.game.sound.getAllPlaying();
+    allSounds.forEach((sound: any) => {
+      sound.stop();
+    });
     
-    // Wait a moment to ensure menu music is fully stopped
-    this.time.delayedCall(100, () => {
+    // Wait to ensure menu music is fully stopped
+    this.time.delayedCall(200, () => {
       // Start background music
       this.playNextBackgroundMusic();
     });
@@ -478,8 +484,10 @@ export default class Game extends Phaser.Scene {
 
   playNextBackgroundMusic() {
     // Stop current music if playing
-    if (this.currentBgMusic && this.currentBgMusic.isPlaying) {
-      this.currentBgMusic.stop();
+    if (this.currentBgMusic) {
+      if (this.currentBgMusic.isPlaying) {
+        this.currentBgMusic.stop();
+      }
       this.currentBgMusic = null;
     }
     

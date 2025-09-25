@@ -6,7 +6,13 @@ const ZombieSkaterGame = () => {
   const phaserGameRef = useRef<Phaser.Game | null>(null);
 
   useEffect(() => {
-    if (gameRef.current && !phaserGameRef.current) {
+    if (gameRef.current) {
+      // Clean up any existing game instance first
+      if (phaserGameRef.current) {
+        phaserGameRef.current.destroy(true);
+        phaserGameRef.current = null;
+      }
+      
       // Create the Phaser game
       phaserGameRef.current = createGame(gameRef.current);
     }

@@ -22,23 +22,17 @@ export class MainMenu extends Phaser.Scene {
     
     // Stop ALL existing sounds from ALL sound managers
     this.game.sound.stopAll();
-    
-    // Also stop any orphaned sounds in THIS scene's sound manager
     this.sound.stopAll();
     
-    // Check if there's already a menu music playing globally
-    const allSounds = this.sound.getAllPlaying();
-    
-    // Stop any menu_music sounds that might be playing
+    // Check all playing sounds
+    const allSounds = this.game.sound.getAllPlaying();
     allSounds.forEach((sound: any) => {
-      if (sound.key === 'menu_music') {
-        sound.stop();
-      }
+      sound.stop();
     });
     
-    // Wait a frame to ensure all sounds are stopped
-    this.time.delayedCall(50, () => {
-      // Always create a fresh menu music instance
+    // Wait to ensure all sounds are stopped
+    this.time.delayedCall(100, () => {
+      // Create fresh menu music
       this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
       this.menuMusic.play();
     });
