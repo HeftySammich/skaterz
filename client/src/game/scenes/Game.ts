@@ -788,6 +788,9 @@ export default class Game extends Phaser.Scene {
     // Remove enemy
     enemy.destroy();
     
+    // Play explosion sound effect
+    this.sound.play('enemy_explosion', { volume: 0.4 });
+    
     // Add score
     this.score += 50;
     this.scoreText.setText('Score: ' + this.score);

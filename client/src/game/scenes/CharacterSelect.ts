@@ -30,7 +30,7 @@ export default class CharacterSelect extends Phaser.Scene {
     }).setOrigin(0.5);
     
     // Character 1: Zombie Kev with red outline
-    const zombieContainer = this.add.container(cam.centerX - 200, cam.centerY);
+    const zombieContainer = this.add.container(cam.centerX - 140, cam.centerY);
     const zombieBorder = this.add.graphics();
     zombieBorder.lineStyle(4, 0xff0000); // Red outline
     zombieBorder.strokeRect(-100, -100, 200, 200);
@@ -39,14 +39,14 @@ export default class CharacterSelect extends Phaser.Scene {
     zombieImage.setInteractive({ useHandCursor: true });
     zombieContainer.add([zombieBorder, zombieImage]);
     
-    const zombieName = this.add.text(cam.centerX - 200, cam.centerY + 150, 'KEV', {
-      fontSize: '16px',
+    const zombieName = this.add.text(cam.centerX - 140, cam.centerY + 150, 'KEV', {
+      fontSize: '22px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
     
-    // Character 2: Stacy with red outline (increased gap)
-    const stacyContainer = this.add.container(cam.centerX + 200, cam.centerY);
+    // Character 2: Stacy with red outline
+    const stacyContainer = this.add.container(cam.centerX + 140, cam.centerY);
     const stacyBorder = this.add.graphics();
     stacyBorder.lineStyle(4, 0xff0000); // Red outline
     stacyBorder.strokeRect(-100, -100, 200, 200);
@@ -55,8 +55,8 @@ export default class CharacterSelect extends Phaser.Scene {
     stacyImage.setInteractive({ useHandCursor: true });
     stacyContainer.add([stacyBorder, stacyImage]);
     
-    const stacyName = this.add.text(cam.centerX + 200, cam.centerY + 150, 'STACY', {
-      fontSize: '16px',
+    const stacyName = this.add.text(cam.centerX + 140, cam.centerY + 150, 'STACY', {
+      fontSize: '22px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
