@@ -535,8 +535,8 @@ export default class Game extends Phaser.Scene {
       this.songTitleContainer.destroy();
     }
     
-    // Create container for song info - positioned in top right
-    this.songTitleContainer = this.add.container(540, 50);
+    // Create container for song info - positioned below star indicator
+    this.songTitleContainer = this.add.container(540, 330);
     this.songTitleContainer.setScrollFactor(0);
     this.songTitleContainer.setDepth(150);
     
@@ -546,18 +546,18 @@ export default class Game extends Phaser.Scene {
     // Create background for better readability
     const bg = this.add.graphics();
     bg.fillStyle(0x000000, 0.7);
-    bg.fillRoundedRect(-120, -20, 130, 45, 5);
+    bg.fillRoundedRect(-160, -25, 170, 55, 5);
     
     // Create song title text
     const titleText = this.add.text(0, 0, displayName, {
-      fontSize: '12px',
+      fontSize: '14px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00'
     }).setOrigin(1, 0.5);
     
     // Create artist text
-    const artistText = this.add.text(0, 15, 'By Silent Architect', {
-      fontSize: '8px',
+    const artistText = this.add.text(0, 20, 'By Silent Architect', {
+      fontSize: '10px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffffff'
     }).setOrigin(1, 0.5);
