@@ -54,11 +54,8 @@ export class MainMenu extends Phaser.Scene {
         this.menuMusic = playingMusic;
         window.menuMusicInstance = playingMusic;
       }
-      return; // EXIT EARLY - don't create new music
-    }
-    
-    // Check if music exists globally
-    if (window.menuMusicInstance && window.menuMusicInstance.isPlaying) {
+    } else if (window.menuMusicInstance && window.menuMusicInstance.isPlaying) {
+      // Check if music exists globally
       window.menuMusicDebug.push(`[${timestamp}] Using existing global instance`);
       this.menuMusic = window.menuMusicInstance;
     } else if (!window.menuMusicStarted) {
