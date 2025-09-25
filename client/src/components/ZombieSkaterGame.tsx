@@ -12,6 +12,8 @@ const cleanupGlobalAudio = () => {
       console.log('Error cleaning up menu music:', e);
     }
     (window as any).menuMusicInstance = undefined;
+    // Reset the flag so music can play again on next game load
+    (window as any).menuMusicStarted = false;
   }
 };
 

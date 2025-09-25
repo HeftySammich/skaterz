@@ -2,6 +2,7 @@
 declare global {
   interface Window {
     menuMusicInstance?: Phaser.Sound.BaseSound;
+    menuMusicStarted?: boolean; // Track if music has ever been started
   }
 }
 
@@ -27,39 +28,24 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
-    // Stop all sounds first
-    this.game.sound.stopAll();
-    this.sound.stopAll();
-    
-    // Check if we have a global menu music instance on window
-    if (window.menuMusicInstance) {
-      try {
-        window.menuMusicInstance.stop();
-        window.menuMusicInstance.destroy();
-      } catch (e) {
-        console.log('Error stopping existing menu music:', e);
+    // Only start menu music ONCE ever - when the game first loads
+    if (!window.menuMusicStarted) {
+      // This is the FIRST time - create and start music
+      window.menuMusicStarted = true; // Set flag immediately
+      
+      // Create menu music
+      this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+      window.menuMusicInstance = this.menuMusic;
+      this.menuMusic.play();
+      console.log('Menu music started');
+    } else if (window.menuMusicInstance) {
+      // Music was already started before - just reference the existing instance
+      this.menuMusic = window.menuMusicInstance;
+      // Ensure it's playing if we're back at menu
+      if (!this.menuMusic.isPlaying) {
+        this.menuMusic.resume();
       }
-      window.menuMusicInstance = undefined;
     }
-    
-    // Wait a frame to ensure cleanup is complete, then create new music
-    this.time.delayedCall(100, () => {
-      // Double check no music is playing
-      if (!window.menuMusicInstance) {
-        // Create new menu music and store globally
-        this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-        window.menuMusicInstance = this.menuMusic;
-        this.menuMusic.play();
-        console.log('Menu music started');
-      } else {
-        // Use existing instance if it exists
-        this.menuMusic = window.menuMusicInstance;
-        // Make sure it's playing
-        if (!this.menuMusic.isPlaying) {
-          this.menuMusic.play();
-        }
-      }
-    });
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
