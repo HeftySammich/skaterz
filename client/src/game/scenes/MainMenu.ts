@@ -1,8 +1,9 @@
-// Global window variable for menu music
+// Global window variable for menu music with debugging
 declare global {
   interface Window {
     menuMusicInstance?: Phaser.Sound.BaseSound;
     menuMusicStarted?: boolean; // Track if music has ever been started
+    menuMusicDebug?: string[]; // Debug log
   }
 }
 
@@ -28,20 +29,55 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
+    // Initialize debug log if not exists
+    if (!window.menuMusicDebug) {
+      window.menuMusicDebug = [];
+    }
+    
+    const timestamp = new Date().toISOString();
+    
+    // CRITICAL: Check if music is already playing
+    const allSounds = this.sound.getAllPlaying();
+    const menuMusicAlreadyPlaying = allSounds.some((s: any) => s.key === 'menu_music');
+    
+    window.menuMusicDebug.push(`[${timestamp}] MainMenu.create() called`);
+    window.menuMusicDebug.push(`[${timestamp}] Music already playing: ${menuMusicAlreadyPlaying}`);
+    window.menuMusicDebug.push(`[${timestamp}] Global instance exists: ${!!window.menuMusicInstance}`);
+    window.menuMusicDebug.push(`[${timestamp}] Music started flag: ${window.menuMusicStarted}`);
+    
+    // If menu music is already playing ANYWHERE, don't create new one
+    if (menuMusicAlreadyPlaying) {
+      window.menuMusicDebug.push(`[${timestamp}] SKIPPING: Menu music already playing`);
+      // Find and reference the playing instance
+      const playingMusic = allSounds.find((s: any) => s.key === 'menu_music');
+      if (playingMusic) {
+        this.menuMusic = playingMusic;
+        window.menuMusicInstance = playingMusic;
+      }
+      return; // EXIT EARLY - don't create new music
+    }
+    
     // Check if music exists globally
-    if (window.menuMusicInstance) {
-      // Music already exists - just reference it, NEVER recreate
+    if (window.menuMusicInstance && window.menuMusicInstance.isPlaying) {
+      window.menuMusicDebug.push(`[${timestamp}] Using existing global instance`);
       this.menuMusic = window.menuMusicInstance;
     } else if (!window.menuMusicStarted) {
       // This is the VERY FIRST time - create music ONCE
       window.menuMusicStarted = true;
+      window.menuMusicDebug.push(`[${timestamp}] Creating menu music for FIRST TIME`);
       
       // Create menu music ONCE
       this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
       window.menuMusicInstance = this.menuMusic;
       this.menuMusic.play();
       console.log('Menu music started');
+      window.menuMusicDebug.push(`[${timestamp}] Menu music STARTED`);
+    } else {
+      window.menuMusicDebug.push(`[${timestamp}] No action taken - music should already exist`);
     }
+    
+    // Log current state
+    console.log('Menu Music Debug Log:', window.menuMusicDebug);
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
