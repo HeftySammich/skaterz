@@ -536,8 +536,8 @@ export default class Game extends Phaser.Scene {
     }
     
     // Create container for song info - positioned directly below star indicator
-    // Star indicator is at Y: 145, so place this at Y: 190 (45 pixels below)
-    this.songTitleContainer = this.add.container(450, 190);
+    // Star indicator is at Y: 145, so place this at Y: 200 (55 pixels below)
+    this.songTitleContainer = this.add.container(440, 200);
     this.songTitleContainer.setScrollFactor(0);
     this.songTitleContainer.setDepth(150);
     
