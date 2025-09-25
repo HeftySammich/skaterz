@@ -4,12 +4,19 @@ A retro-styled 2D endless runner game featuring a skateboarding zombie character
 
 ## 🎮 Game Features
 
-- **Retro GBA Aesthetic**: 240x160 resolution with pixelated graphics and authentic color palette
-- **Infinite Runner**: Endless city street scrolling with seamless background tiling
-- **Skateboarding Mechanics**: Jump and double jump with trick animations
-- **Touch Controls**: Mobile-optimized tap controls alongside keyboard support
-- **Particle Effects**: Dynamic visual effects for jumps, tricks, and ground interactions
-- **Animation System**: Three-state sprite system (idle, jump, trick)
+- **Retro GBA Aesthetic**: 640x960 resolution with pixelated graphics and authentic 16-bit style
+- **Dual Character System**: Play as Kev or Stacy, each with unique zombie sprites
+- **Infinite Runner**: Endless city street with progressive difficulty and speed increases
+- **Combat System**: Crush enemies (eyeballs and robots) by stomping on them
+- **Star Collection ($STAR)**: Collect stars to purchase customizations, new characters, game modes, and extra lives
+- **Health & Stamina System**: Manage health with sandwich pickups and stamina for double jumps
+- **Power-Ups**: Energy drinks provide temporary stamina boost and invulnerability
+- **Combo System**: Chain tricks and enemy kills for multiplied star rewards
+- **Life System**: Earn extra lives at 100, 200, and 300 stars (continuous accumulation)
+- **Obstacle Dodging**: Avoid various obstacles including trash cans, cones, and zombies
+- **Touch Controls**: Tap to jump, swipe up for aerial tricks
+- **Leaderboard System**: Database-backed high score tracking with automatic submission
+- **Dynamic Soundtrack**: Alternating background music tracks with on-screen artist credits
 
 ## 🛠 Tech Stack
 
@@ -110,24 +117,45 @@ npm run db:push
 ## 🎯 Game Controls
 
 ### Desktop
-- **Space** or **↑ Arrow**: Jump / Double Jump
-- **Mouse Click**: Jump / Double Jump
+- **Space** or **↑ Arrow**: Jump
+- **Space/↑ Again (in air)**: Double Jump (costs stamina)
+- **Mouse Click**: Jump
 
 ### Mobile
-- **Tap Screen**: Jump / Double Jump
+- **Tap Screen**: Jump
+- **Tap Again (in air)**: Double Jump (costs stamina)
+- **Swipe Up (while airborne)**: Perform trick for combo points
 
 ## 🎨 Game Mechanics
 
-### Jump System
-- **First Jump**: Regular jump with cyan sparkle particles and dust effects
-- **Double Jump**: Trick jump with golden trail particles and reduced gravity float
-- **Landing**: Automatic state reset with stable ground positioning
+### Core Gameplay
+- **Objective**: Dodge obstacles, crush enemies, and collect $STAR tokens
+- **Progressive Difficulty**: Game speed increases as you score more points
+- **Survival Focus**: Manage health, stamina, and lives to achieve high scores
 
-### Visual Effects
-- **Dust Particles**: Brown particles burst from ground on takeoff
-- **Jump Sparkles**: Cyan particles explode around player on first jump  
-- **Trick Trail**: Golden particles continuously follow player during double jump
-- **Infinite Scrolling**: Seamless city background with proper perspective
+### Combat & Movement
+- **Enemy Stomping**: Jump on enemies to defeat them and score points
+- **Double Jump**: Use stamina to perform a second jump in mid-air
+- **Aerial Tricks**: Swipe up while airborne to perform tricks
+- **Combo System**: Combine tricks and enemy kills (3+ actions) for bonus stars
+
+### Resource Management
+- **Health Bar**: Take damage from obstacles and enemies, restore with sandwiches
+- **Stamina Bar**: Required for double jumps and tricks, regenerates over time
+- **Life Counter**: Start with 3 lives, earn more at star milestones
+- **Star Economy**: Collect stars to unlock features and gain extra lives
+
+### Power-Ups & Items
+- **Sandwiches**: Restore 20 health points (with warning arrow indicator)
+- **Energy Drinks**: Full stamina restore, temporary invulnerability, and speed boost
+- **Single Stars**: Worth 1 star each with collection sound effect
+- **Star Clusters**: Worth 10 stars each with special sound effect
+
+### Scoring System
+- **Base Points**: 10 points per second survived, 50 points per enemy defeated
+- **Combo Multipliers**: x3 to x10 multiplier for successful combo chains
+- **Star Bonuses**: Combos convert score points into bonus stars
+- **Leaderboard**: Automatic score submission as "Player 1"
 
 ## 🚀 Deployment
 
@@ -177,14 +205,33 @@ DATABASE_URL=postgresql://user:pass@host:5432/db  # Optional
 - HashPack wallet connection infrastructure
 - NFT and token integration capabilities
 
-## 🔮 Future Features
+## 🔮 Current Features & Future Roadmap
 
-- **Hedera Network Integration**: NFT character skins and achievements
-- **Wallet Connect**: HashPack wallet integration for blockchain features
-- **Multiplayer**: Real-time competitive skating sessions
-- **Level System**: Procedurally generated obstacle courses
-- **Sound System**: Retro chiptune soundtrack and sound effects
-- **High Scores**: Blockchain-verified leaderboards
+### Fully Implemented
+- ✅ Dual playable characters (Kev and Stacy)
+- ✅ Complete enemy system with stomping mechanics
+- ✅ Health and stamina systems with UI
+- ✅ Power-up system (sandwiches and energy drinks)
+- ✅ Star collection and life reward system
+- ✅ Combo system with multipliers
+- ✅ Progressive difficulty scaling
+- ✅ Full sound effects and alternating music tracks
+- ✅ PostgreSQL-backed leaderboard
+- ✅ Tutorial and How to Play screens
+- ✅ Character selection screen
+- ✅ Splash screen sequence
+
+### Future Features
+- **$STAR Token Integration**: Use collected stars as currency for:
+  - New character skins and customizations
+  - Additional game modes and levels
+  - Permanent upgrades and abilities
+- **Hedera Network Integration**: NFT character ownership and trading
+- **HashPack Wallet**: Connect wallet for blockchain features
+- **Multiplayer Mode**: Compete with other players in real-time
+- **Achievement System**: Unlock rewards for gameplay milestones
+- **Expanded Enemy Types**: More enemy varieties with unique behaviors
+- **Environmental Hazards**: Additional obstacle types and patterns
 
 ## 🤝 Contributing
 

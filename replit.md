@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a retro-style 2D endless runner game inspired by skateboarding, featuring a zombie character. The game mimics the Game Boy Advance aesthetic with pixelated graphics and a limited color palette. Players control a skateboarding zombie through an endless level, performing tricks, grinding rails, and avoiding obstacles while accumulating points. The project uses modern web technologies to create a nostalgic gaming experience with potential for blockchain integration through Hedera network features.
+This is a retro-style 2D endless runner game featuring skateboarding zombie characters. The game mimics classic 16-bit aesthetics with pixelated graphics and vibrant colors. Players dodge obstacles, crush enemies, and collect $STAR tokens to purchase customizations, new characters, game modes, and extra lives. The game features a comprehensive combo system, resource management mechanics, and progressive difficulty scaling. Built with modern web technologies, the project is architected for future blockchain integration through Hedera network features.
 
 ## User Preferences
 
@@ -10,15 +10,21 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### Enhanced Zombie Skater Implementation (Jan 2025)
-- **Implemented three-state animation system**: Static idle PNG for skating, animated jump GIF, and trick GIF for midair stunts
-- **Added enhanced double-jump mechanics**: First jump performs regular leap, second jump triggers trick animation with float effect
-- **Reduced gravity physics**: Overall gravity reduced from 800 to 600, with special trick float at 400 gravity for extended air time
-- **Seamless background integration**: Placeholder gradient background with proper physics ground collision detection
-- **Functional gameplay loop**: Working jump controls (Space/Up), landing detection, ability reset system, and scene restart on falling
-- **Added second playable character "Stacy"**: Full sprite set with idle, jump, and trick animations
-- **Character selection system**: Both Kev and Stacy are playable with their unique sprites
-- **Star counter accumulation**: Stars now accumulate continuously without resetting (100, 200, 300 stars for extra lives)
+### Complete Game Implementation (Jan 2025)
+- **Dual Character System**: Play as Kev or Stacy with unique zombie sprites
+- **Enemy Combat System**: Stomp on eyeball and robot enemies for points and combos
+- **Resource Management**: Health system with sandwich pickups, stamina for double jumps
+- **Power-Up System**: Energy drinks provide stamina boost and temporary invulnerability
+- **Combo Mechanics**: Chain tricks and kills for x3-x10 star multipliers
+- **Star Economy**: Collect $STAR tokens for lives (100, 200, 300) and future purchases
+- **Progressive Difficulty**: Speed increases based on score thresholds
+- **Obstacle Variety**: Multiple obstacle types (cones, trash, crashes, zombies, skulls)
+- **Audio System**: Jump, combo, explosion, and star collection sound effects
+- **Music System**: Alternating tracks ("Broken Code" and "Undead Empire") with on-screen credits
+- **UI Systems**: Health/stamina bars, life counter, star display, combo notifications
+- **Leaderboard**: PostgreSQL-backed high score system with automatic submission
+- **Tutorial System**: In-game instructions and dedicated How to Play screen
+- **Gesture Controls**: Swipe up for aerial tricks, tap for jumping
 
 ## System Architecture
 
@@ -36,10 +42,16 @@ Preferred communication style: Simple, everyday language.
 - **API Structure**: RESTful endpoints with /api prefix (currently minimal)
 
 ### Game Architecture
-- **Scene Management**: Phaser scene system (Preload, Game, GameOver)
-- **Input System**: Unified control system supporting keyboard, mouse, and touch inputs
-- **Physics**: Arcade physics for collision detection and movement
-- **Component Systems**: Modular systems for obstacles, scoring, and audio management
+- **Scene Management**: Complete scene system (Splash screens 1-5, MainMenu, CharacterSelect, HowToPlay, Game, GameOver, Leaderboard)
+- **Input System**: Unified controls with keyboard, mouse, tap, and swipe gesture support
+- **Physics**: Arcade physics for collisions, enemy stomping, and item collection
+- **Combat System**: Enemy spawning, collision detection, and stomping mechanics
+- **Combo System**: Modular combo tracker with event-based architecture
+- **Resource Systems**: Health management, stamina regeneration, life tracking
+- **Item Systems**: Power-up spawning with warning indicators, collection effects
+- **Audio Management**: Dynamic music switching, layered sound effects
+- **UI Systems**: Responsive HUD, floating text notifications, particle effects
+- **Scoring Engine**: Point accumulation, combo multipliers, star conversion
 
 ### Data Storage
 - **Local Storage**: Browser localStorage for high scores and game settings
