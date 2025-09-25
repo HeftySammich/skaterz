@@ -345,7 +345,7 @@ export default class Game extends Phaser.Scene {
     // Background for tutorial
     const tutorialBg = this.add.graphics();
     tutorialBg.fillStyle(0x000000, 0.8);
-    tutorialBg.fillRoundedRect(-320, -70, 640, 140, 10);
+    tutorialBg.fillRoundedRect(-320, -70, 640, 180, 10);
     tutorialContainer.add(tutorialBg);
     
     // Tutorial text
