@@ -48,15 +48,32 @@ const ZombieSkaterGame = () => {
 
   return (
     <div 
-      ref={gameRef} 
       style={{ 
-        width: '100%', 
-        height: '100%',
+        width: '100vw', 
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
-      }} 
-    />
+        justifyContent: 'center',
+        backgroundColor: '#000',
+        overflow: 'hidden',
+        position: 'fixed',
+        top: 0,
+        left: 0
+      }}
+    >
+      <div
+        ref={gameRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          maxWidth: '640px',
+          maxHeight: '960px',
+          aspectRatio: '640 / 960',
+          position: 'relative',
+          backgroundColor: '#2c5f2d'
+        }}
+      />
+    </div>
   );
 };
 
