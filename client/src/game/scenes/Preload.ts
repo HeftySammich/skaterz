@@ -88,6 +88,16 @@ export default class Preload extends Phaser.Scene {
     // Load menu music
     this.load.audio('menu_music', 'assets/menu_music.m4a');
     
+    // Load gameplay background music
+    this.load.audio('broken_code', 'assets/broken_code.m4a');
+    this.load.audio('undead_empire', 'assets/undead_empire.m4a');
+    
+    // Load sound effects
+    this.load.audio('star_single_sfx', 'assets/star_single_sfx.wav');
+    this.load.audio('star_cluster_sfx', 'assets/star_cluster_sfx.wav');
+    this.load.audio('bite_sfx', 'assets/bite_sfx.m4a');
+    this.load.audio('energy_drink_sfx', 'assets/energy_drink_sfx.wav');
+    
     // Loading silently without text
   }
 
