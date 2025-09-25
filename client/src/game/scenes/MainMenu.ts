@@ -37,15 +37,22 @@ export class MainMenu extends Phaser.Scene {
         window.menuMusicInstance.stop();
         window.menuMusicInstance.destroy();
       } catch (e) {
-        // Music might already be destroyed
+        console.log('Error stopping existing menu music:', e);
       }
       window.menuMusicInstance = undefined;
     }
     
-    // Create new menu music and store globally
-    this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-    window.menuMusicInstance = this.menuMusic;
-    this.menuMusic.play();
+    // Wait a frame to ensure cleanup is complete, then create new music
+    this.time.delayedCall(100, () => {
+      // Double check no music is playing
+      if (!window.menuMusicInstance) {
+        // Create new menu music and store globally
+        this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+        window.menuMusicInstance = this.menuMusic;
+        this.menuMusic.play();
+        console.log('Menu music started');
+      }
+    });
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
