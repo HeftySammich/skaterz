@@ -1,3 +1,10 @@
+// Global window variable for menu music
+declare global {
+  interface Window {
+    menuMusicInstance?: Phaser.Sound.BaseSound;
+  }
+}
+
 export class MainMenu extends Phaser.Scene {
   private selectedIndex = 0;
   private menuItems: (Phaser.GameObjects.Image | Phaser.GameObjects.Text)[] = [];
@@ -5,7 +12,6 @@ export class MainMenu extends Phaser.Scene {
   private enterKey!: Phaser.Input.Keyboard.Key;
   private buttonBaseScales: number[] = [];
   private menuMusic!: Phaser.Sound.BaseSound;
-  private static globalMenuMusic: Phaser.Sound.BaseSound | null = null;
 
   constructor() {
     super({ key: 'MainMenu' });
@@ -25,20 +31,20 @@ export class MainMenu extends Phaser.Scene {
     this.game.sound.stopAll();
     this.sound.stopAll();
     
-    // Check if we have a global menu music instance
-    if (MainMenu.globalMenuMusic) {
+    // Check if we have a global menu music instance on window
+    if (window.menuMusicInstance) {
       try {
-        MainMenu.globalMenuMusic.stop();
-        MainMenu.globalMenuMusic.destroy();
+        window.menuMusicInstance.stop();
+        window.menuMusicInstance.destroy();
       } catch (e) {
         // Music might already be destroyed
       }
-      MainMenu.globalMenuMusic = null;
+      window.menuMusicInstance = undefined;
     }
     
-    // Create new menu music only once
+    // Create new menu music and store globally
     this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-    MainMenu.globalMenuMusic = this.menuMusic;
+    window.menuMusicInstance = this.menuMusic;
     this.menuMusic.play();
     
     // Add menu background image (responsive scaling to fill screen)
