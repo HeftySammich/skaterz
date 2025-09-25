@@ -157,10 +157,8 @@ export default class CharacterSelect extends Phaser.Scene {
   }
   
   confirmSelection() {
-    // Stop menu music when game starts
-    if (this.menuMusic && this.menuMusic.isPlaying) {
-      this.menuMusic.stop();
-    }
+    // Stop ALL sounds including menu music when game starts
+    this.sound.stopAll();
     
     // Pass selected character to Game scene
     const selectedCharacter = this.selectedIndex === 0 ? 'kev' : 'stacy';

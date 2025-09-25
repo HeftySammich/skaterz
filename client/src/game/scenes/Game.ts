@@ -204,7 +204,8 @@ export default class Game extends Phaser.Scene {
     this.controls = setupControls(this);
     
     // Stop ALL sounds including menu music before starting gameplay
-    this.sound.stopAll();
+    // Use parent sound manager to ensure all sounds from all scenes stop
+    this.game.sound.stopAll();
     
     // Wait a moment to ensure menu music is fully stopped
     this.time.delayedCall(100, () => {
