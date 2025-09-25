@@ -106,6 +106,18 @@ export class HowToPlay extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0.5);
     controlsText.setShadow(2, 2, '#000000', 3, true, true);
+    
+    // Add combo instruction in smaller font
+    yPos += 70;
+    const comboText = this.add.text(320, yPos, 'COMBINING TRICKS AND KILLS\nSTARTS COMBOS', {
+      fontSize: '12px',
+      color: '#ffff00',
+      fontFamily: '"Press Start 2P", monospace',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 2
+    }).setOrigin(0.5);
+    comboText.setShadow(2, 2, '#000000', 3, true, true);
 
     // Back Button
     const backText = this.add.text(320, 850, 'BACK TO OPTIONS', {
