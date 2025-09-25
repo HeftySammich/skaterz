@@ -1233,15 +1233,15 @@ export default class Game extends Phaser.Scene {
       
 // console.log('First jump performed');
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
-      // Second jump - trick jump (requires stamina)
+      // Second jump - double jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      // Stop animation and show trick sprite for double jump
+      // Stop animation and show jump sprite for double jump
       this.player.stop(); // STOP the skate animation!
-      const trickSprite = this.selectedCharacter === 'kev' ? 'zombie_trick' : 'stacy_trick';
-      this.player.setTexture(trickSprite);
+      const jumpSprite = this.selectedCharacter === 'kev' ? 'zombie_jump' : 'stacy_jump';
+      this.player.setTexture(jumpSprite);
       this.player.setScale(this.jumpScale);
       this.hasDoubleJumped = true;
-      this.trickActive = true;
+      this.trickActive = false;
       this.jumpCount = 2;
       
       // Consume stamina (unless boost is active)
