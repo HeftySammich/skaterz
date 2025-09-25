@@ -1144,12 +1144,9 @@ export default class Game extends Phaser.Scene {
 // console.log(`[DEBUG GAME OVER] Final Score: ${this.score}, Survival Time: ${survivalTime}ms`);
 // console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Lives remaining: ${this.lives}`);
     
-    // Stop background music
-    this.stopBackgroundMusic();
-    
     // Check if player has lives left
     if (this.lives > 0) {
-      // Use a life and respawn
+      // Use a life and respawn (don't stop music)
       this.lives--;
       this.updateLifeDisplay();
       this.respawnPlayer();
@@ -1157,6 +1154,9 @@ export default class Game extends Phaser.Scene {
     } else {
       // No lives left - actual game over
 // console.log('[GAME OVER] No lives remaining - ending game');
+      
+      // Stop background music only on actual game over
+      this.stopBackgroundMusic();
       
       // Stop all timers to prevent them from running after game over
       if (this.obstacleTimer) this.obstacleTimer.remove();
@@ -1936,10 +1936,7 @@ export default class Game extends Phaser.Scene {
     this.stamina = 100;
     this.updateStaminaBar();
     
-    // Only restart background music if it's not already playing
-    if (!this.currentBgMusic || !this.currentBgMusic.isPlaying) {
-      this.playNextBackgroundMusic();
-    }
+    // Music continues playing during respawn - no need to restart
     
     // Reset player state
     this.gameOverTriggered = false;
