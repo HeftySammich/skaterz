@@ -740,7 +740,8 @@ export default class Game extends Phaser.Scene {
     this.hasDoubleJumped = false;
     this.hasUsedTrick = false; // Reset trick ability after stomping enemy
     // Show jump sprite since player is bouncing up
-    this.player.setTexture('jump_static');
+    const jumpSprite = this.selectedCharacter === 'kev' ? 'zombie_jump' : 'stacy_jump';
+    this.player.setTexture(jumpSprite);
     this.player.setScale(this.jumpScale);
     
     // Restore more stamina as reward for successful stomp
@@ -1254,7 +1255,8 @@ export default class Game extends Phaser.Scene {
         this.trickParticles.stop();
         // Keep jump sprite if still airborne
         if (!this.isGrounded) {
-          this.player.setTexture('jump_static');
+          const jumpSprite = this.selectedCharacter === 'kev' ? 'zombie_jump' : 'stacy_jump';
+          this.player.setTexture(jumpSprite);
           this.player.setScale(this.jumpScale);
         }
       });
