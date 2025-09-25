@@ -35,6 +35,20 @@ export default class GameOver extends Phaser.Scene {
     this.starsCollected = data.stars || 0;
     this.enemiesDefeated = data.enemies || 0;
     this.selectedOption = 0; // Reset selection
+    
+    // CRITICAL: Reset these flags for every new game over
+    this.hasSavedScore = false;
+    this.isNewHighScore = false;
+    this.isEnteringName = false;
+    this.playerName = '';
+    
+    // Reset UI references
+    this.playAgainText = undefined;
+    this.mainMenuText = undefined;
+    this.selector = undefined;
+    this.nameInputText = undefined;
+    this.namePromptText = undefined;
+    this.instructionText = undefined;
   }
 
   create() {
