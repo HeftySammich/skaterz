@@ -75,20 +75,20 @@ export class OptionsMenu extends Phaser.Scene {
     
     // Update selector position
     const updateSelector = () => {
-      // Reset all colors
-      howToPlayText.setColor('#ffffff');
-      leaderboardText.setColor('#ffffff');
-      backText.setColor('#ffffff');
+      // Reset all colors with font preserved
+      howToPlayText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
+      leaderboardText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
+      backText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
       
       if (this.selectedOption === 0) {
         selector.setY(320);
-        howToPlayText.setColor('#00ff00');
+        howToPlayText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 1) {
         selector.setY(420);
-        leaderboardText.setColor('#00ff00');
+        leaderboardText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else {
         selector.setY(520);
-        backText.setColor('#00ff00');
+        backText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       }
     };
     
