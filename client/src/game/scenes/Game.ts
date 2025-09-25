@@ -122,6 +122,11 @@ export default class Game extends Phaser.Scene {
   // Stomp velocity removed - stomp feature no longer exists
   private readonly GRAVITY = 4200; // Slightly floatier
   private readonly FLOAT_GRAVITY = 3200; // More float during tricks
+  
+  // Audio system
+  private currentBgMusic!: Phaser.Sound.BaseSound | null;
+  private bgMusicQueue: string[] = ['broken_code', 'undead_empire'];
+  private currentMusicIndex = 0;
 
   constructor() {
     super('Game');
@@ -197,6 +202,9 @@ export default class Game extends Phaser.Scene {
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.controls = setupControls(this);
+    
+    // Start background music
+    this.playNextBackgroundMusic();
     
     // No ground collision - handle landing through position checks only to avoid invisible floors
 
@@ -452,6 +460,42 @@ export default class Game extends Phaser.Scene {
     this.player.setTexture(idleSprite);
     
 // console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=${PLAYER_GROUND_Y}`);
+  }
+
+  playNextBackgroundMusic() {
+    // Stop current music if playing
+    if (this.currentBgMusic) {
+      this.currentBgMusic.stop();
+    }
+    
+    // Randomly select first track if this is the first play
+    if (this.currentMusicIndex === 0 && Math.random() > 0.5) {
+      this.bgMusicQueue = ['undead_empire', 'broken_code'];
+    }
+    
+    // Get next track name
+    const nextTrack = this.bgMusicQueue[this.currentMusicIndex];
+    
+    // Play the track
+    this.currentBgMusic = this.sound.add(nextTrack, { 
+      volume: 0.4, 
+      loop: false 
+    });
+    this.currentBgMusic.play();
+    
+    // Set up completion handler to play next track
+    this.currentBgMusic.once('complete', () => {
+      // Toggle to next track
+      this.currentMusicIndex = (this.currentMusicIndex + 1) % 2;
+      this.playNextBackgroundMusic();
+    });
+  }
+  
+  stopBackgroundMusic() {
+    if (this.currentBgMusic) {
+      this.currentBgMusic.stop();
+      this.currentBgMusic = null;
+    }
   }
 
   createParticleEffects() {
@@ -1082,6 +1126,9 @@ export default class Game extends Phaser.Scene {
 // console.log(`[DEBUG GAME OVER] Final Score: ${this.score}, Survival Time: ${survivalTime}ms`);
 // console.log(`[DEBUG GAME OVER] Health at death: ${this.health}, Lives remaining: ${this.lives}`);
     
+    // Stop background music
+    this.stopBackgroundMusic();
+    
     // Check if player has lives left
     if (this.lives > 0) {
       // Use a life and respawn
@@ -1575,6 +1622,9 @@ export default class Game extends Phaser.Scene {
   }
   
   collectEnergyDrink(energyDrink: any) {
+    // Play energy drink sound effect
+    this.sound.play('energy_drink_sfx', { volume: 0.5 });
+    
     // Increment can counter
     this.cansCollected++;
     
@@ -1632,6 +1682,9 @@ export default class Game extends Phaser.Scene {
   }
   
   collectSandwich(sandwich: any) {
+    // Play bite sound effect
+    this.sound.play('bite_sfx', { volume: 0.5 });
+    
     // Increment sandwich counter
     this.sandwichesCollected++;
     
@@ -1675,6 +1728,14 @@ export default class Game extends Phaser.Scene {
     // Add collision for star collection
     this.physics.add.overlap(this.player, this.starPickups, (player: any, star: any) => {
       const value = (star as any).value || 1;
+      
+      // Play appropriate sound effect based on star type
+      if (value === 10) {
+        this.sound.play('star_cluster_sfx', { volume: 0.5 });
+      } else {
+        this.sound.play('star_single_sfx', { volume: 0.4 });
+      }
+      
       this.collectStars(value);
       star.destroy();
     }, undefined, this);
@@ -1856,6 +1917,9 @@ export default class Game extends Phaser.Scene {
     this.updateHealthBar();
     this.stamina = 100;
     this.updateStaminaBar();
+    
+    // Restart background music
+    this.playNextBackgroundMusic();
     
     // Reset player state
     this.gameOverTriggered = false;
