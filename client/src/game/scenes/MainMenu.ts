@@ -51,6 +51,13 @@ export class MainMenu extends Phaser.Scene {
         window.menuMusicInstance = this.menuMusic;
         this.menuMusic.play();
         console.log('Menu music started');
+      } else {
+        // Use existing instance if it exists
+        this.menuMusic = window.menuMusicInstance;
+        // Make sure it's playing
+        if (!this.menuMusic.isPlaying) {
+          this.menuMusic.play();
+        }
       }
     });
     

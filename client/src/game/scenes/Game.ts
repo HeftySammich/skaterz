@@ -221,6 +221,17 @@ export default class Game extends Phaser.Scene {
       sound.stop();
     });
     
+    // Stop and cleanup global menu music instance on window
+    if ((window as any).menuMusicInstance) {
+      try {
+        (window as any).menuMusicInstance.stop();
+        (window as any).menuMusicInstance.destroy();
+      } catch (e) {
+        // Music might already be destroyed
+      }
+      (window as any).menuMusicInstance = undefined;
+    }
+    
     // Wait to ensure menu music is fully stopped
     this.time.delayedCall(200, () => {
       // Randomly select starting track
