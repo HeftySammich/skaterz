@@ -16,6 +16,9 @@ Preferred communication style: Simple, everyday language.
 - **Reduced gravity physics**: Overall gravity reduced from 800 to 600, with special trick float at 400 gravity for extended air time
 - **Seamless background integration**: Placeholder gradient background with proper physics ground collision detection
 - **Functional gameplay loop**: Working jump controls (Space/Up), landing detection, ability reset system, and scene restart on falling
+- **Added second playable character "Stacy"**: Full sprite set with idle, jump, and trick animations
+- **Character selection system**: Both Kev and Stacy are playable with their unique sprites
+- **Star counter accumulation**: Stars now accumulate continuously without resetting (100, 200, 300 stars for extra lives)
 
 ## System Architecture
 
