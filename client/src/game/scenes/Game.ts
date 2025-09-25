@@ -535,32 +535,33 @@ export default class Game extends Phaser.Scene {
       this.songTitleContainer.destroy();
     }
     
-    // Create container for song info - positioned in top right below life counter
-    this.songTitleContainer = this.add.container(530, 100);
+    // Create container for song info - positioned directly below star indicator
+    // Star indicator is at Y: 145, so place this at Y: 190 (45 pixels below)
+    this.songTitleContainer = this.add.container(450, 190);
     this.songTitleContainer.setScrollFactor(0);
     this.songTitleContainer.setDepth(150);
     
     // Determine display name
     const displayName = trackName === 'broken_code' ? 'BROKEN CODE' : 'UNDEAD EMPIRE';
     
-    // Create background for better readability
+    // Create background for better readability - make it wide enough for all text
     const bg = this.add.graphics();
     bg.fillStyle(0x000000, 0.7);
-    bg.fillRoundedRect(-200, -30, 220, 70, 5);
+    bg.fillRoundedRect(-10, -35, 240, 75, 5);
     
-    // Create song title text
-    const titleText = this.add.text(0, 0, displayName, {
-      fontSize: '18px',
+    // Create song title text - centered in the container
+    const titleText = this.add.text(110, -10, displayName, {
+      fontSize: '16px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00'
-    }).setOrigin(1, 0.5);
+    }).setOrigin(0.5, 0.5);
     
-    // Create artist text
-    const artistText = this.add.text(0, 25, 'By Silent Architect', {
-      fontSize: '12px',
+    // Create artist text - centered below title
+    const artistText = this.add.text(110, 15, 'By Silent Architect', {
+      fontSize: '10px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffffff'
-    }).setOrigin(1, 0.5);
+    }).setOrigin(0.5, 0.5);
     
     this.songTitleContainer.add([bg, titleText, artistText]);
     
