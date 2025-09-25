@@ -59,19 +59,17 @@ const ZombieSkaterGame = () => {
         overflow: 'hidden',
         position: 'fixed',
         top: 0,
-        left: 0,
-        paddingTop: 'env(safe-area-inset-top, 20px)'
+        left: 0
       }}
     >
       <div
         id="game-container"
         ref={gameRef}
         style={{
-          width: 'min(100vw, calc((100vh - env(safe-area-inset-top, 20px) - env(safe-area-inset-bottom, 40px)) * 640 / 960))',
-          height: 'min(calc(100vh - env(safe-area-inset-top, 20px) - env(safe-area-inset-bottom, 40px)), calc(100vw * 960 / 640))',
+          width: 'min(100vw, calc(100vh * 640 / 960))',
+          height: 'min(100vh, calc(100vw * 960 / 640))',
           position: 'relative',
-          backgroundColor: '#2c5f2d',
-          marginTop: '10px'
+          backgroundColor: '#000'
         }}
       />
     </div>

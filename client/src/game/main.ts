@@ -40,7 +40,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     },
     scale: {
       mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      autoCenter: Phaser.Scale.CENTER_HORIZONTALLY, // Only center horizontally, not vertically
       width: BASE_W,
       height: BASE_H,
       parent: parent,
