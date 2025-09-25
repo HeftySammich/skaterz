@@ -28,23 +28,19 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
-    // Only start menu music ONCE ever - when the game first loads
-    if (!window.menuMusicStarted) {
-      // This is the FIRST time - create and start music
-      window.menuMusicStarted = true; // Set flag immediately
+    // Check if music exists globally
+    if (window.menuMusicInstance) {
+      // Music already exists - just reference it, NEVER recreate
+      this.menuMusic = window.menuMusicInstance;
+    } else if (!window.menuMusicStarted) {
+      // This is the VERY FIRST time - create music ONCE
+      window.menuMusicStarted = true;
       
-      // Create menu music
+      // Create menu music ONCE
       this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
       window.menuMusicInstance = this.menuMusic;
       this.menuMusic.play();
       console.log('Menu music started');
-    } else if (window.menuMusicInstance) {
-      // Music was already started before - just reference the existing instance
-      this.menuMusic = window.menuMusicInstance;
-      // Ensure it's playing if we're back at menu
-      if (!this.menuMusic.isPlaying) {
-        this.menuMusic.resume();
-      }
     }
     
     // Add menu background image (responsive scaling to fill screen)
