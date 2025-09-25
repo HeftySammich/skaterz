@@ -127,6 +127,7 @@ export default class Game extends Phaser.Scene {
   private currentBgMusic!: Phaser.Sound.BaseSound | null;
   private bgMusicQueue: string[] = ['broken_code', 'undead_empire'];
   private currentMusicIndex = 0;
+  private songTitleContainer?: Phaser.GameObjects.Container;
 
   constructor() {
     super('Game');
@@ -222,6 +223,8 @@ export default class Game extends Phaser.Scene {
     
     // Wait to ensure menu music is fully stopped
     this.time.delayedCall(200, () => {
+      // Randomly select starting track
+      this.currentMusicIndex = Math.random() < 0.5 ? 0 : 1;
       // Start background music
       this.playNextBackgroundMusic();
     });
@@ -515,11 +518,75 @@ export default class Game extends Phaser.Scene {
     });
     this.currentBgMusic.play();
     
+    // Show song title in top right
+    this.showSongTitle(nextTrack);
+    
     // Set up completion handler to play next track
     this.currentBgMusic.once('complete', () => {
-      // Toggle to next track
+      // Toggle to next track (alternates between 0 and 1)
       this.currentMusicIndex = (this.currentMusicIndex + 1) % 2;
       this.playNextBackgroundMusic();
+    });
+  }
+  
+  showSongTitle(trackName: string) {
+    // Remove existing title if present
+    if (this.songTitleContainer) {
+      this.songTitleContainer.destroy();
+    }
+    
+    // Create container for song info - positioned in top right
+    this.songTitleContainer = this.add.container(540, 50);
+    this.songTitleContainer.setScrollFactor(0);
+    this.songTitleContainer.setDepth(150);
+    
+    // Determine display name
+    const displayName = trackName === 'broken_code' ? 'BROKEN CODE' : 'UNDEAD EMPIRE';
+    
+    // Create background for better readability
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.7);
+    bg.fillRoundedRect(-120, -20, 130, 45, 5);
+    
+    // Create song title text
+    const titleText = this.add.text(0, 0, displayName, {
+      fontSize: '12px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#ffff00'
+    }).setOrigin(1, 0.5);
+    
+    // Create artist text
+    const artistText = this.add.text(0, 15, 'By Silent Architect', {
+      fontSize: '8px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#ffffff'
+    }).setOrigin(1, 0.5);
+    
+    this.songTitleContainer.add([bg, titleText, artistText]);
+    
+    // Fade in
+    this.songTitleContainer.setAlpha(0);
+    this.tweens.add({
+      targets: this.songTitleContainer,
+      alpha: 1,
+      duration: 500
+    });
+    
+    // Fade out after 4 seconds
+    this.time.delayedCall(4000, () => {
+      if (this.songTitleContainer) {
+        this.tweens.add({
+          targets: this.songTitleContainer,
+          alpha: 0,
+          duration: 1000,
+          onComplete: () => {
+            if (this.songTitleContainer) {
+              this.songTitleContainer.destroy();
+              this.songTitleContainer = undefined;
+            }
+          }
+        });
+      }
     });
   }
   
