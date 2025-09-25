@@ -28,7 +28,7 @@ export default class Game extends Phaser.Scene {
   // Stomp feature removed
   
   // Jump sprite - no animation, just a single image when jumping
-  private jumpScale = 0.4;
+  private jumpScale = 0.8; // Balanced scale for proper visibility
   
   // Obstacle system
   private obstacles!: Phaser.GameObjects.Group;
@@ -202,6 +202,9 @@ export default class Game extends Phaser.Scene {
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.controls = setupControls(this);
+    
+    // Stop any existing music (like menu music) before starting gameplay music
+    this.sound.stopAll();
     
     // Start background music
     this.playNextBackgroundMusic();
