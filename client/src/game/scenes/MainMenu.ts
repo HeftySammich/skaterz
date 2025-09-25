@@ -29,52 +29,50 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
-    // Initialize debug log if not exists
-    if (!window.menuMusicDebug) {
-      window.menuMusicDebug = [];
+    // CRITICAL: Stop ALL sounds first to prevent duplicates
+    this.sound.stopAll();
+    this.game.sound.stopAll();
+    
+    // Stop any playing menu music from ANY scene
+    const allSounds = this.game.sound.getAllPlaying();
+    allSounds.forEach((sound: any) => {
+      if (sound.key === 'menu_music') {
+        sound.stop();
+        sound.destroy();
+      }
+    });
+    
+    // Check if we have a global instance that exists and is valid
+    if (window.menuMusicInstance) {
+      // If instance exists but isn't in our sound manager, it's orphaned - destroy it
+      if (!this.sound.get('menu_music')) {
+        try {
+          window.menuMusicInstance.stop();
+          window.menuMusicInstance.destroy();
+        } catch (e) {
+          // Instance might be invalid
+        }
+        window.menuMusicInstance = undefined;
+        window.menuMusicStarted = false;
+      }
     }
     
-    const timestamp = new Date().toISOString();
-    
-    // CRITICAL: Check if music is already playing
-    const allSounds = this.sound.getAllPlaying();
-    const menuMusicAlreadyPlaying = allSounds.some((s: any) => s.key === 'menu_music');
-    
-    window.menuMusicDebug.push(`[${timestamp}] MainMenu.create() called`);
-    window.menuMusicDebug.push(`[${timestamp}] Music already playing: ${menuMusicAlreadyPlaying}`);
-    window.menuMusicDebug.push(`[${timestamp}] Global instance exists: ${!!window.menuMusicInstance}`);
-    window.menuMusicDebug.push(`[${timestamp}] Music started flag: ${window.menuMusicStarted}`);
-    
-    // If menu music is already playing ANYWHERE, don't create new one
-    if (menuMusicAlreadyPlaying) {
-      window.menuMusicDebug.push(`[${timestamp}] SKIPPING: Menu music already playing`);
-      // Find and reference the playing instance
-      const playingMusic = allSounds.find((s: any) => s.key === 'menu_music');
-      if (playingMusic) {
-        this.menuMusic = playingMusic;
-        window.menuMusicInstance = playingMusic;
-      }
-    } else if (window.menuMusicInstance && window.menuMusicInstance.isPlaying) {
-      // Check if music exists globally
-      window.menuMusicDebug.push(`[${timestamp}] Using existing global instance`);
-      this.menuMusic = window.menuMusicInstance;
-    } else if (!window.menuMusicStarted) {
-      // This is the VERY FIRST time - create music ONCE
+    // Now create or reference the menu music
+    if (!window.menuMusicStarted) {
+      // First time - create ONE instance
       window.menuMusicStarted = true;
-      window.menuMusicDebug.push(`[${timestamp}] Creating menu music for FIRST TIME`);
-      
-      // Create menu music ONCE
       this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
       window.menuMusicInstance = this.menuMusic;
       this.menuMusic.play();
-      console.log('Menu music started');
-      window.menuMusicDebug.push(`[${timestamp}] Menu music STARTED`);
-    } else {
-      window.menuMusicDebug.push(`[${timestamp}] No action taken - music should already exist`);
+      console.log('Menu music started - FIRST AND ONLY TIME');
+    } else if (window.menuMusicInstance) {
+      // Music was created before - just reference it
+      this.menuMusic = window.menuMusicInstance;
+      // Make sure it's playing
+      if (!this.menuMusic.isPlaying) {
+        this.menuMusic.play();
+      }
     }
-    
-    // Log current state
-    console.log('Menu Music Debug Log:', window.menuMusicDebug);
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
