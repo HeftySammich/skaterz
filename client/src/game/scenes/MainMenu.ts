@@ -5,6 +5,7 @@ export class MainMenu extends Phaser.Scene {
   private enterKey!: Phaser.Input.Keyboard.Key;
   private buttonBaseScales: number[] = [];
   private menuMusic!: Phaser.Sound.BaseSound;
+  private static globalMenuMusic: Phaser.Sound.BaseSound | null = null;
 
   constructor() {
     super({ key: 'MainMenu' });
@@ -20,22 +21,25 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
-    // Stop ALL existing sounds from ALL sound managers
+    // Stop all sounds first
     this.game.sound.stopAll();
     this.sound.stopAll();
     
-    // Check all playing sounds
-    const allSounds = this.game.sound.getAllPlaying();
-    allSounds.forEach((sound: any) => {
-      sound.stop();
-    });
+    // Check if we have a global menu music instance
+    if (MainMenu.globalMenuMusic) {
+      try {
+        MainMenu.globalMenuMusic.stop();
+        MainMenu.globalMenuMusic.destroy();
+      } catch (e) {
+        // Music might already be destroyed
+      }
+      MainMenu.globalMenuMusic = null;
+    }
     
-    // Wait to ensure all sounds are stopped
-    this.time.delayedCall(100, () => {
-      // Create fresh menu music
-      this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-      this.menuMusic.play();
-    });
+    // Create new menu music only once
+    this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+    MainMenu.globalMenuMusic = this.menuMusic;
+    this.menuMusic.play();
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');

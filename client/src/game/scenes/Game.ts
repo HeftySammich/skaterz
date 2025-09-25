@@ -367,7 +367,19 @@ export default class Game extends Phaser.Scene {
       color: '#ffff00'
     }).setOrigin(0.5);
     
-    tutorialContainer.add([line1, line2, line3]);
+    const line4 = this.add.text(0, 70, 'COMBINING TRICKS AND KILLS', {
+      fontSize: '18px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#ff00ff'
+    }).setOrigin(0.5);
+    
+    const line5 = this.add.text(0, 95, 'STARTS COMBOS', {
+      fontSize: '18px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#ff00ff'
+    }).setOrigin(0.5);
+    
+    tutorialContainer.add([line1, line2, line3, line4, line5]);
     
     // Fade out the tutorial after 5 seconds
     this.time.delayedCall(5000, () => {
