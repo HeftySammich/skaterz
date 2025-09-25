@@ -20,11 +20,12 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
-    // Start menu music only if not already playing
-    if (!this.menuMusic || !this.menuMusic.isPlaying) {
-      this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-      this.menuMusic.play();
-    }
+    // Stop any existing sounds first to prevent duplicates
+    this.sound.stopAll();
+    
+    // Create new menu music instance
+    this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+    this.menuMusic.play();
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
