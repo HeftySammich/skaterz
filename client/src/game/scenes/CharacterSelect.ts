@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 export default class CharacterSelect extends Phaser.Scene {
   private selectedIndex = 0;
-  private characters: { image: Phaser.GameObjects.Image; name: Phaser.GameObjects.Text }[] = [];
+  private characters: { container: Phaser.GameObjects.Container; image: Phaser.GameObjects.Image; name: Phaser.GameObjects.Text }[] = [];
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private menuMusic: Phaser.Sound.BaseSound | null = null;
 
@@ -29,23 +29,33 @@ export default class CharacterSelect extends Phaser.Scene {
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
     
-    // Character 1: Zombie Kev
-    const zombieImage = this.add.image(cam.centerX - 120, cam.centerY, 'zombie_character');
+    // Character 1: Zombie Kev with red outline
+    const zombieContainer = this.add.container(cam.centerX - 200, cam.centerY);
+    const zombieBorder = this.add.graphics();
+    zombieBorder.lineStyle(4, 0xff0000); // Red outline
+    zombieBorder.strokeRect(-100, -100, 200, 200);
+    const zombieImage = this.add.image(0, 0, 'zombie_character');
     zombieImage.setScale(0.25);
     zombieImage.setInteractive({ useHandCursor: true });
+    zombieContainer.add([zombieBorder, zombieImage]);
     
-    const zombieName = this.add.text(cam.centerX - 120, cam.centerY + 150, 'KEV', {
+    const zombieName = this.add.text(cam.centerX - 200, cam.centerY + 150, 'KEV', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
     
-    // Character 2: Stacy
-    const stacyImage = this.add.image(cam.centerX + 120, cam.centerY, 'stacy_character');
+    // Character 2: Stacy with red outline (increased gap)
+    const stacyContainer = this.add.container(cam.centerX + 200, cam.centerY);
+    const stacyBorder = this.add.graphics();
+    stacyBorder.lineStyle(4, 0xff0000); // Red outline
+    stacyBorder.strokeRect(-100, -100, 200, 200);
+    const stacyImage = this.add.image(0, 0, 'stacy_character');
     stacyImage.setScale(0.25);
     stacyImage.setInteractive({ useHandCursor: true });
+    stacyContainer.add([stacyBorder, stacyImage]);
     
-    const stacyName = this.add.text(cam.centerX + 120, cam.centerY + 150, 'STACY', {
+    const stacyName = this.add.text(cam.centerX + 200, cam.centerY + 150, 'STACY', {
       fontSize: '16px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
@@ -53,8 +63,8 @@ export default class CharacterSelect extends Phaser.Scene {
     
     // Store characters for selection
     this.characters = [
-      { image: zombieImage, name: zombieName },
-      { image: stacyImage, name: stacyName }
+      { container: zombieContainer, image: zombieImage, name: zombieName },
+      { container: stacyContainer, image: stacyImage, name: stacyName }
     ];
     
     // Selection indicator
@@ -135,16 +145,13 @@ export default class CharacterSelect extends Phaser.Scene {
         char.name.setScale(1.2);
         
         // Add glow effect to selected character
-        if (char.image.setTint) {
-          char.image.setTint(0xffffaa);
-        }
+        char.image.setTint(0xffffaa);
       } else {
         char.name.setColor('#ffffff');
         char.name.setScale(1);
         
-        if (char.image.clearTint) {
-          char.image.clearTint();
-        }
+        // Clear tint from unselected character
+        char.image.clearTint();
       }
     });
   }
