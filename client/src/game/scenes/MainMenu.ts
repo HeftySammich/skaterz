@@ -20,17 +20,28 @@ export class MainMenu extends Phaser.Scene {
   create() {
     const cam = this.cameras.main;
     
-    // Only create new music if we don't have one from another scene
-    if (!this.menuMusic) {
-      // Stop any existing sounds first
-      this.sound.stopAll();
-      // Create new menu music instance
+    // Stop ALL existing sounds from ALL sound managers
+    this.game.sound.stopAll();
+    
+    // Also stop any orphaned sounds in THIS scene's sound manager
+    this.sound.stopAll();
+    
+    // Check if there's already a menu music playing globally
+    const allSounds = this.sound.getAllPlaying();
+    
+    // Stop any menu_music sounds that might be playing
+    allSounds.forEach((sound: any) => {
+      if (sound.key === 'menu_music') {
+        sound.stop();
+      }
+    });
+    
+    // Wait a frame to ensure all sounds are stopped
+    this.time.delayedCall(50, () => {
+      // Always create a fresh menu music instance
       this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
       this.menuMusic.play();
-    } else if (!this.menuMusic.isPlaying) {
-      // If we have music but it's not playing, play it
-      this.menuMusic.play();
-    }
+    });
     
     // Add menu background image (responsive scaling to fill screen)
     const background = this.add.image(cam.centerX, cam.centerY, 'menu_background');
