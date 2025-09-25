@@ -48,6 +48,7 @@ const ZombieSkaterGame = () => {
 
   return (
     <div 
+      id="game-wrapper"
       style={{ 
         width: '100vw', 
         height: '100vh',
@@ -62,13 +63,11 @@ const ZombieSkaterGame = () => {
       }}
     >
       <div
+        id="game-container"
         ref={gameRef}
         style={{
-          width: '100%',
-          height: '100%',
-          maxWidth: '640px',
-          maxHeight: '960px',
-          aspectRatio: '640 / 960',
+          width: 'min(100vw, calc(100vh * 640 / 960))',
+          height: 'min(100vh, calc(100vw * 960 / 640))',
           position: 'relative',
           backgroundColor: '#2c5f2d'
         }}

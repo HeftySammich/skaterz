@@ -41,20 +41,11 @@ export function createGame(parent: HTMLElement): Phaser.Game {
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 640,
-      height: 960,
+      width: BASE_W,
+      height: BASE_H,
       parent: parent,
       fullscreenTarget: parent,
       expandParent: false,
-      min: {
-        width: 320,
-        height: 480
-      },
-      max: {
-        width: 640,
-        height: 960
-      },
-      zoom: 1, // No additional zoom - show full scene
       autoRound: true // Round pixel values for crisp rendering
     },
     input: {
