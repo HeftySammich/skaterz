@@ -9,9 +9,20 @@ export default class Preload extends Phaser.Scene {
   preload() {
     // Load new character select and background images
     this.load.image('zombie_character', 'assets/zombie_character.png');
+    this.load.image('stacy_character', '/images/stacy-select.png');
     this.load.image('red_sky_bg', 'assets/red_sky_bg.png');
     
     // Load zombie skater assets
+    this.load.image('zombie_idle', '/images/zombie-idle.png');
+    this.load.image('zombie_jump', '/images/zombie-jump-2.gif');
+    this.load.image('zombie_trick', '/images/zombie-trick.gif');
+    
+    // Load Stacy skater assets
+    this.load.image('stacy_idle', '/images/stacy-idle.png');
+    this.load.image('stacy_jump', '/images/stacy-jump.png');
+    this.load.image('stacy_trick', '/images/stacy-trick.png');
+    
+    // Keep old skater references for compatibility
     this.load.image('skater_idle', 'assets/skater_idle.png');
     this.load.image('skater_jump', 'assets/skater_idle.png'); // Use same image for now
     this.load.image('skater_trick', 'assets/skater_idle.png'); // Use same image for now

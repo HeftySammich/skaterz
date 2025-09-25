@@ -40,21 +40,21 @@ export default class CharacterSelect extends Phaser.Scene {
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
     
-    // Character 2: Mystery character (black square)
-    const mysteryGraphics = this.add.graphics();
-    mysteryGraphics.fillStyle(0x000000, 1);
-    mysteryGraphics.fillRect(cam.centerX + 20, cam.centerY - 100, 200, 200);
+    // Character 2: Stacy
+    const stacyImage = this.add.image(cam.centerX + 120, cam.centerY, 'stacy_character');
+    stacyImage.setScale(0.25);
+    stacyImage.setInteractive({ useHandCursor: true });
     
-    const mysteryName = this.add.text(cam.centerX + 120, cam.centerY + 150, '???', {
+    const stacyName = this.add.text(cam.centerX + 120, cam.centerY + 150, 'STACY', {
       fontSize: '16px',
-      color: '#666666',
+      color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace'
     }).setOrigin(0.5);
     
     // Store characters for selection
     this.characters = [
       { image: zombieImage, name: zombieName },
-      { image: mysteryGraphics as any, name: mysteryName }
+      { image: stacyImage, name: stacyName }
     ];
     
     // Selection indicator
@@ -67,6 +67,11 @@ export default class CharacterSelect extends Phaser.Scene {
     // Mouse/touch input
     zombieImage.on('pointerdown', () => {
       this.selectedIndex = 0;
+      this.confirmSelection();
+    });
+    
+    stacyImage.on('pointerdown', () => {
+      this.selectedIndex = 1;
       this.confirmSelection();
     });
     
@@ -134,7 +139,7 @@ export default class CharacterSelect extends Phaser.Scene {
           char.image.setTint(0xffffaa);
         }
       } else {
-        char.name.setColor(index === 0 ? '#ffffff' : '#666666');
+        char.name.setColor('#ffffff');
         char.name.setScale(1);
         
         if (char.image.clearTint) {
@@ -145,28 +150,13 @@ export default class CharacterSelect extends Phaser.Scene {
   }
   
   confirmSelection() {
-    if (this.selectedIndex === 0) {
-      // Selected Zombie Kev - start the game
-      // Stop menu music when game starts
-      if (this.menuMusic && this.menuMusic.isPlaying) {
-        this.menuMusic.stop();
-      }
-      this.scene.start('Game');
-    } else {
-      // Mystery character - show "coming soon" message
-      const comingSoon = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 200, 'COMING SOON', {
-        fontSize: '20px',
-        color: '#ff0000',
-        fontFamily: '"Press Start 2P", monospace'
-      }).setOrigin(0.5);
-      
-      // Fade out the message
-      this.tweens.add({
-        targets: comingSoon,
-        alpha: 0,
-        duration: 2000,
-        onComplete: () => comingSoon.destroy()
-      });
+    // Stop menu music when game starts
+    if (this.menuMusic && this.menuMusic.isPlaying) {
+      this.menuMusic.stop();
     }
+    
+    // Pass selected character to Game scene
+    const selectedCharacter = this.selectedIndex === 0 ? 'kev' : 'stacy';
+    this.scene.start('Game', { selectedCharacter });
   }
 }

@@ -13,6 +13,7 @@ export default class Game extends Phaser.Scene {
   private controls!: ReturnType<typeof setupControls>;
   private world!: any;
   private jumpParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private selectedCharacter: 'kev' | 'stacy' = 'kev'; // Track selected character
   private trickParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
   private dustParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
   
@@ -124,6 +125,12 @@ export default class Game extends Phaser.Scene {
 
   constructor() {
     super('Game');
+  }
+
+  init(data: { selectedCharacter?: 'kev' | 'stacy' }) {
+    // Receive selected character from CharacterSelect scene
+    this.selectedCharacter = data.selectedCharacter || 'kev';
+    console.log('Selected character:', this.selectedCharacter);
   }
 
   create() {
@@ -419,8 +426,11 @@ export default class Game extends Phaser.Scene {
   }
 
   createPlayer() {
+    // Choose sprite based on selected character
+    const idleSprite = this.selectedCharacter === 'kev' ? 'zombie_idle' : 'stacy_idle';
+    
     // Create player sprite positioned properly on ground
-    this.player = this.physics.add.sprite(320, PLAYER_GROUND_Y, 'skater_idle');
+    this.player = this.physics.add.sprite(320, PLAYER_GROUND_Y, idleSprite);
     this.player.setCollideWorldBounds(false);
     this.player.setDepth(10);
     
@@ -438,8 +448,8 @@ export default class Game extends Phaser.Scene {
     body.setBounce(0); // No bouncing
     body.setOffset(0, 0); // Make sure offset is clean
     
-    // Start skating animation
-    this.player.play('skate');
+    // Start skating animation (use idle sprite)
+    this.player.setTexture(idleSprite);
     
 // console.log(`Player created at y=${this.player.y} with body size ${body.width}x${body.height}, ground segments at y=${PLAYER_GROUND_Y}`);
   }
@@ -1113,7 +1123,9 @@ export default class Game extends Phaser.Scene {
     
     // Return to normal gravity and restart skate animation when landing
     this.physics.world.gravity.y = this.GRAVITY;
-    this.player.play('skate'); // Restart the skate animation
+    // Return to idle sprite when landing
+    const idleSprite = this.selectedCharacter === 'kev' ? 'zombie_idle' : 'stacy_idle';
+    this.player.setTexture(idleSprite);
     this.player.setScale(0.4); // Ensure consistent scaling
     
     // Clear ALL vertical velocity to prevent bouncing
@@ -1134,7 +1146,8 @@ export default class Game extends Phaser.Scene {
       this.player.setVelocityY(this.JUMP_VELOCITY);
       // Stop animation and show jump sprite - it stays until landing
       this.player.stop(); // STOP the skate animation!
-      this.player.setTexture('jump_static');
+      const jumpSprite = this.selectedCharacter === 'kev' ? 'zombie_jump' : 'stacy_jump';
+      this.player.setTexture(jumpSprite);
       this.player.setScale(this.jumpScale);
       this.isGrounded = false;
       this.jumpCount = 1;
@@ -1156,9 +1169,10 @@ export default class Game extends Phaser.Scene {
     } else if (this.jumpCount === 1 && !this.hasDoubleJumped && this.stamina >= this.staminaCost) {
       // Second jump - trick jump (requires stamina)
       this.player.setVelocityY(this.TRICK_JUMP_VELOCITY);
-      // Stop animation and keep jump sprite for double jump
+      // Stop animation and show trick sprite for double jump
       this.player.stop(); // STOP the skate animation!
-      this.player.setTexture('jump_static');
+      const trickSprite = this.selectedCharacter === 'kev' ? 'zombie_trick' : 'stacy_trick';
+      this.player.setTexture(trickSprite);
       this.player.setScale(this.jumpScale);
       this.hasDoubleJumped = true;
       this.trickActive = true;
@@ -1205,7 +1219,8 @@ export default class Game extends Phaser.Scene {
       // Stop animation and use trick sprite
       this.player.stop(); // Stop any animation
       // Use the trick sprite during the trick
-      this.player.setTexture('trick_sprite');
+      const trickSprite = this.selectedCharacter === 'kev' ? 'zombie_trick' : 'stacy_trick';
+      this.player.setTexture(trickSprite);
       this.player.setScale(this.jumpScale);
       this.trickActive = true;
       
@@ -1849,6 +1864,10 @@ export default class Game extends Phaser.Scene {
     this.jumpCount = 0;
     this.hasDoubleJumped = false;
     this.trickActive = false;
+    
+    // Reset to idle sprite for selected character
+    const idleSprite = this.selectedCharacter === 'kev' ? 'zombie_idle' : 'stacy_idle';
+    this.player.setTexture(idleSprite);
     
     // Clear nearby obstacles for safe respawn
     const clearRadius = 800;
