@@ -23,54 +23,67 @@ export class MainMenu extends Phaser.Scene {
     // Receive menu music back from other scenes to keep it playing
     if (data.menuMusic) {
       this.menuMusic = data.menuMusic;
+      // Also make sure global instance is updated
+      window.menuMusicInstance = data.menuMusic;
     }
   }
 
   create() {
     const cam = this.cameras.main;
     
-    // CRITICAL: Stop ALL sounds first to prevent duplicates
-    this.sound.stopAll();
-    this.game.sound.stopAll();
-    
-    // Stop any playing menu music from ANY scene
-    const allSounds = this.game.sound.getAllPlaying();
-    allSounds.forEach((sound: any) => {
-      if (sound.key === 'menu_music') {
-        sound.stop();
-        sound.destroy();
-      }
-    });
-    
-    // Check if we have a global instance that exists and is valid
-    if (window.menuMusicInstance) {
-      // If instance exists but isn't in our sound manager, it's orphaned - destroy it
-      if (!this.sound.get('menu_music')) {
-        try {
-          window.menuMusicInstance.stop();
-          window.menuMusicInstance.destroy();
-        } catch (e) {
-          // Instance might be invalid
+    // Only stop sounds if we're NOT coming from another menu scene with music
+    if (!this.menuMusic) {
+      // CRITICAL: Stop ALL sounds first to prevent duplicates
+      this.sound.stopAll();
+      this.game.sound.stopAll();
+      
+      // Stop any playing menu music from ANY scene
+      const allSounds = this.game.sound.getAllPlaying();
+      allSounds.forEach((sound: any) => {
+        if (sound.key === 'menu_music') {
+          sound.stop();
+          sound.destroy();
         }
-        window.menuMusicInstance = undefined;
-        window.menuMusicStarted = false;
+      });
+      
+      // Check if we have a global instance that exists and is valid
+      if (window.menuMusicInstance) {
+        // If instance exists but isn't in our sound manager, it's orphaned - destroy it
+        if (!this.sound.get('menu_music')) {
+          try {
+            window.menuMusicInstance.stop();
+            window.menuMusicInstance.destroy();
+          } catch (e) {
+            // Instance might be invalid
+          }
+          window.menuMusicInstance = undefined;
+          window.menuMusicStarted = false;
+        }
       }
     }
     
     // Now create or reference the menu music
-    if (!window.menuMusicStarted) {
-      // First time - create ONE instance
-      window.menuMusicStarted = true;
-      this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
-      window.menuMusicInstance = this.menuMusic;
-      this.menuMusic.play();
-      console.log('Menu music started - FIRST AND ONLY TIME');
-    } else if (window.menuMusicInstance) {
-      // Music was created before - just reference it
-      this.menuMusic = window.menuMusicInstance;
-      // Make sure it's playing
-      if (!this.menuMusic.isPlaying) {
+    if (!this.menuMusic) {
+      if (!window.menuMusicStarted) {
+        // First time - create ONE instance
+        window.menuMusicStarted = true;
+        this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+        window.menuMusicInstance = this.menuMusic;
         this.menuMusic.play();
+        console.log('Menu music started - FIRST AND ONLY TIME');
+      } else if (window.menuMusicInstance) {
+        // Music was created before - just reference it
+        this.menuMusic = window.menuMusicInstance;
+        // Make sure it's playing
+        if (!this.menuMusic.isPlaying) {
+          this.menuMusic.play();
+        }
+      } else {
+        // Flag was set but no instance exists - create new one
+        this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
+        window.menuMusicInstance = this.menuMusic;
+        this.menuMusic.play();
+        console.log('Menu music restarted');
       }
     }
     
