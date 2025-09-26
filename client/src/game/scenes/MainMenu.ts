@@ -20,29 +20,19 @@ export class MainMenu extends Phaser.Scene {
   }
 
   init(data: { menuMusic?: Phaser.Sound.BaseSound }) {
-    console.log('[MENU DEBUG] MainMenu init called with data:', {
-      hasMusicParam: !!data.menuMusic,
-      globalStarted: window.menuMusicStarted,
-      globalExists: !!window.menuMusicInstance
-    });
-    
     // Receive menu music back from other scenes to keep it playing
     if (data.menuMusic) {
       this.menuMusic = data.menuMusic;
       // Also make sure global instance is updated
       window.menuMusicInstance = data.menuMusic;
-      console.log('[MENU DEBUG] Received music from previous scene');
     }
   }
 
   create() {
     const cam = this.cameras.main;
     
-    console.log('[MENU DEBUG] Create started - menuMusic exists:', !!this.menuMusic);
-    
     // Only stop sounds if we're NOT coming from another menu scene with music
     if (!this.menuMusic) {
-      console.log('[MENU DEBUG] No music passed - stopping all sounds');
       // CRITICAL: Stop ALL sounds first to prevent duplicates
       this.sound.stopAll();
       this.game.sound.stopAll();
@@ -74,17 +64,14 @@ export class MainMenu extends Phaser.Scene {
     
     // Now create or reference the menu music
     if (!this.menuMusic) {
-      console.log('[MENU DEBUG] Need to create/reference music. Started:', window.menuMusicStarted, 'Instance:', !!window.menuMusicInstance);
-      
       // Check if the global instance exists but is destroyed/invalid
       let needNewInstance = false;
       if (window.menuMusicInstance) {
         try {
-          // Check if the instance is still valid
+          // Check if the instance is still valid by accessing a property
           const isPlaying = window.menuMusicInstance.isPlaying;
-          console.log('[MENU DEBUG] Instance appears valid, isPlaying:', isPlaying);
         } catch (e) {
-          console.log('[MENU DEBUG] Instance is invalid/destroyed - need new one');
+          // Instance is invalid/destroyed - need new one
           needNewInstance = true;
           window.menuMusicInstance = undefined;
         }
@@ -96,26 +83,20 @@ export class MainMenu extends Phaser.Scene {
         this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
         window.menuMusicInstance = this.menuMusic;
         this.menuMusic.play();
-        console.log('[MENU DEBUG] Menu music started - FIRST AND ONLY TIME');
       } else if (window.menuMusicInstance && !needNewInstance) {
         // Music was created before - just reference it
-        console.log('[MENU DEBUG] Referencing existing instance. Is playing:', window.menuMusicInstance.isPlaying);
         this.menuMusic = window.menuMusicInstance;
         // Make sure it's playing
         if (!this.menuMusic.isPlaying) {
-          console.log('[MENU DEBUG] Music not playing - starting it');
           this.menuMusic.play();
         }
       } else {
         // Flag was set but no instance exists or instance was destroyed - create new one
-        console.log('[MENU DEBUG] Creating new music instance (returning from gameplay)');
         this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
         window.menuMusicInstance = this.menuMusic;
         this.menuMusic.play();
-        console.log('[MENU DEBUG] Menu music restarted after gameplay');
       }
     } else {
-      console.log('[MENU DEBUG] Music already set from init, ensuring it plays');
       // Make sure the music from init is playing
       if (!this.menuMusic.isPlaying) {
         this.menuMusic.play();
