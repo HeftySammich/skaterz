@@ -120,7 +120,7 @@ npm run db:push
 - **Space** or **↑ Arrow**: Jump
 - **Space/↑ Again (in air)**: Double Jump (costs stamina)
 - **Mouse Click**: Jump
-- **→ Arrow (while airborne)**: Perform trick for combo points
+- **J Key (while airborne)**: Perform trick for combo points
 
 ### Mobile
 - **Tap Screen**: Jump
@@ -137,7 +137,7 @@ npm run db:push
 ### Combat & Movement
 - **Enemy Stomping**: Jump on enemies to defeat them and score points
 - **Double Jump**: Use stamina to perform a second jump in mid-air
-- **Aerial Tricks**: Right arrow key (desktop) or swipe up (mobile) while airborne to perform tricks
+- **Aerial Tricks**: J key (desktop) or swipe up (mobile) while airborne to perform tricks
 - **Combo System**: Combine tricks and enemy kills (3+ actions) for bonus stars
 
 ### Resource Management
