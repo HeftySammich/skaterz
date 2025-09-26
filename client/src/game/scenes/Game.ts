@@ -2034,7 +2034,7 @@ export default class Game extends Phaser.Scene {
   }
   
   respawnPlayer() {
-    // Reset player health and position
+    // Reset player health only - not position or movement state
     this.health = 100;
     this.updateHealthBar();
     this.stamina = 100;
@@ -2042,19 +2042,13 @@ export default class Game extends Phaser.Scene {
     
     // Music continues playing during respawn - no need to restart
     
-    // Reset player state
+    // Reset game state but preserve player movement/position
     this.gameOverTriggered = false;
     this.invulnerable = true; // Give temporary invulnerability after respawn
     this.player.clearTint();
-    this.player.y = PLAYER_GROUND_Y;
-    this.isGrounded = true;
-    this.jumpCount = 0;
-    this.hasDoubleJumped = false;
-    this.trickActive = false;
-    
-    // Reset to idle sprite for selected character
-    const idleSprite = this.selectedCharacter === 'kev' ? 'zombie_idle' : 'stacy_idle';
-    this.player.setTexture(idleSprite);
+    // Don't reset Y position - player continues what they were doing
+    // Don't reset jump states - preserve current action
+    // Don't change sprite - keep current animation state
     
     // Clear nearby obstacles for safe respawn
     const clearRadius = 800;
