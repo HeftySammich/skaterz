@@ -204,6 +204,15 @@ export default class Game extends Phaser.Scene {
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.controls = setupControls(this);
     
+    // Add scroll wheel detection for air tricks
+    this.input.on('wheel', (pointer: Phaser.Input.Pointer, gameObjects: any[], deltaX: number, deltaY: number, deltaZ: number) => {
+      // Any scroll direction triggers tricks when airborne
+      if (!this.isGrounded && Math.abs(deltaY) > 0) {
+        console.log('[SCROLL] Scroll wheel detected for trick! DeltaY:', deltaY);
+        this.performTrick();
+      }
+    });
+    
     // Stop ALL sounds including menu music before starting gameplay
     // Stop all sounds globally
     this.game.sound.stopAll();
@@ -2176,7 +2185,8 @@ export default class Game extends Phaser.Scene {
       this.performJump();
     }
     
-    // Handle swipe-up for tricks while airborne
+    // Handle swipe-up OR scroll wheel for tricks while airborne
+    // (Scroll wheel is handled by the wheel event listener, swipe still works for mobile)
     if (this.controls.justSwipedUp() && !this.isGrounded) {
       this.performTrick();
     }
