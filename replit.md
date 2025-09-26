@@ -11,6 +11,7 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### Complete Game Implementation (Jan 2025)
+- **Music System Fixes**: Fixed menu music transitions to properly continue between menu screens and restart when returning from gameplay
 - **Dual Character System**: Play as Kev or Stacy with unique zombie sprites
 - **Enemy Combat System**: Stomp on eyeball and robot enemies for points and combos
 - **Resource Management**: Health system with sandwich pickups, stamina for double jumps
@@ -24,7 +25,7 @@ Preferred communication style: Simple, everyday language.
 - **UI Systems**: Health/stamina bars, life counter, star display, combo notifications
 - **Leaderboard**: PostgreSQL-backed high score system with automatic submission
 - **Tutorial System**: In-game instructions and dedicated How to Play screen
-- **Gesture Controls**: Swipe up for aerial tricks, tap for jumping
+- **Control Systems**: J key for aerial tricks (desktop), swipe up (mobile), space/tap for jumping
 
 ## System Architecture
 
