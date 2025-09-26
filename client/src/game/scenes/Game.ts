@@ -11,6 +11,7 @@ export default class Game extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private controls!: ReturnType<typeof setupControls>;
+  private trickKey!: Phaser.Input.Keyboard.Key; // J key for tricks
   private world!: any;
   private jumpParticles!: Phaser.GameObjects.Particles.ParticleEmitter;
   private selectedCharacter: 'kev' | 'stacy' = 'kev'; // Track selected character
@@ -203,6 +204,9 @@ export default class Game extends Phaser.Scene {
     // Setup controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.controls = setupControls(this);
+    
+    // Add J key for tricks
+    this.trickKey = this.input.keyboard!.addKey('J');
     
     // Stop ALL sounds including menu music before starting gameplay
     // Stop all sounds globally
@@ -2181,9 +2185,9 @@ export default class Game extends Phaser.Scene {
       this.performTrick();
     }
     
-    // Handle right arrow key for tricks while airborne (desktop)
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.right!) && !this.isGrounded) {
-      console.log('[RIGHT ARROW] Right arrow key detected for trick!');
+    // Handle J key for tricks while airborne (desktop)
+    if (Phaser.Input.Keyboard.JustDown(this.trickKey) && !this.isGrounded) {
+      console.log('[J KEY] J key detected for trick!');
       this.performTrick();
     }
     
