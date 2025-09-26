@@ -27,6 +27,13 @@ export default class GameOver extends Phaser.Scene {
     super('GameOver');
   }
 
+  shutdown() {
+    // Clean up any audio references when scene shuts down
+    // This prevents errors with audio configs being accessed after destruction
+    this.sound.stopAll();
+    this.sound.removeAllListeners();
+  }
+
   init(data: { score: number, time: number, sandwiches?: number, cans?: number, stars?: number, enemies?: number }) {
     this.finalScore = data.score || 0;
     this.survivalTime = data.time || 0;
@@ -394,7 +401,8 @@ export default class GameOver extends Phaser.Scene {
       });
       
       this.mainMenuText.on('pointerdown', () => {
-        this.scene.start('MainMenu');
+        // Pass undefined music to let MainMenu know to create new music
+        this.scene.start('MainMenu', { menuMusic: undefined });
       });
       
       this.mainMenuText.on('pointerover', () => {
@@ -430,7 +438,8 @@ export default class GameOver extends Phaser.Scene {
     if (this.selectedOption === 0) {
       this.scene.start('Game');
     } else {
-      this.scene.start('MainMenu');
+      // Pass undefined music to let MainMenu know to create new music
+      this.scene.start('MainMenu', { menuMusic: undefined });
     }
   }
 

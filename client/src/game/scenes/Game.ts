@@ -610,10 +610,16 @@ export default class Game extends Phaser.Scene {
   
   stopBackgroundMusic() {
     if (this.currentBgMusic) {
-      this.currentBgMusic.stop();
+      try {
+        this.currentBgMusic.stop();
+        this.currentBgMusic.destroy();
+      } catch (e) {
+        // Music might already be destroyed
+      }
       this.currentBgMusic = null;
     }
   }
+  
 
   createParticleEffects() {
     // Create simple colored particles using rectangles
@@ -2096,6 +2102,17 @@ export default class Game extends Phaser.Scene {
   }
 
   shutdown() {
+    // Clean up all audio references when scene shuts down
+    this.stopBackgroundMusic();
+    this.sound.stopAll();
+    this.sound.removeAllListeners();
+    
+    // Clean up timers
+    if (this.obstacleTimer) this.obstacleTimer.remove();
+    if (this.sandwichTimer) this.sandwichTimer.remove();
+    if (this.enemyTimer) this.enemyTimer.remove();
+    if (this.energyDrinkTimer) this.energyDrinkTimer.remove();
+    
     // Clean up all arrow indicators when scene shuts down
     if (this.arrowIndicators) {
       this.arrowIndicators.clear(true, true); // Remove and destroy all arrows

@@ -70,10 +70,16 @@ export class MainMenu extends Phaser.Scene {
         try {
           // Check if the instance is still valid by accessing a property
           const isPlaying = window.menuMusicInstance.isPlaying;
+          // Also check if the sound manager still has this sound
+          if (!this.sound.get(window.menuMusicInstance.key)) {
+            needNewInstance = true;
+            window.menuMusicInstance = undefined;
+          }
         } catch (e) {
           // Instance is invalid/destroyed - need new one
           needNewInstance = true;
           window.menuMusicInstance = undefined;
+          window.menuMusicStarted = false; // Reset flag if instance is destroyed
         }
       }
       
