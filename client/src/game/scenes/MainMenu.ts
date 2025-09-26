@@ -75,6 +75,21 @@ export class MainMenu extends Phaser.Scene {
     // Now create or reference the menu music
     if (!this.menuMusic) {
       console.log('[MENU DEBUG] Need to create/reference music. Started:', window.menuMusicStarted, 'Instance:', !!window.menuMusicInstance);
+      
+      // Check if the global instance exists but is destroyed/invalid
+      let needNewInstance = false;
+      if (window.menuMusicInstance) {
+        try {
+          // Check if the instance is still valid
+          const isPlaying = window.menuMusicInstance.isPlaying;
+          console.log('[MENU DEBUG] Instance appears valid, isPlaying:', isPlaying);
+        } catch (e) {
+          console.log('[MENU DEBUG] Instance is invalid/destroyed - need new one');
+          needNewInstance = true;
+          window.menuMusicInstance = undefined;
+        }
+      }
+      
       if (!window.menuMusicStarted) {
         // First time - create ONE instance
         window.menuMusicStarted = true;
@@ -82,7 +97,7 @@ export class MainMenu extends Phaser.Scene {
         window.menuMusicInstance = this.menuMusic;
         this.menuMusic.play();
         console.log('[MENU DEBUG] Menu music started - FIRST AND ONLY TIME');
-      } else if (window.menuMusicInstance) {
+      } else if (window.menuMusicInstance && !needNewInstance) {
         // Music was created before - just reference it
         console.log('[MENU DEBUG] Referencing existing instance. Is playing:', window.menuMusicInstance.isPlaying);
         this.menuMusic = window.menuMusicInstance;
@@ -92,12 +107,18 @@ export class MainMenu extends Phaser.Scene {
           this.menuMusic.play();
         }
       } else {
-        // Flag was set but no instance exists - create new one
-        console.log('[MENU DEBUG] Flag was set but no instance - creating new music');
+        // Flag was set but no instance exists or instance was destroyed - create new one
+        console.log('[MENU DEBUG] Creating new music instance (returning from gameplay)');
         this.menuMusic = this.sound.add('menu_music', { loop: true, volume: 0.5 });
         window.menuMusicInstance = this.menuMusic;
         this.menuMusic.play();
-        console.log('[MENU DEBUG] Menu music restarted');
+        console.log('[MENU DEBUG] Menu music restarted after gameplay');
+      }
+    } else {
+      console.log('[MENU DEBUG] Music already set from init, ensuring it plays');
+      // Make sure the music from init is playing
+      if (!this.menuMusic.isPlaying) {
+        this.menuMusic.play();
       }
     }
     
