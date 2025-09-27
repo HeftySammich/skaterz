@@ -57,16 +57,22 @@ class WalletService {
   private listeners: Array<(state: WalletState) => void> = [];
 
   /**
-   * Get the wallet-connected client for blockchain operations
+   * Get the wallet-connected client for hashgraph operations
    */
   private async getClient(): Promise<Client> {
+    envLog('🔧 getClient() called');
+
     if (!this.dAppConnector) {
-      throw new Error('Wallet not connected - cannot perform blockchain operations');
+      envLog('❌ No dAppConnector found');
+      throw new Error('Wallet not connected - cannot perform hashgraph operations');
     }
 
     if (!this.state.isConnected || !this.state.accountId) {
+      envLog('❌ Wallet state invalid:', this.state);
       throw new Error('Wallet not properly connected - no account ID available');
     }
+
+    envLog('✅ Initial checks passed, dAppConnector exists and state is connected');
 
     // Verify we have an active session
     const sessions = this.dAppConnector.walletConnectClient?.session.getAll();
@@ -305,7 +311,14 @@ class WalletService {
 
     envLog(`Successfully connected to account: ${accountId}`);
 
-    // Wait a moment for the session to fully establish, then test blockchain operations
+    // Debug: Check DAppConnector state after connection
+    envLog('DAppConnector after connection:', {
+      exists: !!this.dAppConnector,
+      hasWalletConnectClient: !!this.dAppConnector?.walletConnectClient,
+      hasSessions: this.dAppConnector?.walletConnectClient?.session.getAll()?.length || 0
+    });
+
+    // Wait a moment for the session to fully establish, then test hashgraph operations
     setTimeout(() => {
       this.testBlockchainConnection();
     }, 1000);
@@ -474,11 +487,12 @@ class WalletService {
   }
 
   /**
-   * Test if blockchain operations actually work after connection
+   * Test if hashgraph operations actually work after connection
    */
   private async testBlockchainConnection(): Promise<void> {
     try {
-      console.log('🧪 Testing blockchain connection...');
+      console.log('🧪 Testing hashgraph connection...');
+      envLog('testBlockchainConnection called with state:', this.state);
 
       // Test 1: Simple balance query (should work without signing)
       const balance = await this.getAccountBalance();
