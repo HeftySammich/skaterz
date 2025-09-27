@@ -59,9 +59,19 @@ class WalletService {
   /**
    * Get the wallet-connected client for blockchain operations
    */
-  private getClient(): Client {
+  private async getClient(): Promise<Client> {
     if (!this.dAppConnector) {
       throw new Error('Wallet not connected - cannot perform blockchain operations');
+    }
+
+    if (!this.state.isConnected || !this.state.accountId) {
+      throw new Error('Wallet not properly connected - no account ID available');
+    }
+
+    // Verify we have an active session
+    const sessions = this.dAppConnector.walletConnectClient?.session.getAll();
+    if (!sessions || sessions.length === 0) {
+      throw new Error('No active wallet session found');
     }
 
     // Create client that routes through the connected wallet
@@ -69,12 +79,21 @@ class WalletService {
       ? Client.forMainnet()
       : Client.forTestnet();
 
-    // Set the operator to use the wallet signer
-    if (this.state.accountId) {
-      client.setOperator(this.state.accountId, this.dAppConnector.getSigner());
-    }
+    try {
+      // Get the signer from the DApp connector
+      const signer = this.dAppConnector.getSigner();
 
-    return client;
+      if (!signer) {
+        throw new Error('Failed to get wallet signer - wallet may not be properly authorized');
+      }
+
+      // Set the operator to use the wallet signer
+      client.setOperator(this.state.accountId, signer);
+
+      return client;
+    } catch (error) {
+      throw new Error(`Failed to initialize Hedera client with wallet: ${error}`);
+    }
   }
 
   /**
@@ -168,7 +187,7 @@ class WalletService {
       const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
 
       if (existingSessions && existingSessions.length > 0) {
-        this.handleConnectionSuccess(existingSessions[0]);
+        await this.handleConnectionSuccess(existingSessions[0]);
         return;
       }
 
@@ -188,7 +207,7 @@ class WalletService {
       }
 
       // Handle successful connection
-      this.handleConnectionSuccess(session);
+      await this.handleConnectionSuccess(session);
     } catch (error) {
       envLog('Failed to connect wallet: ' + error, 'error');
       this.setState({
@@ -218,25 +237,35 @@ class WalletService {
   /**
    * Handle successful connection
    */
-  private handleConnectionSuccess(session: any) {
+  private async handleConnectionSuccess(session: any) {
     if (!session) {
       throw new Error('Invalid session data');
     }
 
+    envLog('Session data received:', JSON.stringify(session, null, 2));
+
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
 
-    // Try different session structures
+    // Try different session structures for Hedera namespace
     if (session.namespaces?.hedera?.accounts?.[0]) {
-      accountId = session.namespaces.hedera.accounts[0].split(':')[2];
+      const account = session.namespaces.hedera.accounts[0];
+      accountId = account.includes(':') ? account.split(':')[2] : account;
     } else if (session.peer?.metadata?.accountIds?.[0]) {
       accountId = session.peer.metadata.accountIds[0];
     } else if (session.accounts?.[0]) {
-      accountId = session.accounts[0].split(':')[2];
+      const account = session.accounts[0];
+      accountId = account.includes(':') ? account.split(':')[2] : account;
     }
 
     if (!accountId) {
-      throw new Error('No account ID found in wallet session');
+      envLog('Session structure:', JSON.stringify(session, null, 2));
+      throw new Error('No account ID found in wallet session - wallet may not be properly connected');
+    }
+
+    // Validate account ID format
+    if (!accountId.match(/^\d+\.\d+\.\d+$/)) {
+      throw new Error(`Invalid account ID format: ${accountId}`);
     }
 
     this.setState({
@@ -247,8 +276,12 @@ class WalletService {
       error: null
     });
 
-    // Test if we can actually perform blockchain operations
-    this.testBlockchainConnection();
+    envLog(`Successfully connected to account: ${accountId}`);
+
+    // Wait a moment for the session to fully establish, then test blockchain operations
+    setTimeout(() => {
+      this.testBlockchainConnection();
+    }, 1000);
   }
 
 
@@ -303,7 +336,7 @@ class WalletService {
     }
 
     try {
-      const client = this.getClient();
+      const client = await this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const balance = await new AccountBalanceQuery()
         .setAccountId(accountId)
@@ -325,7 +358,7 @@ class WalletService {
     }
 
     try {
-      const client = this.getClient();
+      const client = await this.getClient();
       const nftId = new NftId(TokenId.fromString(tokenId), serialNumber);
       const nftInfo = await new TokenNftInfoQuery()
         .setNftId(nftId)
@@ -373,7 +406,7 @@ class WalletService {
     }
 
     try {
-      const client = this.getClient();
+      const client = await this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const balance = await new AccountBalanceQuery()
         .setAccountId(accountId)
@@ -396,7 +429,7 @@ class WalletService {
     }
 
     try {
-      const client = this.getClient();
+      const client = await this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const transaction = new TokenAssociateTransaction()
         .setAccountId(accountId)
@@ -427,7 +460,7 @@ class WalletService {
       // Test 2: Check if we can create a transaction (this should prompt wallet)
       console.log('🔐 Testing transaction creation (should prompt wallet)...');
 
-      const client = this.getClient();
+      const client = await this.getClient();
       const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
 
       const transaction = new TransferTransaction()
@@ -485,7 +518,7 @@ class WalletService {
     }
 
     try {
-      const client = this.getClient();
+      const client = await this.getClient();
       const receiverAccountId = AccountId.fromString(this.state.accountId);
       const tokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
 
