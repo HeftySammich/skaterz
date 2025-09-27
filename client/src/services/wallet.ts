@@ -20,7 +20,7 @@ import {
   TokenNftInfoQuery,
   Client
 } from '@hashgraph/sdk';
-import { BLOCKCHAIN_CONFIG, envLog } from '../../../shared/environment';
+import { BLOCKCHAIN_CONFIG } from '../../../shared/environment';
 
 export interface WalletState {
   isConnected: boolean;
@@ -57,7 +57,7 @@ class WalletService {
   private listeners: Array<(state: WalletState) => void> = [];
 
   /**
-   * Get the wallet-connected client for hashgraph operations
+   * Get the wallet-connected client for hashgraph operations with node cycling
    */
   private async getClient(): Promise<Client> {
     if (!this.dAppConnector || !this.state.isConnected || !this.state.accountId) {
@@ -68,8 +68,17 @@ class WalletService {
       ? Client.forMainnet()
       : Client.forTestnet();
 
-    // For wallet operations, set operator with account ID only
-    // Wallet handles signing through executeWithSigner()
+    // Configure multiple nodes to handle rate limiting
+    if (BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'testnet') {
+      client.setNetwork({
+        "0.0.3": "0.testnet.hedera.com:50211",
+        "0.0.4": "1.testnet.hedera.com:50211",
+        "0.0.5": "2.testnet.hedera.com:50211",
+        "0.0.6": "3.testnet.hedera.com:50211"
+      });
+    }
+
+    // Set operator with dummy key (wallet handles actual signing)
     const { PrivateKey } = await import('@hashgraph/sdk');
     const dummyKey = PrivateKey.generate();
     client.setOperator(this.state.accountId, dummyKey);
@@ -83,7 +92,6 @@ class WalletService {
   async initialize(): Promise<void> {
     // Prevent multiple initializations
     if (this.isInitialized || this.isInitializing) {
-      envLog('Wallet service already initialized or initializing');
       return;
     }
 
@@ -92,16 +100,12 @@ class WalletService {
     try {
       this.setState({ isLoading: true, error: null });
 
-      // Log configuration for debugging
-      envLog(`Initializing wallet service with network: ${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}`);
-      envLog(`WalletConnect Project ID: ${BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID}`);
-
       // Clean up any existing connector first
       if (this.dAppConnector) {
         try {
           await this.dAppConnector.disconnectAll();
         } catch (e) {
-          envLog('Error cleaning up existing connector: ' + e);
+          // Ignore cleanup errors
         }
         this.dAppConnector = null;
       }
@@ -132,22 +136,11 @@ class WalletService {
       );
 
       // Initialize the connector
-      envLog('Initializing DAppConnector...');
       await this.dAppConnector.init();
-      envLog('DAppConnector initialized successfully');
-
-      // Verify the connector is ready
-      envLog('DAppConnector state after init:', {
-        isInitialized: !!this.dAppConnector.walletConnectClient,
-        hasClient: !!this.dAppConnector.walletConnectClient?.core,
-        projectId: BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID
-      });
 
       this.isInitialized = true;
-      envLog('Wallet service initialized successfully');
       this.setState({ isLoading: false });
     } catch (error) {
-      envLog('Failed to initialize wallet service: ' + error, 'error');
       this.setState({
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to initialize wallet service'
@@ -161,45 +154,27 @@ class WalletService {
    * Connect to wallet
    */
   async connect(): Promise<void> {
-    envLog('🔗 connect() method called');
-
     if (!this.dAppConnector) {
-      envLog('❌ No dAppConnector - wallet service not initialized');
       throw new Error('Wallet service not initialized');
     }
 
     if (this.state.isConnected) {
-      envLog('ℹ️ Already connected, returning early');
       return;
     }
 
     try {
-      envLog('🔄 Setting loading state and starting connection...');
       this.setState({ isLoading: true, error: null });
-      envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
 
       // Check if already connected
       const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
-      envLog('Existing sessions found:', existingSessions?.length || 0);
 
       if (existingSessions && existingSessions.length > 0) {
-        envLog('Using existing session:', existingSessions[0]);
-        envLog('Calling handleConnectionSuccess with existing session...');
         await this.handleConnectionSuccess(existingSessions[0]);
         return;
       }
 
-      // Clean up any pending sessions first
-      try {
-        await this.dAppConnector.disconnectAll();
-      } catch (e) {
-        envLog('Error cleaning up sessions: ' + e);
-      }
-
       // Open WalletConnect modal and connect
-      envLog('Opening WalletConnect modal...');
       const session = await this.dAppConnector.openModal();
-      envLog('Modal returned session:', !!session);
 
       if (!session) {
         this.setState({ isLoading: false, error: 'Connection cancelled' });
@@ -207,10 +182,8 @@ class WalletService {
       }
 
       // Handle successful connection
-      envLog('Calling handleConnectionSuccess...');
       await this.handleConnectionSuccess(session);
     } catch (error) {
-      envLog('Failed to connect wallet: ' + error, 'error');
       this.setState({
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to connect wallet'
@@ -228,9 +201,7 @@ class WalletService {
     try {
       await this.dAppConnector.disconnectAll();
       this.handleDisconnection();
-      envLog('Wallet disconnected successfully');
     } catch (error) {
-      envLog('Failed to disconnect wallet: ' + error, 'error');
       throw error;
     }
   }
@@ -242,12 +213,6 @@ class WalletService {
     if (!session) {
       throw new Error('Invalid session data');
     }
-
-    envLog('Session data received:');
-    envLog('Session keys:', Object.keys(session));
-    envLog('Session namespaces:', session.namespaces);
-    envLog('Session accounts:', session.accounts);
-    envLog('Full session:', JSON.stringify(session, null, 2));
 
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
@@ -264,8 +229,7 @@ class WalletService {
     }
 
     if (!accountId) {
-      envLog('Session structure:', JSON.stringify(session, null, 2));
-      throw new Error('No account ID found in wallet session - wallet may not be properly connected');
+      throw new Error('No account ID found in wallet session');
     }
 
     // Validate account ID format
@@ -279,15 +243,6 @@ class WalletService {
       evmAddress: null,
       isLoading: false,
       error: null
-    });
-
-    envLog(`Successfully connected to account: ${accountId}`);
-
-    // Debug: Check DAppConnector state after connection
-    envLog('DAppConnector after connection:', {
-      exists: !!this.dAppConnector,
-      hasWalletConnectClient: !!this.dAppConnector?.walletConnectClient,
-      hasSessions: this.dAppConnector?.walletConnectClient?.session.getAll()?.length || 0
     });
 
     // Wait a moment for the session to fully establish, then test hashgraph operations
@@ -347,17 +302,26 @@ class WalletService {
       throw new Error('Wallet not connected');
     }
 
-    try {
-      const client = await this.getClient();
-      const accountId = AccountId.fromString(this.state.accountId);
-      const balance = await new AccountBalanceQuery()
-        .setAccountId(accountId)
-        .execute(client);
+    const client = await this.getClient();
+    const accountId = AccountId.fromString(this.state.accountId);
 
-      return balance.hbars.toString();
-    } catch (error) {
-      throw error;
+    // Retry logic for network issues
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const balance = await new AccountBalanceQuery()
+          .setAccountId(accountId)
+          .execute(client);
+        return balance.hbars.toString();
+      } catch (error: any) {
+        if (attempt === 3 || !error.message?.includes('BUSY')) {
+          throw error;
+        }
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
     }
+
+    throw new Error('Failed after retries');
   }
 
   /**
@@ -377,7 +341,6 @@ class WalletService {
 
       return nftInfo.accountId?.toString() === this.state.accountId;
     } catch (error) {
-      envLog('Failed to check NFT ownership: ' + error, 'error');
       return false;
     }
   }
@@ -395,15 +358,12 @@ class WalletService {
       for (const serialNumber of serialNumbers) {
         const hasNFT = await this.checkNFTOwnership(tokenId, serialNumber);
         if (hasNFT) {
-          envLog(`Found NFT ${tokenId} serial #${serialNumber} owned by account`);
           return true;
         }
       }
 
-      envLog(`No NFTs found for token ${tokenId} with serials: ${serialNumbers.join(', ')}`);
       return false;
     } catch (error) {
-      envLog('Failed to check multiple NFT ownership: ' + error, 'error');
       return false;
     }
   }
@@ -426,7 +386,6 @@ class WalletService {
       // Check if token appears in balance (even with 0 balance means associated)
       return balance.tokens.has(TokenId.fromString(tokenId));
     } catch (error) {
-      envLog('Failed to check token association: ' + error, 'error');
       return false;
     }
   }
@@ -449,10 +408,7 @@ class WalletService {
 
       // Execute transaction through wallet signer
       const result = await transaction.executeWithSigner(this.dAppConnector.getSigner());
-
-      envLog(`Successfully associated with token ${tokenId}: ${result.transactionId}`);
     } catch (error) {
-      envLog('Failed to associate token: ' + error, 'error');
       throw error;
     }
   }
@@ -463,29 +419,9 @@ class WalletService {
   private async testBlockchainConnection(): Promise<void> {
     try {
       const balance = await this.getAccountBalance();
-      console.log('✅ PHASE 2 COMPLETE - Hedera connection working! Balance:', balance);
-
-      // Test 2: Check if we can create a transaction (this should prompt wallet)
-      console.log('🔐 Testing transaction creation (should prompt wallet)...');
-
-      const client = await this.getClient();
-      const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
-
-      const transaction = new TransferTransaction()
-        .addHbarTransfer(this.state.accountId!, Hbar.fromTinybars(-1))
-        .addHbarTransfer('0.0.98', Hbar.fromTinybars(1))
-        .setTransactionMemo('Zombie Skaterz connection test')
-        .freezeWith(client);
-
-      console.log('📝 Transaction created, attempting to sign...');
-
-      // This should trigger wallet signing prompt
-      const result = await transaction.executeWithSigner(this.dAppConnector!.getSigner());
-      console.log('✅ Transaction signed successfully:', result.transactionId.toString());
-
+      console.log('✅ Hedera connection working! Balance:', balance);
     } catch (error) {
-      console.error('❌ Blockchain connection test failed:', error);
-      console.log('💡 This means wallet is paired but not properly authorized for blockchain operations');
+      console.error('❌ Connection test failed:', error);
     }
   }
 
@@ -537,9 +473,7 @@ class WalletService {
         .freezeWith(client);
 
       const result = await transaction.executeWithSigner(this.dAppConnector.getSigner());
-      envLog(`Successfully sent ${amount} STAR tokens: ${result.transactionId}`);
     } catch (error) {
-      envLog('Failed to send STAR reward: ' + error, 'error');
       throw error;
     }
   }
