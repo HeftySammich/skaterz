@@ -3,7 +3,12 @@
  * Handles wallet connection, account management, and blockchain interactions
  */
 
-import { DAppConnector } from '@hashgraph/hedera-wallet-connect';
+import {
+  DAppConnector,
+  HederaSessionEvent,
+  HederaJsonRpcMethod,
+  HederaChainId
+} from '@hashgraph/hedera-wallet-connect';
 import {
   AccountId,
   TokenId,
@@ -106,7 +111,12 @@ class WalletService {
         ? LedgerId.MAINNET
         : LedgerId.TESTNET;
 
-      // Initialize DApp Connector
+      // Determine chain ID
+      const chainId = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
+        ? HederaChainId.Mainnet
+        : HederaChainId.Testnet;
+
+      // Initialize DApp Connector with proper Hedera methods and events
       this.dAppConnector = new DAppConnector(
         {
           name: 'Zombie Skaterz V3',
@@ -115,7 +125,10 @@ class WalletService {
           icons: [`${window.location.origin}/favicon.ico`]
         },
         network,
-        BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID
+        BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID,
+        Object.values(HederaJsonRpcMethod),
+        [HederaSessionEvent.ChainChanged, HederaSessionEvent.AccountsChanged],
+        [chainId]
       );
 
       // Initialize the connector
