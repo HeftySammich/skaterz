@@ -245,10 +245,8 @@ class WalletService {
       error: null
     });
 
-    // Wait a moment for the session to fully establish, then test hashgraph operations
-    setTimeout(() => {
-      this.testBlockchainConnection();
-    }, 1000);
+    // Connection successful - no need to test immediately
+    console.log('✅ Hedera wallet connected successfully!');
   }
 
 
@@ -305,23 +303,31 @@ class WalletService {
     const client = await this.getClient();
     const accountId = AccountId.fromString(this.state.accountId);
 
-    // Retry logic for network issues
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    // Extended retry logic with longer delays for rate limiting
+    for (let attempt = 1; attempt <= 5; attempt++) {
       try {
         const balance = await new AccountBalanceQuery()
           .setAccountId(accountId)
+          .setMaxQueryPayment(new (await import('@hashgraph/sdk')).Hbar(1))
           .execute(client);
         return balance.hbars.toString();
       } catch (error: any) {
-        if (attempt === 3 || !error.message?.includes('BUSY')) {
+        if (attempt === 5) {
           throw error;
         }
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+
+        // Handle different error types
+        if (error.message?.includes('BUSY') || error.message?.includes('max attempts')) {
+          // Exponential backoff for rate limiting
+          const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error; // Non-rate-limit errors should fail immediately
+        }
       }
     }
 
-    throw new Error('Failed after retries');
+    throw new Error('Network congestion - please try again later');
   }
 
   /**
@@ -413,17 +419,7 @@ class WalletService {
     }
   }
 
-  /**
-   * Test if hashgraph operations actually work after connection
-   */
-  private async testBlockchainConnection(): Promise<void> {
-    try {
-      const balance = await this.getAccountBalance();
-      console.log('✅ Hedera connection working! Balance:', balance);
-    } catch (error) {
-      console.error('❌ Connection test failed:', error);
-    }
-  }
+
 
   /**
    * Game-specific convenience methods
