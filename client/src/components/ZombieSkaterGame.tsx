@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createGame } from '../game/main';
 import { useWallet } from '../hooks/useWallet';
+import WalletStatus from './wallet/WalletStatus';
 
 // Global cleanup function
 const cleanupGlobalAudio = () => {
@@ -22,6 +23,7 @@ const ZombieSkaterGame = () => {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
   const { connect, isConnected } = useWallet();
+  const [currentScene, setCurrentScene] = useState<string>('MainMenu');
 
   useEffect(() => {
     if (gameRef.current) {
@@ -35,6 +37,17 @@ const ZombieSkaterGame = () => {
 
       // Create the Phaser game
       phaserGameRef.current = createGame(gameRef.current);
+
+      // Listen for scene changes to show/hide wallet status
+      const handleSceneChange = (event: CustomEvent) => {
+        setCurrentScene(event.detail.scene);
+      };
+
+      window.addEventListener('sceneChanged', handleSceneChange as EventListener);
+
+      return () => {
+        window.removeEventListener('sceneChanged', handleSceneChange as EventListener);
+      };
     }
 
     return () => {
@@ -51,12 +64,17 @@ const ZombieSkaterGame = () => {
   // Listen for wallet connection events from Phaser game
   useEffect(() => {
     const handleWalletModalEvent = async (event: CustomEvent) => {
+      console.log('🎮 Wallet connection event received from options menu');
       if (!isConnected) {
         try {
+          console.log('🔗 Attempting wallet connection...');
           await connect();
+          console.log('✅ Wallet connection successful!');
         } catch (error) {
-          console.error('Failed to connect wallet from options menu:', error);
+          console.error('❌ Failed to connect wallet from options menu:', error);
         }
+      } else {
+        console.log('ℹ️ Wallet already connected');
       }
     };
 
@@ -66,6 +84,9 @@ const ZombieSkaterGame = () => {
       window.removeEventListener('openWalletModal', handleWalletModalEvent as EventListener);
     };
   }, [connect, isConnected]);
+
+  // Only show wallet status on menu screens (not during gameplay)
+  const isMenuScene = ['MainMenu', 'OptionsMenu', 'HowToPlay', 'Leaderboard', 'CharacterSelect'].includes(currentScene);
 
   return (
     <div
@@ -93,6 +114,9 @@ const ZombieSkaterGame = () => {
           backgroundColor: '#000'
         }}
       />
+
+      {/* Show wallet status only on menu screens */}
+      {isMenuScene && <WalletStatus />}
     </div>
   );
 };

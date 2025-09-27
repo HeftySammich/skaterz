@@ -14,6 +14,11 @@ export class OptionsMenu extends Phaser.Scene {
   }
 
   create() {
+    // Emit scene change event for React components
+    window.dispatchEvent(new CustomEvent('sceneChanged', {
+      detail: { scene: 'OptionsMenu' }
+    }));
+
     // Add graffiti background
     const bg = this.add.image(320, 480, 'graffiti_bg');
     bg.setDisplaySize(640, 960);
