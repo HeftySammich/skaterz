@@ -497,11 +497,14 @@ class WalletService {
   private async testBlockchainConnection(): Promise<void> {
     try {
       console.log('🧪 Testing hashgraph connection...');
-      envLog('testBlockchainConnection called with state:', this.state);
+      console.log('📋 Account ID:', this.state.accountId);
+      console.log('🔗 Connected:', this.state.isConnected);
 
       // Test 1: Simple balance query (should work without signing)
+      console.log('💰 Getting account balance...');
       const balance = await this.getAccountBalance();
       console.log('✅ Balance query successful:', balance);
+      console.log('🎉 PHASE 2 COMPLETE - Hedera connection working!');
 
       // Test 2: Check if we can create a transaction (this should prompt wallet)
       console.log('🔐 Testing transaction creation (should prompt wallet)...');
