@@ -77,6 +77,10 @@ class WalletService {
     try {
       this.setState({ isLoading: true, error: null });
 
+      // Log configuration for debugging
+      envLog(`Initializing wallet service with network: ${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}`);
+      envLog(`WalletConnect Project ID: ${BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID}`);
+
       // Determine network
       const network = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
         ? LedgerId.MAINNET
@@ -118,9 +122,11 @@ class WalletService {
 
     try {
       this.setState({ isLoading: true, error: null });
+      envLog('Attempting to connect wallet...');
 
       // Open WalletConnect modal and connect
       const session = await this.dAppConnector.openModal();
+      envLog('WalletConnect modal opened, session received');
 
       // Handle successful connection
       this.handleConnectionSuccess(session);
@@ -156,8 +162,12 @@ class WalletService {
    * Handle successful connection
    */
   private handleConnectionSuccess(session: any) {
+    envLog('Processing connection success...');
+    envLog('Session data: ' + JSON.stringify(session, null, 2));
+
     // Extract account ID from session
     const accountId = session.namespaces?.hedera?.accounts?.[0]?.split(':')?.[2];
+    envLog(`Extracted account ID: ${accountId}`);
 
     this.setState({
       isConnected: true,
@@ -166,6 +176,8 @@ class WalletService {
       isLoading: false,
       error: null
     });
+
+    envLog(`Wallet state updated - Connected: ${!!accountId}, Account: ${accountId}`);
   }
 
   /**
