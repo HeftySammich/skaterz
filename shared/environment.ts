@@ -78,13 +78,13 @@ export function envLog(message: string, level: 'info' | 'warn' | 'error' = 'info
   const config = getPlatformConfig();
   const timestamp = new Date().toISOString();
   const prefix = `[${config.platform.toUpperCase()}]`;
-  
+
   if (config.logLevel === 'error' && level !== 'error') {
     return; // Skip non-error logs in production
   }
-  
+
   const logMessage = `${timestamp} ${prefix} ${message}`;
-  
+
   switch (level) {
     case 'error':
       console.error(logMessage);
@@ -95,4 +95,38 @@ export function envLog(message: string, level: 'info' | 'warn' | 'error' = 'info
     default:
       console.log(logMessage);
   }
+}
+
+/**
+ * Blockchain configuration from environment variables
+ */
+export const BLOCKCHAIN_CONFIG = {
+  // Hedera Configuration
+  HEDERA_NETWORK: process.env.HEDERA_NETWORK || 'mainnet',
+  HEDERA_TREASURY_ACCOUNT_ID: process.env.HEDERA_TREASURY_ACCOUNT_ID || '0.0.9972684',
+  HEDERA_TREASURY_PRIVATE_KEY: process.env.HEDERA_TREASURY_PRIVATE_KEY || '',
+
+  // Token Configuration
+  STAR_TOKEN_ID: process.env.STAR_TOKEN_ID || '0.0.9243537',
+  UNLOCK_NFT_TOKEN_ID: process.env.UNLOCK_NFT_TOKEN_ID || '0.0.9963841',
+  UNLOCK_SERIAL_NUMBER: parseInt(process.env.UNLOCK_SERIAL_NUMBER || '13'),
+
+  // WalletConnect
+  WALLETCONNECT_PROJECT_ID: process.env.WALLETCONNECT_PROJECT_ID || '2abfdd275154279c314b1b873de18f5a',
+} as const;
+
+/**
+ * Validate required blockchain configuration
+ */
+export function validateBlockchainConfig(): { isValid: boolean; missingVars: string[] } {
+  const missingVars: string[] = [];
+
+  if (!BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY) {
+    missingVars.push('HEDERA_TREASURY_PRIVATE_KEY');
+  }
+
+  return {
+    isValid: missingVars.length === 0,
+    missingVars
+  };
 }

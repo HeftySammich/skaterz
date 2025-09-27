@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createGame } from '../game/main';
+import WalletConnect from './wallet/WalletConnect';
+import './wallet/WalletConnect.css';
 
 // Global cleanup function
 const cleanupGlobalAudio = () => {
@@ -47,10 +49,10 @@ const ZombieSkaterGame = () => {
   }, []);
 
   return (
-    <div 
+    <div
       id="game-wrapper"
-      style={{ 
-        width: '100vw', 
+      style={{
+        width: '100vw',
         height: '100vh',
         display: 'flex',
         alignItems: 'flex-start',
@@ -72,6 +74,20 @@ const ZombieSkaterGame = () => {
           backgroundColor: '#000'
         }}
       />
+
+      {/* Wallet Connection Overlay */}
+      <div
+        id="wallet-overlay"
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          zIndex: 1000,
+          pointerEvents: 'auto'
+        }}
+      >
+        <WalletConnect compact={true} showBalance={false} />
+      </div>
     </div>
   );
 };

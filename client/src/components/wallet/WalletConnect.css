@@ -1,0 +1,246 @@
+/**
+ * Wallet Connect Component Styles
+ * GBA-inspired retro styling for wallet connection UI
+ */
+
+.wallet-connect {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #2a2a2a;
+  border: 2px solid #4a4a4a;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #ffffff;
+  min-width: 200px;
+}
+
+.wallet-connect.compact {
+  padding: 8px;
+  min-width: 150px;
+}
+
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connection-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.connection-indicator.connected {
+  background: #00ff00;
+  box-shadow: 0 0 4px #00ff00;
+}
+
+.connection-indicator.disconnected {
+  background: #ff4444;
+  box-shadow: 0 0 4px #ff4444;
+}
+
+.status-text {
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-text.error {
+  color: #ff4444;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.account-id {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: #cccccc;
+  background: #1a1a1a;
+  padding: 4px 6px;
+  border-radius: 2px;
+  border: 1px solid #333333;
+  word-break: break-all;
+}
+
+.balance-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.balance {
+  font-size: 11px;
+  color: #00ff00;
+  font-weight: bold;
+}
+
+.balance.loading {
+  color: #ffff00;
+}
+
+.balance-button {
+  background: #333333;
+  border: 1px solid #555555;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.balance-button:hover {
+  background: #444444;
+  border-color: #666666;
+}
+
+.connect-button,
+.disconnect-button,
+.retry-button {
+  background: #4a4a4a;
+  border: 2px solid #6a6a6a;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connect-button:hover,
+.disconnect-button:hover,
+.retry-button:hover {
+  background: #5a5a5a;
+  border-color: #7a7a7a;
+  transform: translateY(-1px);
+}
+
+.connect-button:active,
+.disconnect-button:active,
+.retry-button:active {
+  transform: translateY(0);
+}
+
+.connect-button:disabled,
+.disconnect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.connect-button {
+  background: #006600;
+  border-color: #008800;
+}
+
+.connect-button:hover:not(:disabled) {
+  background: #007700;
+  border-color: #009900;
+}
+
+.disconnect-button {
+  background: #660000;
+  border-color: #880000;
+}
+
+.disconnect-button:hover:not(:disabled) {
+  background: #770000;
+  border-color: #990000;
+}
+
+.retry-button {
+  background: #666600;
+  border-color: #888800;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.retry-button:hover {
+  background: #777700;
+  border-color: #999900;
+}
+
+.error-details {
+  background: #331111;
+  border: 1px solid #551111;
+  padding: 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  color: #ff8888;
+  word-break: break-word;
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+.wallet-connect.error {
+  border-color: #ff4444;
+  background: #2a1a1a;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .wallet-connect {
+    font-size: 11px;
+    padding: 10px;
+  }
+  
+  .wallet-connect.compact {
+    padding: 6px;
+    min-width: 120px;
+  }
+  
+  .account-id {
+    font-size: 9px;
+  }
+  
+  .connect-button,
+  .disconnect-button {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+}
+
+/* Animation for connection state changes */
+.wallet-connect {
+  transition: all 0.3s ease;
+}
+
+.connection-indicator {
+  transition: all 0.3s ease;
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.balance.loading,
+.status-text:has-text("Connecting"),
+.status-text:has-text("Initializing") {
+  animation: pulse 1.5s infinite;
+}
+
+/* Retro glow effect for connected state */
+.wallet-connect.connected {
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+}
+
+.wallet-connect.error {
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.2);
+}
