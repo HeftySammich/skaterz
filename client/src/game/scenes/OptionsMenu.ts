@@ -30,7 +30,7 @@ export class OptionsMenu extends Phaser.Scene {
     titleText.setShadow(3, 3, '#000000', 5, true, true);
 
     // Menu options
-    const connectWalletText = this.add.text(320, 300, 'CONNECT HEDERA WALLET', {
+    const connectWalletText = this.add.text(320, 300, 'CONNECT TO HEDERA', {
       fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
