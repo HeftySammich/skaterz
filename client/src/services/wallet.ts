@@ -228,7 +228,9 @@ class WalletService {
       }
 
       // Open WalletConnect modal and connect
+      envLog('Opening WalletConnect modal...');
       const session = await this.dAppConnector.openModal();
+      envLog('Modal returned session:', !!session);
 
       if (!session) {
         this.setState({ isLoading: false, error: 'Connection cancelled' });
@@ -236,6 +238,7 @@ class WalletService {
       }
 
       // Handle successful connection
+      envLog('Calling handleConnectionSuccess...');
       await this.handleConnectionSuccess(session);
     } catch (error) {
       envLog('Failed to connect wallet: ' + error, 'error');
@@ -371,11 +374,17 @@ class WalletService {
    * Get account balance for HBAR
    */
   async getAccountBalance(): Promise<string> {
+    envLog('📊 getAccountBalance() called');
+
     if (!this.state.accountId) {
+      envLog('❌ No account ID in state');
       throw new Error('Wallet not connected');
     }
 
+    envLog('✅ Account ID found:', this.state.accountId);
+
     try {
+      envLog('🔧 About to call getClient()...');
       const client = await this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const balance = await new AccountBalanceQuery()
