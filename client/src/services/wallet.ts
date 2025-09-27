@@ -209,6 +209,48 @@ class WalletService {
   /**
    * Disconnect wallet
    */
+  private async testTransactionSigning(): Promise<void> {
+    try {
+      console.log('🧪 Testing transaction signing...');
+
+      if (!this.state.accountId) {
+        console.error('❌ No account ID for signing test');
+        return;
+      }
+
+      // Create a simple account balance query (read-only, no signing required)
+      const { AccountBalanceQuery } = await import('@hashgraph/sdk');
+      const query = new AccountBalanceQuery()
+        .setAccountId(this.state.accountId);
+
+      console.log('📊 Testing account balance query...');
+
+      // This should work without signing
+      const balance = await query.execute(this.client);
+      console.log('💰 Account balance:', balance.hbars.toString());
+
+      // Now test a transaction that requires signing
+      console.log('✍️ Testing transaction signing (this should prompt wallet)...');
+
+      // Create a simple memo transaction (minimal cost)
+      const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
+      const transaction = new TransferTransaction()
+        .addHbarTransfer(this.state.accountId, Hbar.fromTinybars(-1))
+        .addHbarTransfer('0.0.98', Hbar.fromTinybars(1)) // Hedera fee account
+        .setTransactionMemo('Test signing from Zombie Skaterz')
+        .freezeWith(this.client);
+
+      console.log('📝 Transaction created, sending to wallet for signing...');
+
+      // This should trigger the wallet signing prompt
+      const signedTx = await transaction.executeWithSigner(this.dAppConnector.getSigner());
+      console.log('✅ Transaction signed and submitted:', signedTx.transactionId.toString());
+
+    } catch (error) {
+      console.error('❌ Transaction signing test failed:', error);
+    }
+  }
+
   async disconnect(): Promise<void> {
     if (!this.dAppConnector) return;
 
@@ -235,6 +277,9 @@ class WalletService {
     }
 
     console.log('📋 Full session data:', session);
+    console.log('🔑 Session keys detailed:', Object.keys(session));
+    console.log('🌐 Session namespaces:', session.namespaces);
+    console.log('👤 Session peer:', session.peer);
 
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
@@ -264,6 +309,51 @@ class WalletService {
     });
 
     console.log(`✅ Wallet state updated - Connected: ${!!accountId}, Account: ${accountId}`);
+
+    // Test transaction signing immediately after connection
+    this.testTransactionSigning();
+  }
+
+  private async testTransactionSigning(): Promise<void> {
+    try {
+      console.log('🧪 Testing transaction signing...');
+
+      if (!this.state.accountId) {
+        console.error('❌ No account ID for signing test');
+        return;
+      }
+
+      // Create a simple account balance query (read-only, no signing required)
+      const { AccountBalanceQuery } = await import('@hashgraph/sdk');
+      const query = new AccountBalanceQuery()
+        .setAccountId(this.state.accountId);
+
+      console.log('📊 Testing account balance query...');
+
+      // This should work without signing
+      const balance = await query.execute(this.client);
+      console.log('💰 Account balance:', balance.hbars.toString());
+
+      // Now test a transaction that requires signing
+      console.log('✍️ Testing transaction signing (this should prompt wallet)...');
+
+      // Create a simple memo transaction (minimal cost)
+      const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
+      const transaction = new TransferTransaction()
+        .addHbarTransfer(this.state.accountId, Hbar.fromTinybars(-1))
+        .addHbarTransfer('0.0.98', Hbar.fromTinybars(1)) // Hedera fee account
+        .setTransactionMemo('Test signing from Zombie Skaterz')
+        .freezeWith(this.client);
+
+      console.log('📝 Transaction created, sending to wallet for signing...');
+
+      // This should trigger the wallet signing prompt
+      const signedTx = await transaction.executeWithSigner(this.dAppConnector.getSigner());
+      console.log('✅ Transaction signed and submitted:', signedTx.transactionId.toString());
+
+    } catch (error) {
+      console.error('❌ Transaction signing test failed:', error);
+    }
   }
 
   /**
