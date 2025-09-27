@@ -2,6 +2,7 @@ import { users, leaderboard, type User, type InsertUser, type Leaderboard, type 
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { desc, sql } from "drizzle-orm";
+import { envLog } from "../shared/environment";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -60,4 +61,70 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Memory storage implementation for development/fallback
+export class MemoryStorage implements IStorage {
+  private users: User[] = [];
+  private leaderboard: Leaderboard[] = [];
+  private nextUserId = 1;
+  private nextLeaderboardId = 1;
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.find(user => user.id === id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.users.find(user => user.username === username);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const user: User = {
+      id: this.nextUserId++,
+      username: insertUser.username,
+      password: insertUser.password
+    };
+    this.users.push(user);
+    return user;
+  }
+
+  async saveScore(playerName: string, score: number): Promise<Leaderboard> {
+    const entry: Leaderboard = {
+      id: this.nextLeaderboardId++,
+      playerName,
+      score,
+      createdAt: new Date()
+    };
+    this.leaderboard.push(entry);
+    return entry;
+  }
+
+  async getTopScores(limit: number = 10): Promise<Leaderboard[]> {
+    return this.leaderboard
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  }
+
+  async getHighScore(): Promise<number> {
+    if (this.leaderboard.length === 0) return 0;
+    return Math.max(...this.leaderboard.map(entry => entry.score));
+  }
+}
+
+// Create storage instance with fallback
+function createStorage(): IStorage {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (connectionString) {
+    try {
+      envLog('Using database storage');
+      return new DatabaseStorage();
+    } catch (error) {
+      envLog(`Database connection failed, falling back to memory storage: ${error}`, 'warn');
+      return new MemoryStorage();
+    }
+  } else {
+    envLog('No DATABASE_URL provided, using memory storage');
+    return new MemoryStorage();
+  }
+}
+
+export const storage = createStorage();
