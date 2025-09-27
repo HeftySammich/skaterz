@@ -90,9 +90,9 @@ export function useWallet(): UseWalletReturn {
 
   // Game-specific convenience methods
   const checkStacyUnlock = useCallback(async () => {
-    return await walletService.checkNFTOwnership(
+    return await walletService.checkMultipleNFTOwnership(
       BLOCKCHAIN_CONFIG.UNLOCK_NFT_TOKEN_ID,
-      BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBER
+      BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBERS
     );
   }, []);
 

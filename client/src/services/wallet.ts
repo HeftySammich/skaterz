@@ -264,6 +264,32 @@ class WalletService {
   }
 
   /**
+   * Check if account owns any of multiple NFT serial numbers
+   */
+  async checkMultipleNFTOwnership(tokenId: string, serialNumbers: number[]): Promise<boolean> {
+    if (!this.client || !this.state.accountId) {
+      throw new Error('Wallet not connected or client not initialized');
+    }
+
+    try {
+      // Check each serial number
+      for (const serialNumber of serialNumbers) {
+        const hasNFT = await this.checkNFTOwnership(tokenId, serialNumber);
+        if (hasNFT) {
+          envLog(`Found NFT ${tokenId} serial #${serialNumber} owned by account`);
+          return true;
+        }
+      }
+
+      envLog(`No NFTs found for token ${tokenId} with serials: ${serialNumbers.join(', ')}`);
+      return false;
+    } catch (error) {
+      envLog('Failed to check multiple NFT ownership: ' + error, 'error');
+      return false;
+    }
+  }
+
+  /**
    * Check if account is associated with a token
    */
   async checkTokenAssociation(tokenId: string): Promise<boolean> {

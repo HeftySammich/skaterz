@@ -109,7 +109,9 @@ export const BLOCKCHAIN_CONFIG = {
   // Token Configuration
   STAR_TOKEN_ID: process.env.STAR_TOKEN_ID || '0.0.9243537',
   UNLOCK_NFT_TOKEN_ID: process.env.UNLOCK_NFT_TOKEN_ID || '0.0.9963841',
-  UNLOCK_SERIAL_NUMBER: parseInt(process.env.UNLOCK_SERIAL_NUMBER || '13'),
+  UNLOCK_SERIAL_NUMBERS: process.env.UNLOCK_SERIAL_NUMBER
+    ? process.env.UNLOCK_SERIAL_NUMBER.split(',').map(n => parseInt(n.trim()))
+    : [13],
 
   // WalletConnect
   WALLETCONNECT_PROJECT_ID: process.env.WALLETCONNECT_PROJECT_ID || '2abfdd275154279c314b1b873de18f5a',
