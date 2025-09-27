@@ -146,11 +146,16 @@ class WalletService {
     try {
       this.setState({ isLoading: true, error: null });
       envLog('Attempting to connect wallet...');
+      envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
+      envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
 
       // Check if already connected
       const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
+      envLog(`Checking existing sessions: ${existingSessions?.length || 0} found`);
+
       if (existingSessions && existingSessions.length > 0) {
         envLog('Found existing session, using it');
+        envLog('Existing session data: ' + JSON.stringify(existingSessions[0], null, 2));
         this.handleConnectionSuccess(existingSessions[0]);
         return;
       }
@@ -166,11 +171,17 @@ class WalletService {
       envLog('Opening WalletConnect modal...');
       const session = await this.dAppConnector.openModal();
 
-      if (!session) {
-        throw new Error('No session returned from WalletConnect');
+      envLog('Modal returned, checking session...');
+      envLog('Session type: ' + typeof session);
+
+      if (!session || session === null || session === undefined) {
+        envLog('User cancelled wallet connection or no session returned', 'error');
+        this.setState({ isLoading: false, error: 'Connection cancelled' });
+        throw new Error('Wallet connection was cancelled or failed');
       }
 
-      envLog('WalletConnect modal opened, session received');
+      envLog('Session received, processing...');
+      envLog('Session keys: ' + Object.keys(session).join(', '));
 
       // Handle successful connection
       this.handleConnectionSuccess(session);
