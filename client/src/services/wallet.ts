@@ -139,32 +139,22 @@ class WalletService {
    * Connect to wallet
    */
   async connect(): Promise<void> {
-    console.log('🚀 CONNECT METHOD CALLED');
-    console.log('📊 Initial state:', this.state);
-
     if (!this.dAppConnector) {
-      console.error('❌ DApp connector not initialized');
       throw new Error('Wallet service not initialized');
     }
 
     if (this.state.isConnected) {
-      console.log('⚠️ Already connected, returning early');
       return;
     }
 
     try {
       this.setState({ isLoading: true, error: null });
-      console.log('🔗 Attempting to connect wallet...');
-      console.log('Current wallet state:', this.state);
       envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
 
       // Check if already connected
       const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
-      console.log(`🔍 Checking existing sessions: ${existingSessions?.length || 0} found`);
 
       if (existingSessions && existingSessions.length > 0) {
-        console.log('✅ Found existing session, using it');
-        console.log('📋 Existing session data:', existingSessions[0]);
         this.handleConnectionSuccess(existingSessions[0]);
         return;
       }
@@ -177,25 +167,15 @@ class WalletService {
       }
 
       // Open WalletConnect modal and connect
-      console.log('🚀 Opening WalletConnect modal...');
       const session = await this.dAppConnector.openModal();
 
-      console.log('📱 Modal returned, checking session...');
-      console.log('📊 Session type:', typeof session);
-
-      if (!session || session === null || session === undefined) {
-        console.error('❌ User cancelled wallet connection or no session returned');
+      if (!session) {
         this.setState({ isLoading: false, error: 'Connection cancelled' });
         throw new Error('Wallet connection was cancelled or failed');
       }
 
-      console.log('✅ Session received, processing...');
-      console.log('🔑 Session keys:', Object.keys(session));
-
       // Handle successful connection
       this.handleConnectionSuccess(session);
-
-      console.log('🎉 Wallet connected successfully');
     } catch (error) {
       envLog('Failed to connect wallet: ' + error, 'error');
       this.setState({
@@ -268,18 +248,9 @@ class WalletService {
    * Handle successful connection
    */
   private handleConnectionSuccess(session: any) {
-    console.log('🔄 Processing connection success...');
-
-    // Validate session structure
     if (!session) {
-      console.error('❌ No session provided');
       throw new Error('Invalid session data');
     }
-
-    console.log('📋 Full session data:', session);
-    console.log('🔑 Session keys detailed:', Object.keys(session));
-    console.log('🌐 Session namespaces:', session.namespaces);
-    console.log('👤 Session peer:', session.peer);
 
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
@@ -293,68 +264,20 @@ class WalletService {
       accountId = session.accounts[0].split(':')[2];
     }
 
-    console.log(`🆔 Extracted account ID: ${accountId}`);
-
     if (!accountId) {
-      console.error('❌ No account ID found in session');
       throw new Error('No account ID found in wallet session');
     }
 
     this.setState({
       isConnected: true,
       accountId: accountId,
-      evmAddress: null, // DAppConnector doesn't provide EVM address directly
+      evmAddress: null,
       isLoading: false,
       error: null
     });
-
-    console.log(`✅ Wallet state updated - Connected: ${!!accountId}, Account: ${accountId}`);
-
-    // Test transaction signing immediately after connection
-    this.testTransactionSigning();
   }
 
-  private async testTransactionSigning(): Promise<void> {
-    try {
-      console.log('🧪 Testing transaction signing...');
 
-      if (!this.state.accountId) {
-        console.error('❌ No account ID for signing test');
-        return;
-      }
-
-      // Create a simple account balance query (read-only, no signing required)
-      const { AccountBalanceQuery } = await import('@hashgraph/sdk');
-      const query = new AccountBalanceQuery()
-        .setAccountId(this.state.accountId);
-
-      console.log('📊 Testing account balance query...');
-
-      // This should work without signing
-      const balance = await query.execute(this.client);
-      console.log('💰 Account balance:', balance.hbars.toString());
-
-      // Now test a transaction that requires signing
-      console.log('✍️ Testing transaction signing (this should prompt wallet)...');
-
-      // Create a simple memo transaction (minimal cost)
-      const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
-      const transaction = new TransferTransaction()
-        .addHbarTransfer(this.state.accountId, Hbar.fromTinybars(-1))
-        .addHbarTransfer('0.0.98', Hbar.fromTinybars(1)) // Hedera fee account
-        .setTransactionMemo('Test signing from Zombie Skaterz')
-        .freezeWith(this.client);
-
-      console.log('📝 Transaction created, sending to wallet for signing...');
-
-      // This should trigger the wallet signing prompt
-      const signedTx = await transaction.executeWithSigner(this.dAppConnector.getSigner());
-      console.log('✅ Transaction signed and submitted:', signedTx.transactionId.toString());
-
-    } catch (error) {
-      console.error('❌ Transaction signing test failed:', error);
-    }
-  }
 
   /**
    * Handle disconnection
