@@ -145,17 +145,17 @@ class WalletService {
 
     try {
       this.setState({ isLoading: true, error: null });
-      envLog('Attempting to connect wallet...');
-      envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
+      console.log('🔗 Attempting to connect wallet...');
+      console.log('Current wallet state:', this.state);
       envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
 
       // Check if already connected
       const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
-      envLog(`Checking existing sessions: ${existingSessions?.length || 0} found`);
+      console.log(`🔍 Checking existing sessions: ${existingSessions?.length || 0} found`);
 
       if (existingSessions && existingSessions.length > 0) {
-        envLog('Found existing session, using it');
-        envLog('Existing session data: ' + JSON.stringify(existingSessions[0], null, 2));
+        console.log('✅ Found existing session, using it');
+        console.log('📋 Existing session data:', existingSessions[0]);
         this.handleConnectionSuccess(existingSessions[0]);
         return;
       }
@@ -168,25 +168,25 @@ class WalletService {
       }
 
       // Open WalletConnect modal and connect
-      envLog('Opening WalletConnect modal...');
+      console.log('🚀 Opening WalletConnect modal...');
       const session = await this.dAppConnector.openModal();
 
-      envLog('Modal returned, checking session...');
-      envLog('Session type: ' + typeof session);
+      console.log('📱 Modal returned, checking session...');
+      console.log('📊 Session type:', typeof session);
 
       if (!session || session === null || session === undefined) {
-        envLog('User cancelled wallet connection or no session returned', 'error');
+        console.error('❌ User cancelled wallet connection or no session returned');
         this.setState({ isLoading: false, error: 'Connection cancelled' });
         throw new Error('Wallet connection was cancelled or failed');
       }
 
-      envLog('Session received, processing...');
-      envLog('Session keys: ' + Object.keys(session).join(', '));
+      console.log('✅ Session received, processing...');
+      console.log('🔑 Session keys:', Object.keys(session));
 
       // Handle successful connection
       this.handleConnectionSuccess(session);
 
-      envLog('Wallet connected successfully');
+      console.log('🎉 Wallet connected successfully');
     } catch (error) {
       envLog('Failed to connect wallet: ' + error, 'error');
       this.setState({
@@ -217,15 +217,15 @@ class WalletService {
    * Handle successful connection
    */
   private handleConnectionSuccess(session: any) {
-    envLog('Processing connection success...');
+    console.log('🔄 Processing connection success...');
 
     // Validate session structure
     if (!session) {
-      envLog('No session provided', 'error');
+      console.error('❌ No session provided');
       throw new Error('Invalid session data');
     }
 
-    envLog('Session data: ' + JSON.stringify(session, null, 2));
+    console.log('📋 Full session data:', session);
 
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
@@ -239,10 +239,10 @@ class WalletService {
       accountId = session.accounts[0].split(':')[2];
     }
 
-    envLog(`Extracted account ID: ${accountId}`);
+    console.log(`🆔 Extracted account ID: ${accountId}`);
 
     if (!accountId) {
-      envLog('No account ID found in session', 'error');
+      console.error('❌ No account ID found in session');
       throw new Error('No account ID found in wallet session');
     }
 
@@ -254,7 +254,7 @@ class WalletService {
       error: null
     });
 
-    envLog(`Wallet state updated - Connected: ${!!accountId}, Account: ${accountId}`);
+    console.log(`✅ Wallet state updated - Connected: ${!!accountId}, Account: ${accountId}`);
   }
 
   /**
