@@ -200,22 +200,30 @@ class WalletService {
    * Connect to wallet
    */
   async connect(): Promise<void> {
+    envLog('🔗 connect() method called');
+
     if (!this.dAppConnector) {
+      envLog('❌ No dAppConnector - wallet service not initialized');
       throw new Error('Wallet service not initialized');
     }
 
     if (this.state.isConnected) {
+      envLog('ℹ️ Already connected, returning early');
       return;
     }
 
     try {
+      envLog('🔄 Setting loading state and starting connection...');
       this.setState({ isLoading: true, error: null });
       envLog('Current wallet state: ' + JSON.stringify(this.state, null, 2));
 
       // Check if already connected
       const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
+      envLog('Existing sessions found:', existingSessions?.length || 0);
 
       if (existingSessions && existingSessions.length > 0) {
+        envLog('Using existing session:', existingSessions[0]);
+        envLog('Calling handleConnectionSuccess with existing session...');
         await this.handleConnectionSuccess(existingSessions[0]);
         return;
       }
