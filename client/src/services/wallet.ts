@@ -60,46 +60,21 @@ class WalletService {
    * Get the wallet-connected client for hashgraph operations
    */
   private async getClient(): Promise<Client> {
-    envLog('🔧 getClient() called');
-
-    if (!this.dAppConnector) {
-      envLog('❌ No dAppConnector found');
-      throw new Error('Wallet not connected - cannot perform hashgraph operations');
+    if (!this.dAppConnector || !this.state.isConnected || !this.state.accountId) {
+      throw new Error('Wallet not connected');
     }
 
-    if (!this.state.isConnected || !this.state.accountId) {
-      envLog('❌ Wallet state invalid:', this.state);
-      throw new Error('Wallet not properly connected - no account ID available');
-    }
-
-    envLog('✅ Initial checks passed, dAppConnector exists and state is connected');
-
-    // Verify we have an active session
-    const sessions = this.dAppConnector.walletConnectClient?.session.getAll();
-    if (!sessions || sessions.length === 0) {
-      throw new Error('No active wallet session found');
-    }
-
-    // Create client that routes through the connected wallet
     const client = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
       ? Client.forMainnet()
       : Client.forTestnet();
 
-    try {
-      // For wallet operations, we need to set the operator with the account ID and a dummy private key
-      // The actual signing will be done by the wallet through executeWithSigner()
-      const { PrivateKey } = await import('@hashgraph/sdk');
+    // For wallet operations, set operator with account ID only
+    // Wallet handles signing through executeWithSigner()
+    const { PrivateKey } = await import('@hashgraph/sdk');
+    const dummyKey = PrivateKey.generate();
+    client.setOperator(this.state.accountId, dummyKey);
 
-      // Use a dummy private key - the wallet will override this for signing
-      const dummyKey = PrivateKey.generate();
-      client.setOperator(this.state.accountId, dummyKey);
-
-      envLog('✅ Hedera client configured with dummy operator for wallet operations');
-      return client;
-    } catch (error) {
-      envLog('Error configuring Hedera client:', error);
-      throw new Error(`Failed to configure Hedera client: ${error}`);
-    }
+    return client;
   }
 
   /**
@@ -368,28 +343,19 @@ class WalletService {
    * Get account balance for HBAR
    */
   async getAccountBalance(): Promise<string> {
-    envLog('📊 getAccountBalance() called');
-
     if (!this.state.accountId) {
-      envLog('❌ No account ID in state');
       throw new Error('Wallet not connected');
     }
 
-    envLog('✅ Account ID found:', this.state.accountId);
-
     try {
-      envLog('🔧 About to call getClient()...');
       const client = await this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
-
-      // For queries, we can use the client directly (no signing needed)
       const balance = await new AccountBalanceQuery()
         .setAccountId(accountId)
         .execute(client);
 
       return balance.hbars.toString();
     } catch (error) {
-      envLog('Failed to get account balance: ' + error, 'error');
       throw error;
     }
   }
@@ -496,15 +462,8 @@ class WalletService {
    */
   private async testBlockchainConnection(): Promise<void> {
     try {
-      console.log('🧪 Testing hashgraph connection...');
-      console.log('📋 Account ID:', this.state.accountId);
-      console.log('🔗 Connected:', this.state.isConnected);
-
-      // Test 1: Simple balance query (should work without signing)
-      console.log('💰 Getting account balance...');
       const balance = await this.getAccountBalance();
-      console.log('✅ Balance query successful:', balance);
-      console.log('🎉 PHASE 2 COMPLETE - Hedera connection working!');
+      console.log('✅ PHASE 2 COMPLETE - Hedera connection working! Balance:', balance);
 
       // Test 2: Check if we can create a transaction (this should prompt wallet)
       console.log('🔐 Testing transaction creation (should prompt wallet)...');
