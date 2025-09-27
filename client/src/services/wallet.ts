@@ -233,6 +233,9 @@ class WalletService {
       isLoading: false,
       error: null
     });
+
+    // Test if we can actually perform blockchain operations
+    this.testBlockchainConnection();
   }
 
 
@@ -394,6 +397,41 @@ class WalletService {
     } catch (error) {
       envLog('Failed to associate token: ' + error, 'error');
       throw error;
+    }
+  }
+
+  /**
+   * Test if blockchain operations actually work after connection
+   */
+  private async testBlockchainConnection(): Promise<void> {
+    try {
+      console.log('🧪 Testing blockchain connection...');
+
+      // Test 1: Simple balance query (should work without signing)
+      const balance = await this.getAccountBalance();
+      console.log('✅ Balance query successful:', balance);
+
+      // Test 2: Check if we can create a transaction (this should prompt wallet)
+      console.log('🔐 Testing transaction creation (should prompt wallet)...');
+
+      const client = this.getClient();
+      const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
+
+      const transaction = new TransferTransaction()
+        .addHbarTransfer(this.state.accountId!, Hbar.fromTinybars(-1))
+        .addHbarTransfer('0.0.98', Hbar.fromTinybars(1))
+        .setTransactionMemo('Zombie Skaterz connection test')
+        .freezeWith(client);
+
+      console.log('📝 Transaction created, attempting to sign...');
+
+      // This should trigger wallet signing prompt
+      const result = await transaction.executeWithSigner(this.dAppConnector!.getSigner());
+      console.log('✅ Transaction signed successfully:', result.transactionId.toString());
+
+    } catch (error) {
+      console.error('❌ Blockchain connection test failed:', error);
+      console.log('💡 This means wallet is paired but not properly authorized for blockchain operations');
     }
   }
 
