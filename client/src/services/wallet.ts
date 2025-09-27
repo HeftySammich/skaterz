@@ -80,18 +80,32 @@ class WalletService {
       : Client.forTestnet();
 
     try {
+      // Debug: Check session state
+      const sessions = this.dAppConnector.walletConnectClient?.session.getAll();
+      envLog('Active sessions:', sessions?.length || 0);
+
+      if (sessions && sessions.length > 0) {
+        envLog('Session details:', JSON.stringify(sessions[0], null, 2));
+      }
+
       // Get the signer from the DApp connector
+      envLog('Attempting to get signer from DAppConnector...');
       const signer = this.dAppConnector.getSigner();
+
+      envLog('Signer result:', signer);
 
       if (!signer) {
         throw new Error('Failed to get wallet signer - wallet may not be properly authorized');
       }
 
       // Set the operator to use the wallet signer
+      envLog('Setting client operator with account:', this.state.accountId);
       client.setOperator(this.state.accountId, signer);
 
+      envLog('Client operator set successfully');
       return client;
     } catch (error) {
+      envLog('Error in getClient:', error);
       throw new Error(`Failed to initialize Hedera client with wallet: ${error}`);
     }
   }
@@ -151,7 +165,16 @@ class WalletService {
       );
 
       // Initialize the connector
+      envLog('Initializing DAppConnector...');
       await this.dAppConnector.init();
+      envLog('DAppConnector initialized successfully');
+
+      // Verify the connector is ready
+      envLog('DAppConnector state after init:', {
+        isInitialized: !!this.dAppConnector.walletConnectClient,
+        hasClient: !!this.dAppConnector.walletConnectClient?.core,
+        projectId: BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID
+      });
 
       this.isInitialized = true;
       envLog('Wallet service initialized successfully');
@@ -242,7 +265,11 @@ class WalletService {
       throw new Error('Invalid session data');
     }
 
-    envLog('Session data received:', JSON.stringify(session, null, 2));
+    envLog('Session data received:');
+    envLog('Session keys:', Object.keys(session));
+    envLog('Session namespaces:', session.namespaces);
+    envLog('Session accounts:', session.accounts);
+    envLog('Full session:', JSON.stringify(session, null, 2));
 
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
