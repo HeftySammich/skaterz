@@ -69,6 +69,21 @@ export function WalletConnect({
     }
   }, [isConnected, showBalance, balance]);
 
+  // Listen for wallet connection events from Phaser game
+  React.useEffect(() => {
+    const handleWalletModalEvent = (event: CustomEvent) => {
+      if (!isConnected) {
+        handleConnect();
+      }
+    };
+
+    window.addEventListener('openWalletModal', handleWalletModalEvent as EventListener);
+
+    return () => {
+      window.removeEventListener('openWalletModal', handleWalletModalEvent as EventListener);
+    };
+  }, [isConnected]);
+
   const formatAccountId = (accountId: string) => {
     if (compact && accountId.length > 12) {
       return `${accountId.slice(0, 6)}...${accountId.slice(-6)}`;
