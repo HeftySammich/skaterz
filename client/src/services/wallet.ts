@@ -40,7 +40,6 @@ export interface NFTInfo {
 
 class WalletService {
   private dAppConnector: DAppConnector | null = null;
-  private client: Client | null = null;
   private isInitialized = false;
   private isInitializing = false;
   private state: WalletState = {
@@ -52,24 +51,25 @@ class WalletService {
   };
   private listeners: Array<(state: WalletState) => void> = [];
 
-  constructor() {
-    this.initializeClient();
-  }
-
   /**
-   * Initialize Hedera client
+   * Get the wallet-connected client for blockchain operations
    */
-  private initializeClient() {
-    try {
-      if (BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet') {
-        this.client = Client.forMainnet();
-      } else {
-        this.client = Client.forTestnet();
-      }
-      envLog('Hedera client initialized for ' + BLOCKCHAIN_CONFIG.HEDERA_NETWORK);
-    } catch (error) {
-      envLog('Failed to initialize Hedera client: ' + error, 'error');
+  private getClient(): Client {
+    if (!this.dAppConnector) {
+      throw new Error('Wallet not connected - cannot perform blockchain operations');
     }
+
+    // Create client that routes through the connected wallet
+    const client = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
+      ? Client.forMainnet()
+      : Client.forTestnet();
+
+    // Set the operator to use the wallet signer
+    if (this.state.accountId) {
+      client.setOperator(this.state.accountId, this.dAppConnector.getSigner());
+    }
+
+    return client;
   }
 
   /**
@@ -189,48 +189,6 @@ class WalletService {
   /**
    * Disconnect wallet
    */
-  private async testTransactionSigning(): Promise<void> {
-    try {
-      console.log('🧪 Testing transaction signing...');
-
-      if (!this.state.accountId) {
-        console.error('❌ No account ID for signing test');
-        return;
-      }
-
-      // Create a simple account balance query (read-only, no signing required)
-      const { AccountBalanceQuery } = await import('@hashgraph/sdk');
-      const query = new AccountBalanceQuery()
-        .setAccountId(this.state.accountId);
-
-      console.log('📊 Testing account balance query...');
-
-      // This should work without signing
-      const balance = await query.execute(this.client);
-      console.log('💰 Account balance:', balance.hbars.toString());
-
-      // Now test a transaction that requires signing
-      console.log('✍️ Testing transaction signing (this should prompt wallet)...');
-
-      // Create a simple memo transaction (minimal cost)
-      const { TransferTransaction, Hbar } = await import('@hashgraph/sdk');
-      const transaction = new TransferTransaction()
-        .addHbarTransfer(this.state.accountId, Hbar.fromTinybars(-1))
-        .addHbarTransfer('0.0.98', Hbar.fromTinybars(1)) // Hedera fee account
-        .setTransactionMemo('Test signing from Zombie Skaterz')
-        .freezeWith(this.client);
-
-      console.log('📝 Transaction created, sending to wallet for signing...');
-
-      // This should trigger the wallet signing prompt
-      const signedTx = await transaction.executeWithSigner(this.dAppConnector.getSigner());
-      console.log('✅ Transaction signed and submitted:', signedTx.transactionId.toString());
-
-    } catch (error) {
-      console.error('❌ Transaction signing test failed:', error);
-    }
-  }
-
   async disconnect(): Promise<void> {
     if (!this.dAppConnector) return;
 
@@ -324,15 +282,16 @@ class WalletService {
    * Get account balance for HBAR
    */
   async getAccountBalance(): Promise<string> {
-    if (!this.client || !this.state.accountId) {
-      throw new Error('Wallet not connected or client not initialized');
+    if (!this.state.accountId) {
+      throw new Error('Wallet not connected');
     }
 
     try {
+      const client = this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const balance = await new AccountBalanceQuery()
         .setAccountId(accountId)
-        .execute(this.client);
+        .execute(client);
 
       return balance.hbars.toString();
     } catch (error) {
@@ -345,15 +304,16 @@ class WalletService {
    * Check if account owns specific NFT
    */
   async checkNFTOwnership(tokenId: string, serialNumber: number): Promise<boolean> {
-    if (!this.client || !this.state.accountId) {
-      throw new Error('Wallet not connected or client not initialized');
+    if (!this.state.accountId) {
+      throw new Error('Wallet not connected');
     }
 
     try {
+      const client = this.getClient();
       const nftId = new NftId(TokenId.fromString(tokenId), serialNumber);
       const nftInfo = await new TokenNftInfoQuery()
         .setNftId(nftId)
-        .execute(this.client);
+        .execute(client);
 
       return nftInfo.accountId?.toString() === this.state.accountId;
     } catch (error) {
@@ -366,8 +326,8 @@ class WalletService {
    * Check if account owns any of multiple NFT serial numbers
    */
   async checkMultipleNFTOwnership(tokenId: string, serialNumbers: number[]): Promise<boolean> {
-    if (!this.client || !this.state.accountId) {
-      throw new Error('Wallet not connected or client not initialized');
+    if (!this.state.accountId) {
+      throw new Error('Wallet not connected');
     }
 
     try {
@@ -392,15 +352,16 @@ class WalletService {
    * Check if account is associated with a token
    */
   async checkTokenAssociation(tokenId: string): Promise<boolean> {
-    if (!this.client || !this.state.accountId) {
-      throw new Error('Wallet not connected or client not initialized');
+    if (!this.state.accountId) {
+      throw new Error('Wallet not connected');
     }
 
     try {
+      const client = this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const balance = await new AccountBalanceQuery()
         .setAccountId(accountId)
-        .execute(this.client);
+        .execute(client);
 
       // Check if token appears in balance (even with 0 balance means associated)
       return balance.tokens.has(TokenId.fromString(tokenId));
@@ -419,25 +380,74 @@ class WalletService {
     }
 
     try {
+      const client = this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
       const transaction = new TokenAssociateTransaction()
         .setAccountId(accountId)
         .setTokenIds([TokenId.fromString(tokenId)])
-        .freezeWith(this.client!);
+        .freezeWith(client);
 
-      // Sign and execute transaction through DApp connector
-      const result = await this.dAppConnector.signAndExecuteTransaction({
-        signerAccountId: this.state.accountId,
-        transaction: [transaction.toString()]
-      });
+      // Execute transaction through wallet signer
+      const result = await transaction.executeWithSigner(this.dAppConnector.getSigner());
 
-      if (result.response.success) {
-        envLog(`Successfully associated with token ${tokenId}`);
-      } else {
-        throw new Error('Token association failed');
-      }
+      envLog(`Successfully associated with token ${tokenId}: ${result.transactionId}`);
     } catch (error) {
       envLog('Failed to associate token: ' + error, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Game-specific convenience methods
+   */
+
+  /**
+   * Check if user owns Stacy unlock NFT (any of the configured serial numbers)
+   */
+  async checkStacyUnlock(): Promise<boolean> {
+    return this.checkMultipleNFTOwnership(
+      BLOCKCHAIN_CONFIG.UNLOCK_NFT_TOKEN_ID,
+      BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBERS
+    );
+  }
+
+  /**
+   * Check if user has STAR token associated
+   */
+  async checkStarTokenAssociation(): Promise<boolean> {
+    return this.checkTokenAssociation(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
+  }
+
+  /**
+   * Associate STAR token with user's account
+   */
+  async associateStarToken(): Promise<void> {
+    return this.associateToken(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
+  }
+
+  /**
+   * Send STAR tokens as reward (requires treasury account setup)
+   */
+  async sendStarReward(amount: number): Promise<void> {
+    if (!this.dAppConnector || !this.state.accountId) {
+      throw new Error('Wallet not connected');
+    }
+
+    try {
+      const client = this.getClient();
+      const receiverAccountId = AccountId.fromString(this.state.accountId);
+      const tokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
+
+      const transaction = new TransferTransaction()
+        .addTokenTransfer(tokenId, BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID, -amount)
+        .addTokenTransfer(tokenId, receiverAccountId, amount)
+        .setTransactionMemo(`Zombie Skaterz reward: ${amount} STAR tokens`)
+        .freezeWith(client);
+
+      const result = await transaction.executeWithSigner(this.dAppConnector.getSigner());
+      envLog(`Successfully sent ${amount} STAR tokens: ${result.transactionId}`);
+    } catch (error) {
+      envLog('Failed to send STAR reward: ' + error, 'error');
       throw error;
     }
   }
