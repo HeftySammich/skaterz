@@ -86,33 +86,19 @@ class WalletService {
       : Client.forTestnet();
 
     try {
-      // Debug: Check session state
-      const sessions = this.dAppConnector.walletConnectClient?.session.getAll();
-      envLog('Active sessions:', sessions?.length || 0);
+      // For wallet operations, we need to set the operator with the account ID and a dummy private key
+      // The actual signing will be done by the wallet through executeWithSigner()
+      const { PrivateKey } = await import('@hashgraph/sdk');
 
-      if (sessions && sessions.length > 0) {
-        envLog('Session details:', JSON.stringify(sessions[0], null, 2));
-      }
+      // Use a dummy private key - the wallet will override this for signing
+      const dummyKey = PrivateKey.generate();
+      client.setOperator(this.state.accountId, dummyKey);
 
-      // Get the signer from the DApp connector
-      envLog('Attempting to get signer from DAppConnector...');
-      const signer = this.dAppConnector.getSigner();
-
-      envLog('Signer result:', signer);
-
-      if (!signer) {
-        throw new Error('Failed to get wallet signer - wallet may not be properly authorized');
-      }
-
-      // Set the operator to use the wallet signer
-      envLog('Setting client operator with account:', this.state.accountId);
-      client.setOperator(this.state.accountId, signer);
-
-      envLog('Client operator set successfully');
+      envLog('✅ Hedera client configured with dummy operator for wallet operations');
       return client;
     } catch (error) {
-      envLog('Error in getClient:', error);
-      throw new Error(`Failed to initialize Hedera client with wallet: ${error}`);
+      envLog('Error configuring Hedera client:', error);
+      throw new Error(`Failed to configure Hedera client: ${error}`);
     }
   }
 
@@ -395,6 +381,8 @@ class WalletService {
       envLog('🔧 About to call getClient()...');
       const client = await this.getClient();
       const accountId = AccountId.fromString(this.state.accountId);
+
+      // For queries, we can use the client directly (no signing needed)
       const balance = await new AccountBalanceQuery()
         .setAccountId(accountId)
         .execute(client);
