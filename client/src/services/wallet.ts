@@ -139,8 +139,17 @@ class WalletService {
    * Connect to wallet
    */
   async connect(): Promise<void> {
+    console.log('🚀 CONNECT METHOD CALLED');
+    console.log('📊 Initial state:', this.state);
+
     if (!this.dAppConnector) {
+      console.error('❌ DApp connector not initialized');
       throw new Error('Wallet service not initialized');
+    }
+
+    if (this.state.isConnected) {
+      console.log('⚠️ Already connected, returning early');
+      return;
     }
 
     try {
