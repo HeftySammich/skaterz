@@ -41,6 +41,8 @@ export interface NFTInfo {
 class WalletService {
   private dAppConnector: DAppConnector | null = null;
   private client: Client | null = null;
+  private isInitialized = false;
+  private isInitializing = false;
   private state: WalletState = {
     isConnected: false,
     accountId: null,
@@ -74,12 +76,30 @@ class WalletService {
    * Initialize wallet connection services
    */
   async initialize(): Promise<void> {
+    // Prevent multiple initializations
+    if (this.isInitialized || this.isInitializing) {
+      envLog('Wallet service already initialized or initializing');
+      return;
+    }
+
+    this.isInitializing = true;
+
     try {
       this.setState({ isLoading: true, error: null });
 
       // Log configuration for debugging
       envLog(`Initializing wallet service with network: ${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}`);
       envLog(`WalletConnect Project ID: ${BLOCKCHAIN_CONFIG.WALLETCONNECT_PROJECT_ID}`);
+
+      // Clean up any existing connector first
+      if (this.dAppConnector) {
+        try {
+          await this.dAppConnector.disconnectAll();
+        } catch (e) {
+          envLog('Error cleaning up existing connector: ' + e);
+        }
+        this.dAppConnector = null;
+      }
 
       // Determine network
       const network = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
@@ -101,6 +121,7 @@ class WalletService {
       // Initialize the connector
       await this.dAppConnector.init();
 
+      this.isInitialized = true;
       envLog('Wallet service initialized successfully');
       this.setState({ isLoading: false });
     } catch (error) {
@@ -109,6 +130,8 @@ class WalletService {
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to initialize wallet service'
       });
+    } finally {
+      this.isInitializing = false;
     }
   }
 
@@ -124,8 +147,29 @@ class WalletService {
       this.setState({ isLoading: true, error: null });
       envLog('Attempting to connect wallet...');
 
+      // Check if already connected
+      const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
+      if (existingSessions && existingSessions.length > 0) {
+        envLog('Found existing session, using it');
+        this.handleConnectionSuccess(existingSessions[0]);
+        return;
+      }
+
+      // Clean up any pending sessions first
+      try {
+        await this.dAppConnector.disconnectAll();
+      } catch (e) {
+        envLog('Error cleaning up sessions: ' + e);
+      }
+
       // Open WalletConnect modal and connect
+      envLog('Opening WalletConnect modal...');
       const session = await this.dAppConnector.openModal();
+
+      if (!session) {
+        throw new Error('No session returned from WalletConnect');
+      }
+
       envLog('WalletConnect modal opened, session received');
 
       // Handle successful connection
@@ -163,15 +207,37 @@ class WalletService {
    */
   private handleConnectionSuccess(session: any) {
     envLog('Processing connection success...');
+
+    // Validate session structure
+    if (!session) {
+      envLog('No session provided', 'error');
+      throw new Error('Invalid session data');
+    }
+
     envLog('Session data: ' + JSON.stringify(session, null, 2));
 
-    // Extract account ID from session
-    const accountId = session.namespaces?.hedera?.accounts?.[0]?.split(':')?.[2];
+    // Extract account ID from session - try multiple possible paths
+    let accountId = null;
+
+    // Try different session structures
+    if (session.namespaces?.hedera?.accounts?.[0]) {
+      accountId = session.namespaces.hedera.accounts[0].split(':')[2];
+    } else if (session.peer?.metadata?.accountIds?.[0]) {
+      accountId = session.peer.metadata.accountIds[0];
+    } else if (session.accounts?.[0]) {
+      accountId = session.accounts[0].split(':')[2];
+    }
+
     envLog(`Extracted account ID: ${accountId}`);
+
+    if (!accountId) {
+      envLog('No account ID found in session', 'error');
+      throw new Error('No account ID found in wallet session');
+    }
 
     this.setState({
       isConnected: true,
-      accountId: accountId || null,
+      accountId: accountId,
       evmAddress: null, // DAppConnector doesn't provide EVM address directly
       isLoading: false,
       error: null
@@ -344,6 +410,13 @@ class WalletService {
   }
 }
 
-// Export singleton instance
-export const walletService = new WalletService();
+// Singleton pattern to prevent multiple instances
+let walletServiceInstance: WalletService | null = null;
+
+export const walletService = (() => {
+  if (!walletServiceInstance) {
+    walletServiceInstance = new WalletService();
+  }
+  return walletServiceInstance;
+})();
 export default walletService;
