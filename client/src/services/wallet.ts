@@ -70,20 +70,15 @@ class WalletService {
   }
 
   /**
-   * Get the wallet-connected client for hashgraph operations with node cycling
+   * Get the wallet-connected client for hashgraph operations
    */
   private async getClient(): Promise<Client> {
     if (!this.dAppConnector || !this.state.isConnected || !this.state.accountId) {
       throw new Error('Wallet not connected');
     }
 
-    // Use simple mainnet client - no custom network configuration
+    // Use simple mainnet client - no operator needed for read-only queries
     const client = Client.forMainnet();
-
-    // Set operator with dummy key (wallet handles actual signing)
-    const { PrivateKey } = await import('@hashgraph/sdk');
-    const dummyKey = PrivateKey.generate();
-    client.setOperator(this.state.accountId, dummyKey);
 
     return client;
   }
@@ -338,6 +333,18 @@ class WalletService {
     const client = await this.getClient();
     const query = new AccountInfoQuery()
       .setAccountId(AccountId.fromString(accountId));
+
+    return await query.execute(client);
+  }
+
+  /**
+   * Query NFT information from Hedera network
+   */
+  async queryNftInfo(tokenId: TokenId, serialNumber: number): Promise<any> {
+    const client = await this.getClient();
+    const nftId = new NftId(tokenId, serialNumber);
+    const query = new TokenNftInfoQuery()
+      .setNftId(nftId);
 
     return await query.execute(client);
   }
