@@ -77,16 +77,8 @@ class WalletService {
       throw new Error('Wallet not connected');
     }
 
+    // Use simple mainnet client - no custom network configuration
     const client = Client.forMainnet();
-
-    // Configure multiple mainnet nodes to handle rate limiting
-    client.setNetwork({
-      "0.0.3": "35.237.200.180:50211",
-      "0.0.4": "35.186.191.247:50211",
-      "0.0.5": "35.192.2.25:50211",
-      "0.0.6": "35.199.161.108:50211",
-      "0.0.7": "35.203.82.240:50211"
-    });
 
     // Set operator with dummy key (wallet handles actual signing)
     const { PrivateKey } = await import('@hashgraph/sdk');
@@ -412,10 +404,10 @@ class WalletService {
     try {
       console.log(`🔍 Parsing account ID: ${this.state.accountId}`);
       const accountId = AccountId.fromString(this.state.accountId);
-      const unlockTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.UNLOCK_TOKEN_ID);
+      const unlockTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.UNLOCK_NFT_TOKEN_ID);
 
       console.log(`🔍 Checking Stacy NFT ownership for account: ${this.state.accountId}`);
-      console.log(`🔍 Token ID: ${BLOCKCHAIN_CONFIG.UNLOCK_TOKEN_ID}`);
+      console.log(`🔍 Token ID: ${BLOCKCHAIN_CONFIG.UNLOCK_NFT_TOKEN_ID}`);
       console.log(`🔍 Required serials: ${BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBERS.join(', ')}`);
 
       // Check for each required serial number
