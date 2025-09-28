@@ -169,6 +169,11 @@ export default class CharacterSelect extends Phaser.Scene {
   }
   
   update() {
+    // Safety check for cursors
+    if (!this.cursors) {
+      return;
+    }
+
     // Navigation
     if (Phaser.Input.Keyboard.JustDown(this.cursors.left!)) {
       this.selectedIndex = 0;

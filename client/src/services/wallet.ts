@@ -17,6 +17,7 @@ import {
   TransferTransaction,
   TokenAssociateTransaction,
   AccountBalanceQuery,
+  AccountInfoQuery,
   TokenNftInfoQuery,
   Client
 } from '@hashgraph/sdk';
@@ -217,6 +218,12 @@ class WalletService {
       throw new Error('Invalid session data');
     }
 
+    console.log('🔍 Session data received:', {
+      namespaces: session.namespaces,
+      accounts: session.accounts,
+      peer: session.peer?.metadata
+    });
+
     // Extract account ID from session - try multiple possible paths
     let accountId = null;
 
@@ -224,14 +231,20 @@ class WalletService {
     if (session.namespaces?.hedera?.accounts?.[0]) {
       const account = session.namespaces.hedera.accounts[0];
       accountId = account.includes(':') ? account.split(':')[2] : account;
+      console.log('🔍 Account ID from namespaces.hedera.accounts:', accountId);
     } else if (session.peer?.metadata?.accountIds?.[0]) {
       accountId = session.peer.metadata.accountIds[0];
+      console.log('🔍 Account ID from peer.metadata.accountIds:', accountId);
     } else if (session.accounts?.[0]) {
       const account = session.accounts[0];
       accountId = account.includes(':') ? account.split(':')[2] : account;
+      console.log('🔍 Account ID from session.accounts:', accountId);
     }
 
+    console.log('🔍 Final extracted account ID:', accountId);
+
     if (!accountId) {
+      console.error('❌ No account ID found in session. Session structure:', session);
       throw new Error('No account ID found in wallet session');
     }
 
@@ -258,7 +271,7 @@ class WalletService {
       error: null
     });
 
-    console.log('✅ Hedera wallet authenticated successfully!');
+    console.log('✅ Wallet connection established with account:', accountId);
   }
 
   /**
@@ -327,17 +340,33 @@ class WalletService {
   }
 
   /**
+   * Get account information from Hedera network
+   */
+  async getAccountInfo(accountId: string): Promise<any> {
+    const client = await this.getClient();
+    const query = new AccountInfoQuery()
+      .setAccountId(AccountId.fromString(accountId));
+
+    return await query.execute(client);
+  }
+
+  /**
    * Check if user has STAR token associated (for rewards eligibility)
    */
   async checkStarTokenAssociation(): Promise<boolean> {
     if (!this.state.isConnected || !this.state.accountId) {
       console.warn('⚠️ Wallet not connected for STAR token check');
+      console.warn('⚠️ Connection state:', { isConnected: this.state.isConnected, accountId: this.state.accountId });
       return false;
     }
 
     try {
       console.log(`🔍 Checking STAR token association for account: ${this.state.accountId}`);
       console.log(`🔍 STAR Token ID: ${BLOCKCHAIN_CONFIG.STAR_TOKEN_ID}`);
+
+      if (!this.state.accountId) {
+        throw new Error('Account ID is undefined');
+      }
 
       const accountInfo = await this.getAccountInfo(this.state.accountId);
 
@@ -376,10 +405,12 @@ class WalletService {
   async checkStacyNftOwnership(): Promise<boolean> {
     if (!this.state.isConnected || !this.state.accountId) {
       console.warn('⚠️ Wallet not connected for Stacy NFT check');
+      console.warn('⚠️ Connection state:', { isConnected: this.state.isConnected, accountId: this.state.accountId });
       return false;
     }
 
     try {
+      console.log(`🔍 Parsing account ID: ${this.state.accountId}`);
       const accountId = AccountId.fromString(this.state.accountId);
       const unlockTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.UNLOCK_TOKEN_ID);
 
