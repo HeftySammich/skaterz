@@ -256,29 +256,36 @@ class WalletService {
 
     // Create a simple message to sign for authentication
     const message = `Authenticate Zombie Skaterz access for account ${accountId} at ${new Date().toISOString()}`;
-    const messageBytes = new TextEncoder().encode(message);
 
     try {
-      // Request signature from wallet using Hedera JSON-RPC method
+      // Get the active session
+      const sessions = this.dAppConnector.walletConnectClient?.session.getAll() || [];
+      if (sessions.length === 0) {
+        throw new Error('No active WalletConnect session');
+      }
+
+      const session = sessions[0];
+
+      // Request signature from wallet using Hedera native method
       const result = await this.dAppConnector.request({
-        topic: this.dAppConnector.walletConnectClient?.session.getAll()[0]?.topic || '',
+        topic: session.topic,
         chainId: `hedera:${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}`,
         request: {
           method: 'hedera_signMessage',
           params: {
-            accountId: accountId,
-            message: Array.from(messageBytes)
+            signerAccountId: `hedera:${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}:${accountId}`,
+            message: message
           }
         }
       });
 
-      if (!result || !result.signature) {
-        throw new Error('No signature received from wallet');
+      if (!result) {
+        throw new Error('No response received from wallet');
       }
 
       // For now, we'll trust that the wallet properly signed with the correct account
       // In a production app, you might want to verify the signature cryptographically
-      console.log('🔐 Account authentication signature received');
+      console.log('🔐 Account authentication signature received:', result);
 
     } catch (error) {
       // If signing fails, still allow connection but log the issue
