@@ -78,10 +78,10 @@ const ZombieSkaterGame = () => {
       }
     };
 
-    window.addEventListener('openWalletModal', handleWalletModalEvent as EventListener);
+    window.addEventListener('openWalletModal', handleWalletModalEvent as any);
 
     return () => {
-      window.removeEventListener('openWalletModal', handleWalletModalEvent as EventListener);
+      window.removeEventListener('openWalletModal', handleWalletModalEvent as any);
     };
   }, [connect, isConnected]);
 

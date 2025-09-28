@@ -111,7 +111,7 @@ export const BLOCKCHAIN_CONFIG = {
   UNLOCK_NFT_TOKEN_ID: process.env.UNLOCK_NFT_TOKEN_ID || '0.0.9963841',
   UNLOCK_SERIAL_NUMBERS: process.env.UNLOCK_SERIAL_NUMBER
     ? process.env.UNLOCK_SERIAL_NUMBER.split(',').map(n => parseInt(n.trim()))
-    : [13],
+    : [1, 2],
 
   // WalletConnect
   WALLETCONNECT_PROJECT_ID: process.env.WALLETCONNECT_PROJECT_ID || '2abfdd275154279c314b1b873de18f5a',

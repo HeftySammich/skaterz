@@ -64,19 +64,16 @@ class WalletService {
       throw new Error('Wallet not connected');
     }
 
-    const client = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
-      ? Client.forMainnet()
-      : Client.forTestnet();
+    const client = Client.forMainnet();
 
-    // Configure multiple nodes to handle rate limiting
-    if (BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'testnet') {
-      client.setNetwork({
-        "0.0.3": "0.testnet.hedera.com:50211",
-        "0.0.4": "1.testnet.hedera.com:50211",
-        "0.0.5": "2.testnet.hedera.com:50211",
-        "0.0.6": "3.testnet.hedera.com:50211"
-      });
-    }
+    // Configure multiple mainnet nodes to handle rate limiting
+    client.setNetwork({
+      "0.0.3": "35.237.200.180:50211",
+      "0.0.4": "35.186.191.247:50211",
+      "0.0.5": "35.192.2.25:50211",
+      "0.0.6": "35.199.161.108:50211",
+      "0.0.7": "35.203.82.240:50211"
+    });
 
     // Set operator with dummy key (wallet handles actual signing)
     const { PrivateKey } = await import('@hashgraph/sdk');
@@ -110,15 +107,9 @@ class WalletService {
         this.dAppConnector = null;
       }
 
-      // Determine network
-      const network = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
-        ? LedgerId.MAINNET
-        : LedgerId.TESTNET;
-
-      // Determine chain ID
-      const chainId = BLOCKCHAIN_CONFIG.HEDERA_NETWORK === 'mainnet'
-        ? HederaChainId.Mainnet
-        : HederaChainId.Testnet;
+      // Use mainnet network and chain ID
+      const network = LedgerId.MAINNET;
+      const chainId = HederaChainId.Mainnet;
 
       // Initialize DApp Connector with proper Hedera methods and events
       this.dAppConnector = new DAppConnector(
@@ -345,7 +336,7 @@ class WalletService {
         .setNftId(nftId)
         .execute(client);
 
-      return nftInfo.accountId?.toString() === this.state.accountId;
+      return nftInfo[0]?.accountId?.toString() === this.state.accountId;
     } catch (error) {
       return false;
     }
@@ -390,7 +381,7 @@ class WalletService {
         .execute(client);
 
       // Check if token appears in balance (even with 0 balance means associated)
-      return balance.tokens.has(TokenId.fromString(tokenId));
+      return balance.tokens ? balance.tokens.get(TokenId.fromString(tokenId)) !== undefined : false;
     } catch (error) {
       return false;
     }
@@ -413,7 +404,7 @@ class WalletService {
         .freezeWith(client);
 
       // Execute transaction through wallet signer
-      const result = await transaction.executeWithSigner(this.dAppConnector.getSigner());
+      const result = await transaction.executeWithSigner(this.dAppConnector.getSigner(accountId));
     } catch (error) {
       throw error;
     }
@@ -468,7 +459,7 @@ class WalletService {
         .setTransactionMemo(`Zombie Skaterz reward: ${amount} STAR tokens`)
         .freezeWith(client);
 
-      const result = await transaction.executeWithSigner(this.dAppConnector.getSigner());
+      const result = await transaction.executeWithSigner(this.dAppConnector.getSigner(receiverAccountId));
     } catch (error) {
       throw error;
     }
