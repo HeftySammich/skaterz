@@ -312,6 +312,105 @@ class WalletService {
     }
   }
 
+  /**
+   * Check if user has STAR token associated (for rewards eligibility)
+   */
+  async checkStarTokenAssociation(): Promise<boolean> {
+    if (!this.state.isConnected || !this.state.accountId) {
+      console.warn('⚠️ Wallet not connected for STAR token check');
+      return false;
+    }
+
+    try {
+      const accountInfo = await this.getAccountInfo(this.state.accountId);
+
+      // Check if STAR token is in the account's token relationships
+      const starTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
+      const hasStarToken = accountInfo.tokenRelationships?.has(starTokenId) || false;
+
+      console.log(`🌟 STAR token association check for ${this.state.accountId}:`, hasStarToken);
+      return hasStarToken;
+
+    } catch (error) {
+      console.error('❌ Failed to check STAR token association:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if user owns Stacy NFT (serials #1 or #2) for character unlock
+   */
+  async checkStacyNftOwnership(): Promise<boolean> {
+    if (!this.state.isConnected || !this.state.accountId) {
+      console.warn('⚠️ Wallet not connected for Stacy NFT check');
+      return false;
+    }
+
+    try {
+      const accountId = AccountId.fromString(this.state.accountId);
+      const unlockTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.UNLOCK_TOKEN_ID);
+
+      // Check for each required serial number
+      for (const serialNumber of BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBERS) {
+        try {
+          const nftInfo = await this.queryNftInfo(unlockTokenId, serialNumber);
+
+          // Check if this account owns this NFT
+          if (nftInfo.accountId && nftInfo.accountId.equals(accountId)) {
+            console.log(`🎮 Stacy NFT found! Serial #${serialNumber} owned by ${this.state.accountId}`);
+            return true;
+          }
+        } catch (error) {
+          console.warn(`⚠️ Could not check NFT serial #${serialNumber}:`, error);
+          // Continue checking other serials
+        }
+      }
+
+      console.log(`❌ Stacy NFT not found for ${this.state.accountId}`);
+      return false;
+
+    } catch (error) {
+      console.error('❌ Failed to check Stacy NFT ownership:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get comprehensive wallet status for game features
+   */
+  async getWalletGameStatus(): Promise<{
+    isConnected: boolean;
+    accountId: string | null;
+    hasStarToken: boolean;
+    hasStacyNft: boolean;
+  }> {
+    if (!this.state.isConnected || !this.state.accountId) {
+      return {
+        isConnected: false,
+        accountId: null,
+        hasStarToken: false,
+        hasStacyNft: false
+      };
+    }
+
+    console.log('🔍 Checking wallet game status...');
+
+    const [hasStarToken, hasStacyNft] = await Promise.all([
+      this.checkStarTokenAssociation(),
+      this.checkStacyNftOwnership()
+    ]);
+
+    const status = {
+      isConnected: true,
+      accountId: this.state.accountId,
+      hasStarToken,
+      hasStacyNft
+    };
+
+    console.log('🎮 Wallet game status:', status);
+    return status;
+  }
+
 
   /**
    * Handle disconnection
@@ -497,12 +596,7 @@ class WalletService {
     );
   }
 
-  /**
-   * Check if user has STAR token associated
-   */
-  async checkStarTokenAssociation(): Promise<boolean> {
-    return this.checkTokenAssociation(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
-  }
+
 
   /**
    * Associate STAR token with user's account
@@ -546,4 +640,7 @@ export const walletService = (() => {
   }
   return walletServiceInstance;
 })();
+
+// Export both the class and the instance
+export { WalletService };
 export default walletService;
