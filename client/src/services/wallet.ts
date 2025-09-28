@@ -717,12 +717,7 @@ class WalletService {
 
 
 
-  /**
-   * Associate STAR token with user's account
-   */
-  async associateStarToken(): Promise<void> {
-    return this.associateToken(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
-  }
+
 
   /**
    * Send STAR tokens as reward (requires treasury account setup)
