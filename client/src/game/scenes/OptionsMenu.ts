@@ -35,7 +35,7 @@ export class OptionsMenu extends Phaser.Scene {
     titleText.setShadow(3, 3, '#000000', 5, true, true);
 
     // Menu options
-    const connectWalletText = this.add.text(320, 280, 'CONNECT TO HEDERA', {
+    const connectWalletText = this.add.text(320, 300, 'CONNECT TO HEDERA', {
       fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -45,8 +45,8 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
     connectWalletText.setShadow(2, 2, '#000000', 3, true, true);
 
-    const associateStarText = this.add.text(320, 330, 'ASSOCIATE STAR', {
-      fontSize: '18px',
+    const associateStarText = this.add.text(320, 360, 'ASSOCIATE STAR', {
+      fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -55,8 +55,8 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
     associateStarText.setShadow(2, 2, '#000000', 3, true, true);
 
-    const howToPlayText = this.add.text(320, 430, 'HOW TO PLAY', {
-      fontSize: '24px',
+    const howToPlayText = this.add.text(320, 420, 'HOW TO PLAY', {
+      fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -65,8 +65,8 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
     howToPlayText.setShadow(2, 2, '#000000', 3, true, true);
 
-    const leaderboardText = this.add.text(320, 490, 'LEADERBOARD', {
-      fontSize: '24px',
+    const leaderboardText = this.add.text(320, 480, 'LEADERBOARD', {
+      fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -75,7 +75,7 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
     leaderboardText.setShadow(2, 2, '#000000', 3, true, true);
 
-    const backText = this.add.text(320, 570, 'GO BACK', {
+    const backText = this.add.text(320, 540, 'GO BACK', {
       fontSize: '22px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -108,19 +108,19 @@ export class OptionsMenu extends Phaser.Scene {
       backText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
 
       if (this.selectedOption === 0) {
-        selector.setY(280);
+        selector.setY(300);
         connectWalletText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 1) {
-        selector.setY(330);
+        selector.setY(360);
         associateStarText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 2) {
-        selector.setY(430);
+        selector.setY(420);
         howToPlayText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 3) {
-        selector.setY(490);
+        selector.setY(480);
         leaderboardText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 4) {
-        selector.setY(570);
+        selector.setY(540);
         backText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       }
     };

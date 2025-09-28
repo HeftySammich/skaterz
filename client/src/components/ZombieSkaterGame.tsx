@@ -96,12 +96,9 @@ const ZombieSkaterGame = () => {
       }
 
       try {
-        // Get wallet service instance
-        const walletService = (window as any).walletService;
-        if (!walletService) {
-          console.log('❌ Wallet service not available');
-          return;
-        }
+        // Get wallet service instance using singleton
+        const { WalletService } = await import('../services/wallet');
+        const walletService = WalletService.getInstance();
 
         // Check if already associated
         const hasStarToken = await walletService.checkStarTokenAssociation();
