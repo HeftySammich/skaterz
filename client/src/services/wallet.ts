@@ -44,6 +44,8 @@ export interface NFTInfo {
 }
 
 class WalletService {
+  private static instance: WalletService | null = null;
+
   private dAppConnector: DAppConnector | null = null;
   private isInitialized = false;
   private isInitializing = false;
@@ -55,6 +57,16 @@ class WalletService {
     error: null
   };
   private listeners: Array<(state: WalletState) => void> = [];
+
+  /**
+   * Get singleton instance of WalletService
+   */
+  static getInstance(): WalletService {
+    if (!WalletService.instance) {
+      WalletService.instance = new WalletService();
+    }
+    return WalletService.instance;
+  }
 
   /**
    * Get the wallet-connected client for hashgraph operations with node cycling
@@ -231,8 +243,10 @@ class WalletService {
     // Authenticate the account by requesting a signature (optional for now)
     try {
       await this.authenticateAccount(accountId);
+      console.log('✅ Hedera wallet authenticated successfully!');
     } catch (error) {
-      console.warn('⚠️ Authentication failed, proceeding with basic connection:', error);
+      console.warn('⚠️ Authentication signature failed, proceeding with basic connection:', error);
+      console.warn('🔍 Note: Wallet is paired but NOT cryptographically authenticated');
       // Don't throw - authentication is optional for now until we resolve the method format
     }
 

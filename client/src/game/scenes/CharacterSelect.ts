@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { WalletService } from '../../services/wallet';
+import walletService from '../../services/wallet';
 
 export default class CharacterSelect extends Phaser.Scene {
   private selectedIndex = 0;
@@ -21,7 +21,6 @@ export default class CharacterSelect extends Phaser.Scene {
     // Check wallet status for character unlocks FIRST
     console.log('🔍 Checking wallet status for character select...');
     try {
-      const walletService = WalletService.getInstance();
       const gameStatus = await walletService.getWalletGameStatus();
       this.walletStatus = {
         hasStacyNft: gameStatus.hasStacyNft,
