@@ -77,8 +77,14 @@ class WalletService {
       throw new Error('Wallet not connected');
     }
 
-    // Use simple mainnet client - no operator needed for read-only queries
+    // Use simple mainnet client with wallet signer
     const client = Client.forMainnet();
+
+    // Get the signer from the DAppConnector for queries that require payment
+    const signer = this.dAppConnector.signers[0];
+    if (signer) {
+      client.setOperator(signer.getAccountId(), signer.getAccountKey());
+    }
 
     return client;
   }
@@ -240,14 +246,16 @@ class WalletService {
       throw new Error(`Invalid account ID format: ${accountId}`);
     }
 
-    // Authenticate the account by requesting a signature (optional for now)
+    // Verify we have a valid signer for this account
     try {
-      await this.authenticateAccount(accountId);
-      console.log('✅ Hedera wallet authenticated successfully!');
+      const signer = this.dAppConnector.signers[0];
+      if (signer && signer.getAccountId().toString() === accountId) {
+        console.log('✅ Hedera wallet authenticated successfully with signer!');
+      } else {
+        console.warn('⚠️ No matching signer found for account:', accountId);
+      }
     } catch (error) {
-      console.warn('⚠️ Authentication signature failed, proceeding with basic connection:', error);
-      console.warn('🔍 Note: Wallet is paired but NOT cryptographically authenticated');
-      // Don't throw - authentication is optional for now until we resolve the method format
+      console.warn('⚠️ Signer verification failed:', error);
     }
 
     this.setState({
@@ -261,53 +269,7 @@ class WalletService {
     console.log('✅ Wallet connection established with account:', accountId);
   }
 
-  /**
-   * Authenticate account ownership by requesting a signature
-   */
-  private async authenticateAccount(accountId: string): Promise<void> {
-    if (!this.dAppConnector) {
-      throw new Error('DApp connector not initialized');
-    }
 
-    // Create a simple message to sign for authentication
-    const message = `Authenticate Zombie Skaterz access for account ${accountId} at ${new Date().toISOString()}`;
-
-    try {
-      // Get the active session
-      const sessions = this.dAppConnector.walletConnectClient?.session.getAll() || [];
-      if (sessions.length === 0) {
-        throw new Error('No active WalletConnect session');
-      }
-
-      const session = sessions[0];
-
-      // Request signature from wallet using Hedera native method per HIP-820
-      const result = await this.dAppConnector.request({
-        topic: session.topic,
-        chainId: `hedera:${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}`,
-        request: {
-          method: 'hedera_signMessage',
-          params: {
-            message: message,
-            signerAccountId: `hedera:${BLOCKCHAIN_CONFIG.HEDERA_NETWORK}:${accountId}`
-          }
-        }
-      });
-
-      if (!result) {
-        throw new Error('No response received from wallet');
-      }
-
-      // For now, we'll trust that the wallet properly signed with the correct account
-      // In a production app, you might want to verify the signature cryptographically
-      console.log('🔐 Account authentication signature received:', result);
-
-    } catch (error) {
-      // If signing fails, still allow connection but log the issue
-      console.warn('⚠️ Authentication signature failed, proceeding with basic connection:', error);
-      // Don't throw here to maintain compatibility with wallets that don't support message signing
-    }
-  }
 
   /**
    * Test authentication by requesting a test signature
