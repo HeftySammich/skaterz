@@ -17,8 +17,9 @@ export default class CharacterSelect extends Phaser.Scene {
     this.menuMusic = data.menuMusic || null;
   }
 
-  async preload() {
-    // Check wallet status for character unlocks
+  async create() {
+    // Check wallet status for character unlocks FIRST
+    console.log('🔍 Checking wallet status for character select...');
     try {
       const walletService = WalletService.getInstance();
       const gameStatus = await walletService.getWalletGameStatus();
@@ -29,10 +30,11 @@ export default class CharacterSelect extends Phaser.Scene {
       console.log('🎮 Character select wallet status:', this.walletStatus);
     } catch (error) {
       console.warn('⚠️ Could not check wallet status for character select:', error);
+      // Default to locked if wallet check fails
+      this.walletStatus = { hasStacyNft: false, hasStarToken: false };
     }
-  }
 
-  create() {
+    // Now create the UI with the correct wallet status
     const cam = this.cameras.main;
     
     // Add graffiti background
@@ -270,7 +272,7 @@ export default class CharacterSelect extends Phaser.Scene {
     const infoText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 20,
       'To unlock Stacy, you need to:\n\n' +
       '1. Connect your Hedera wallet\n' +
-      '2. Own Stacy NFT (Token ID: 0.0.9963841)\n' +
+      '2. Hold Token ID: 0.0.9963841\n' +
       '3. Serial #1 or #2 required\n\n' +
       'Connect wallet in Options Menu!', {
       fontSize: '16px',

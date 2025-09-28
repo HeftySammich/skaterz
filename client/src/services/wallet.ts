@@ -322,13 +322,32 @@ class WalletService {
     }
 
     try {
+      console.log(`🔍 Checking STAR token association for account: ${this.state.accountId}`);
+      console.log(`🔍 STAR Token ID: ${BLOCKCHAIN_CONFIG.STAR_TOKEN_ID}`);
+
       const accountInfo = await this.getAccountInfo(this.state.accountId);
+
+      console.log(`📋 Account info retrieved:`, {
+        accountId: accountInfo.accountId?.toString(),
+        tokenRelationshipsCount: accountInfo.tokenRelationships?.size || 0
+      });
 
       // Check if STAR token is in the account's token relationships
       const starTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
       const hasStarToken = accountInfo.tokenRelationships?.has(starTokenId) || false;
 
       console.log(`🌟 STAR token association check for ${this.state.accountId}:`, hasStarToken);
+
+      // Debug: List all associated tokens
+      if (accountInfo.tokenRelationships && accountInfo.tokenRelationships.size > 0) {
+        console.log('📋 All associated tokens:');
+        accountInfo.tokenRelationships.forEach((relationship, tokenId) => {
+          console.log(`  - ${tokenId.toString()}: ${relationship.balance?.toString() || '0'} tokens`);
+        });
+      } else {
+        console.log('📋 No token associations found');
+      }
+
       return hasStarToken;
 
     } catch (error) {
@@ -350,15 +369,28 @@ class WalletService {
       const accountId = AccountId.fromString(this.state.accountId);
       const unlockTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.UNLOCK_TOKEN_ID);
 
+      console.log(`🔍 Checking Stacy NFT ownership for account: ${this.state.accountId}`);
+      console.log(`🔍 Token ID: ${BLOCKCHAIN_CONFIG.UNLOCK_TOKEN_ID}`);
+      console.log(`🔍 Required serials: ${BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBERS.join(', ')}`);
+
       // Check for each required serial number
       for (const serialNumber of BLOCKCHAIN_CONFIG.UNLOCK_SERIAL_NUMBERS) {
         try {
+          console.log(`🔍 Checking NFT serial #${serialNumber}...`);
           const nftInfo = await this.queryNftInfo(unlockTokenId, serialNumber);
+
+          console.log(`📋 NFT serial #${serialNumber} info:`, {
+            accountId: nftInfo.accountId?.toString(),
+            tokenId: nftInfo.nftId?.tokenId?.toString(),
+            serialNumber: nftInfo.nftId?.serial?.toString()
+          });
 
           // Check if this account owns this NFT
           if (nftInfo.accountId && nftInfo.accountId.equals(accountId)) {
-            console.log(`🎮 Stacy NFT found! Serial #${serialNumber} owned by ${this.state.accountId}`);
+            console.log(`🎮 ✅ Stacy NFT found! Serial #${serialNumber} owned by ${this.state.accountId}`);
             return true;
+          } else {
+            console.log(`❌ Serial #${serialNumber} owned by: ${nftInfo.accountId?.toString() || 'unknown'}`);
           }
         } catch (error) {
           console.warn(`⚠️ Could not check NFT serial #${serialNumber}:`, error);
