@@ -70,23 +70,32 @@ class WalletService {
   }
 
   /**
-   * Get the wallet-connected client for hashgraph operations
+   * Get the wallet-connected client for hashgraph transactions (not queries)
    */
   private async getClient(): Promise<Client> {
     if (!this.dAppConnector || !this.state.isConnected || !this.state.accountId) {
       throw new Error('Wallet not connected');
     }
 
-    // Use simple mainnet client with wallet signer
+    // Use simple mainnet client - no operator needed for transactions with wallet signer
     const client = Client.forMainnet();
+    return client;
+  }
 
-    // Get the signer from the DAppConnector for queries that require payment
-    const signer = this.dAppConnector.signers[0];
-    if (signer) {
-      client.setOperator(signer.getAccountId(), signer.getAccountKey());
+  /**
+   * Get the DApp signer for transactions
+   */
+  private getSigner() {
+    if (!this.dAppConnector || !this.state.isConnected) {
+      throw new Error('Wallet not connected');
     }
 
-    return client;
+    const signer = this.dAppConnector.signers[0];
+    if (!signer) {
+      throw new Error('No signer available from wallet connection');
+    }
+
+    return signer;
   }
 
   /**
@@ -289,26 +298,45 @@ class WalletService {
   }
 
   /**
-   * Get account information from Hedera network
+   * Get account information using Mirror Node API (free, no payment required)
    */
   async getAccountInfo(accountId: string): Promise<any> {
-    const client = await this.getClient();
-    const query = new AccountInfoQuery()
-      .setAccountId(AccountId.fromString(accountId));
-
-    return await query.execute(client);
+    try {
+      const response = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/${accountId}`);
+      if (!response.ok) {
+        throw new Error(`Mirror Node API error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Failed to get account info from Mirror Node:', error);
+      throw error;
+    }
   }
 
   /**
-   * Query NFT information from Hedera network
+   * Query NFT information using Mirror Node API (free, no payment required)
    */
   async queryNftInfo(tokenId: TokenId, serialNumber: number): Promise<any> {
-    const client = await this.getClient();
-    const nftId = new NftId(tokenId, serialNumber);
-    const query = new TokenNftInfoQuery()
-      .setNftId(nftId);
+    try {
+      const tokenIdString = tokenId.toString();
+      const response = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/tokens/${tokenIdString}/nfts/${serialNumber}`);
+      if (!response.ok) {
+        throw new Error(`Mirror Node API error: ${response.status}`);
+      }
+      const nftData = await response.json();
 
-    return await query.execute(client);
+      // Convert Mirror Node format to match SDK format for compatibility
+      return {
+        nftId: {
+          tokenId: { toString: () => tokenIdString },
+          serial: { toString: () => serialNumber.toString() }
+        },
+        accountId: { toString: () => nftData.account_id }
+      };
+    } catch (error) {
+      console.error(`❌ Failed to get NFT info from Mirror Node for ${tokenId}/${serialNumber}:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -329,24 +357,30 @@ class WalletService {
         throw new Error('Account ID is undefined');
       }
 
-      const accountInfo = await this.getAccountInfo(this.state.accountId);
+      // Get account token balances from Mirror Node
+      const response = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/${this.state.accountId}/tokens`);
+      if (!response.ok) {
+        throw new Error(`Mirror Node API error: ${response.status}`);
+      }
+      const tokenData = await response.json();
 
-      console.log(`📋 Account info retrieved:`, {
-        accountId: accountInfo.accountId?.toString(),
-        tokenRelationshipsCount: accountInfo.tokenRelationships?.size || 0
+      console.log(`📋 Account token data retrieved:`, {
+        accountId: this.state.accountId,
+        tokenCount: tokenData.tokens?.length || 0
       });
 
-      // Check if STAR token is in the account's token relationships
-      const starTokenId = TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID);
-      const hasStarToken = accountInfo.tokenRelationships?.has(starTokenId) || false;
+      // Check if STAR token is in the account's token list
+      const hasStarToken = tokenData.tokens?.some((token: any) =>
+        token.token_id === BLOCKCHAIN_CONFIG.STAR_TOKEN_ID
+      ) || false;
 
       console.log(`🌟 STAR token association check for ${this.state.accountId}:`, hasStarToken);
 
       // Debug: List all associated tokens
-      if (accountInfo.tokenRelationships && accountInfo.tokenRelationships.size > 0) {
+      if (tokenData.tokens && tokenData.tokens.length > 0) {
         console.log('📋 All associated tokens:');
-        accountInfo.tokenRelationships.forEach((relationship, tokenId) => {
-          console.log(`  - ${tokenId.toString()}: ${relationship.balance?.toString() || '0'} tokens`);
+        tokenData.tokens.forEach((token: any) => {
+          console.log(`  - ${token.token_id}: ${token.balance} tokens`);
         });
       } else {
         console.log('📋 No token associations found');
@@ -410,6 +444,39 @@ class WalletService {
     } catch (error) {
       console.error('❌ Failed to check Stacy NFT ownership:', error);
       return false;
+    }
+  }
+
+  /**
+   * Send STAR tokens using wallet signer (for rewards)
+   */
+  async sendStarTokens(amount: number, receiverAccountId: string): Promise<string> {
+    try {
+      const signer = this.getSigner();
+      const client = await this.getClient();
+
+      const transferTransaction = new TransferTransaction()
+        .addTokenTransfer(
+          TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
+          AccountId.fromString(BLOCKCHAIN_CONFIG.TREASURY_ACCOUNT_ID),
+          -amount
+        )
+        .addTokenTransfer(
+          TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
+          AccountId.fromString(receiverAccountId),
+          amount
+        );
+
+      // Sign and execute with wallet
+      const signedTransaction = await transferTransaction.signWithSigner(signer);
+      const response = await signedTransaction.execute(client);
+      const receipt = await response.getReceipt(client);
+
+      console.log(`✅ STAR token transfer successful: ${amount} tokens to ${receiverAccountId}`);
+      return receipt.transactionId.toString();
+    } catch (error) {
+      console.error('❌ Failed to send STAR tokens:', error);
+      throw error;
     }
   }
 
