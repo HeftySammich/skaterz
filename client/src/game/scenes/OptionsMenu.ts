@@ -116,7 +116,7 @@ export class OptionsMenu extends Phaser.Scene {
       } else if (this.selectedOption === 2) {
         selector.setY(430);
         howToPlayText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
-      } else {
+      } else if (this.selectedOption === 3) {
         selector.setY(490);
         leaderboardText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 4) {
