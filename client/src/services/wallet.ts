@@ -357,33 +357,21 @@ class WalletService {
         throw new Error('Account ID is undefined');
       }
 
-      // Get account token balances from Mirror Node
-      const response = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/${this.state.accountId}/tokens`);
+      // Check specific STAR token association from Mirror Node
+      const response = await fetch(`https://mainnet-public.mirrornode.hedera.com/api/v1/accounts/${this.state.accountId}/tokens?token.id=${BLOCKCHAIN_CONFIG.STAR_TOKEN_ID}`);
       if (!response.ok) {
         throw new Error(`Mirror Node API error: ${response.status}`);
       }
       const tokenData = await response.json();
 
-      console.log(`📋 Account token data retrieved:`, {
-        accountId: this.state.accountId,
-        tokenCount: tokenData.tokens?.length || 0
-      });
-
-      // Check if STAR token is in the account's token list
-      const hasStarToken = tokenData.tokens?.some((token: any) =>
-        token.token_id === BLOCKCHAIN_CONFIG.STAR_TOKEN_ID
-      ) || false;
+      const hasStarToken = tokenData.tokens && tokenData.tokens.length > 0;
 
       console.log(`🌟 STAR token association check for ${this.state.accountId}:`, hasStarToken);
 
-      // Debug: List all associated tokens
-      if (tokenData.tokens && tokenData.tokens.length > 0) {
-        console.log('📋 All associated tokens:');
-        tokenData.tokens.forEach((token: any) => {
-          console.log(`  - ${token.token_id}: ${token.balance} tokens`);
-        });
+      if (hasStarToken) {
+        console.log(`📋 STAR token balance: ${tokenData.tokens[0].balance}`);
       } else {
-        console.log('📋 No token associations found');
+        console.log('📋 STAR token not associated - user needs to associate it for rewards');
       }
 
       return hasStarToken;
@@ -425,12 +413,13 @@ class WalletService {
             serialNumber: nftInfo.nftId?.serial?.toString()
           });
 
-          // Check if this account owns this NFT
-          if (nftInfo.accountId && nftInfo.accountId.equals(accountId)) {
+          // Check if this account owns this NFT (Mirror Node returns strings)
+          const nftOwner = nftInfo.accountId?.toString() || nftInfo.accountId;
+          if (nftOwner === this.state.accountId) {
             console.log(`🎮 ✅ Stacy NFT found! Serial #${serialNumber} owned by ${this.state.accountId}`);
             return true;
           } else {
-            console.log(`❌ Serial #${serialNumber} owned by: ${nftInfo.accountId?.toString() || 'unknown'}`);
+            console.log(`❌ Serial #${serialNumber} owned by: ${nftOwner || 'unknown'}`);
           }
         } catch (error) {
           console.warn(`⚠️ Could not check NFT serial #${serialNumber}:`, error);
@@ -444,6 +433,31 @@ class WalletService {
     } catch (error) {
       console.error('❌ Failed to check Stacy NFT ownership:', error);
       return false;
+    }
+  }
+
+  /**
+   * Associate STAR token with user's account (required before receiving rewards)
+   */
+  async associateStarToken(): Promise<string> {
+    try {
+      const signer = this.getSigner();
+      const client = await this.getClient();
+
+      const associateTransaction = new TokenAssociateTransaction()
+        .setAccountId(signer.getAccountId())
+        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)]);
+
+      // Sign and execute with wallet
+      const signedTransaction = await associateTransaction.signWithSigner(signer);
+      const response = await signedTransaction.execute(client);
+      const receipt = await response.getReceipt(client);
+
+      console.log(`✅ STAR token association successful for ${signer.getAccountId()}`);
+      return receipt.transactionId.toString();
+    } catch (error) {
+      console.error('❌ Failed to associate STAR token:', error);
+      throw error;
     }
   }
 
