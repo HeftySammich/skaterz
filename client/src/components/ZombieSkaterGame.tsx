@@ -85,6 +85,50 @@ const ZombieSkaterGame = () => {
     };
   }, [connect, isConnected]);
 
+  // Handle STAR token association events from game
+  useEffect(() => {
+    const handleAssociateStarEvent = async (event: any) => {
+      console.log('🌟 STAR token association event received from options menu');
+
+      if (!isConnected) {
+        console.log('❌ Wallet not connected - cannot associate STAR token');
+        return;
+      }
+
+      try {
+        // Get wallet service instance
+        const walletService = (window as any).walletService;
+        if (!walletService) {
+          console.log('❌ Wallet service not available');
+          return;
+        }
+
+        // Check if already associated
+        const hasStarToken = await walletService.checkStarTokenAssociation();
+        if (hasStarToken) {
+          console.log('✅ STAR token already associated!');
+          // Could show a toast notification here
+          return;
+        }
+
+        console.log('🔗 Attempting STAR token association...');
+        const transactionId = await walletService.associateStarToken();
+        console.log('✅ STAR token association successful!', transactionId);
+        // Could show success notification here
+
+      } catch (error) {
+        console.error('❌ Failed to associate STAR token:', error);
+        // Could show error notification here
+      }
+    };
+
+    window.addEventListener('associateStarToken', handleAssociateStarEvent as any);
+
+    return () => {
+      window.removeEventListener('associateStarToken', handleAssociateStarEvent as any);
+    };
+  }, [isConnected]);
+
   // Only show wallet status on menu screens (not during gameplay)
   const isMenuScene = ['MainMenu', 'OptionsMenu', 'HowToPlay', 'Leaderboard', 'CharacterSelect'].includes(currentScene);
 
