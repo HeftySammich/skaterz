@@ -107,13 +107,24 @@ const ZombieSkaterGame = () => {
         const { WalletService } = await import('../services/wallet');
         const walletService = WalletService.getInstance();
 
-        // Ensure wallet service knows about the connection
+        // Ensure wallet service is properly initialized and connected
         const walletState = walletService.getState();
         console.log('🔍 Wallet service state:', walletState);
 
         if (!walletState.isConnected) {
-          console.log('⚠️ Wallet service not connected, forcing reconnection...');
+          console.log('⚠️ Wallet service not connected, initializing and connecting...');
+
+          // First ensure wallet service is initialized
+          try {
+            await walletService.initialize();
+            console.log('✅ Wallet service initialized');
+          } catch (initError) {
+            console.warn('⚠️ Wallet service already initialized:', initError);
+          }
+
+          // Then connect
           await walletService.connect();
+          console.log('✅ Wallet service connected');
         }
 
         // Check if already associated

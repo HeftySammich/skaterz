@@ -260,6 +260,15 @@ class WalletService {
       const signer = this.dAppConnector.signers[0];
       if (signer && signer.getAccountId().toString() === accountId) {
         console.log('✅ Hedera wallet authenticated successfully with signer!');
+
+        // Perform authentication signature to verify wallet ownership
+        try {
+          await this.authenticateAccount(accountId);
+          console.log('✅ Wallet authentication signature completed');
+        } catch (authError) {
+          console.warn('⚠️ Authentication signature failed, but continuing with connection:', authError);
+          // Continue with connection even if auth signature fails - some wallets may not support it
+        }
       } else {
         console.warn('⚠️ No matching signer found for account:', accountId);
       }
@@ -279,6 +288,36 @@ class WalletService {
   }
 
 
+
+  /**
+   * Authenticate account by requesting a signature from the wallet
+   */
+  private async authenticateAccount(accountId: string): Promise<void> {
+    if (!this.dAppConnector) {
+      throw new Error('Wallet service not initialized');
+    }
+
+    try {
+      console.log('🔐 Requesting authentication signature from wallet...');
+
+      // Create a simple message to sign for authentication
+      const message = `Authenticate Zombie Skaterz access for account ${accountId} at ${new Date().toISOString()}`;
+      const messageBytes = new TextEncoder().encode(message);
+
+      // Request signature from wallet
+      const signer = this.dAppConnector.signers[0];
+      if (!signer) {
+        throw new Error('No signer available');
+      }
+
+      // This will trigger a signature request in the wallet
+      await signer.sign([messageBytes]);
+      console.log('✅ Authentication signature successful');
+    } catch (error) {
+      console.error('❌ Authentication signature failed:', error);
+      throw error;
+    }
+  }
 
   /**
    * Test authentication by requesting a test signature
