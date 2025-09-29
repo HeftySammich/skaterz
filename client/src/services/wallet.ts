@@ -64,10 +64,8 @@ class WalletService {
    * Get singleton instance of WalletService
    */
   static getInstance(): WalletService {
-    if (!WalletService.instance) {
-      WalletService.instance = new WalletService();
-    }
-    return WalletService.instance;
+    // Return the same instance as the default export
+    return walletService;
   }
 
   /**

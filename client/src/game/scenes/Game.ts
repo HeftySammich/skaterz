@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { ComboTracker, createComboSystem } from '../systems/combo';
 import { setupControls } from '../systems/controls';
-import walletService from '../../services/wallet';
+import { WalletService } from '../../services/wallet';
 // All visual asset imports removed - clean slate for new assets
 
 // Define ground level constants - skater runs higher than obstacles sit
@@ -132,10 +132,11 @@ export default class Game extends Phaser.Scene {
   private songTitleContainer?: Phaser.GameObjects.Container;
 
   // Wallet service for STAR token rewards
-  private walletService = walletService;
+  private walletService: WalletService;
 
   constructor() {
     super('Game');
+    this.walletService = WalletService.getInstance();
     console.log('🎮 Game scene constructor - wallet service initialized');
     console.log('🎮 Wallet service instance ID:', this.walletService);
   }
