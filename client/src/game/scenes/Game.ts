@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ComboTracker, createComboSystem } from '../systems/combo';
 import { setupControls } from '../systems/controls';
+import { WalletService } from '../../services/wallet';
 // All visual asset imports removed - clean slate for new assets
 
 // Define ground level constants - skater runs higher than obstacles sit
@@ -130,8 +131,12 @@ export default class Game extends Phaser.Scene {
   private currentMusicIndex = 0;
   private songTitleContainer?: Phaser.GameObjects.Container;
 
+  // Wallet service for STAR token rewards
+  private walletService: WalletService;
+
   constructor() {
     super('Game');
+    this.walletService = WalletService.getInstance();
   }
 
   init(data: { selectedCharacter?: 'kev' | 'stacy' }) {
@@ -1977,8 +1982,44 @@ export default class Game extends Phaser.Scene {
     });
     
 // console.log(`Collected ${amount} stars! Total: ${this.stars}`);
+
+    // Send actual STAR tokens to wallet if connected
+    this.sendStarTokenReward(amount);
   }
-  
+
+  /**
+   * Send STAR tokens to player's wallet as reward
+   * NOTE: This currently logs the reward - actual token sending requires treasury backend
+   */
+  private async sendStarTokenReward(amount: number) {
+    try {
+      // Check if wallet is connected and has STAR token associated
+      const walletState = this.walletService.getState();
+      if (!walletState.isConnected || !walletState.accountId) {
+        console.log('🌟 Wallet not connected - skipping STAR token reward');
+        return;
+      }
+
+      // Check if STAR token is associated
+      const hasStarToken = await this.walletService.checkStarTokenAssociation();
+      if (!hasStarToken) {
+        console.log('🌟 STAR token not associated - skipping reward');
+        return;
+      }
+
+      // For now, just log the reward (treasury backend needed for actual sending)
+      console.log(`🌟 STAR TOKEN REWARD: ${amount} tokens earned by ${walletState.accountId}`);
+      console.log(`💰 Total session rewards: ${this.stars} STAR tokens`);
+
+      // TODO: Implement treasury-based reward system
+      // This would require a backend service with treasury account access
+
+    } catch (error) {
+      console.error('❌ Failed to process STAR token reward:', error);
+      // Don't throw - game should continue even if blockchain reward fails
+    }
+  }
+
   updateBackgroundTiles() {
     if (this.backgroundTiles.length === 0) return;
     
