@@ -1023,7 +1023,7 @@ export default class Game extends Phaser.Scene {
     }).setDepth(100).setScrollFactor(0)
 
     // Add pause button below stamina bar
-    this.pauseButton = this.add.text(50, 210, '⏸ PAUSE', {
+    this.pauseButton = this.add.text(50, 210, 'PAUSE', {
       fontSize: '18px',
       fontFamily: '"Press Start 2P", monospace',
       color: '#ffff00',

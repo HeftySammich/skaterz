@@ -277,7 +277,7 @@ export default class CharacterSelect extends Phaser.Scene {
       'To unlock Stacy, you need to:\n\n' +
       '1. Connect your Hedera wallet\n' +
       '2. Hold Token ID: 0.0.9963841\n' +
-      '3. Serial #1 or #2 required\n\n' +
+      '3. Serial #2 required\n\n' +
       'Connect wallet in Options Menu!', {
       fontSize: '16px',
       color: '#ffffff',
