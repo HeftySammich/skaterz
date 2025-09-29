@@ -499,7 +499,7 @@ class WalletService {
       const receipt = await response.getReceipt(client);
 
       console.log(`✅ STAR token association successful for ${signer.getAccountId()}`);
-      return receipt.transactionId.toString();
+      return transactionId.toString();
     } catch (error) {
       console.error('❌ Failed to associate STAR token:', error);
       throw error;
@@ -536,7 +536,7 @@ class WalletService {
       const receipt = await response.getReceipt(client);
 
       console.log(`✅ STAR token transfer successful: ${amount} tokens to ${receiverAccountId}`);
-      return receipt.transactionId.toString();
+      return transactionId.toString();
     } catch (error) {
       console.error('❌ Failed to send STAR tokens:', error);
       throw error;
