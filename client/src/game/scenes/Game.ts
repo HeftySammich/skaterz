@@ -138,6 +138,7 @@ export default class Game extends Phaser.Scene {
     super('Game');
     this.walletService = WalletService.getInstance();
     console.log('🎮 Game scene constructor - wallet service initialized');
+    console.log('🎮 Wallet service instance ID:', this.walletService);
   }
 
   init(data: { selectedCharacter?: 'kev' | 'stacy' }) {
@@ -154,7 +155,12 @@ export default class Game extends Phaser.Scene {
 
     // Debug wallet state when game scene starts
     const walletState = this.walletService.getState();
-    console.log('🎮 Game scene create() - wallet state:', walletState);
+    console.log('🎮 Game scene create() - wallet state:', {
+      isConnected: walletState.isConnected,
+      accountId: walletState.accountId,
+      isLoading: walletState.isLoading,
+      error: walletState.error
+    });
 
     // Reset all game state variables
 // console.log('[DEBUG GAME INIT] Starting game scene...');
@@ -1998,30 +2004,25 @@ export default class Game extends Phaser.Scene {
    */
   private async sendStarTokenReward(amount: number) {
     try {
-      // Check if wallet is connected and has STAR token associated
-      const walletState = this.walletService.getState();
-      console.log('🔍 Game scene wallet state:', walletState);
+      // Get wallet status using the async method that checks everything
+      console.log('🔍 Getting comprehensive wallet status...');
+      const walletStatus = await this.walletService.getWalletGameStatus();
+      console.log('🔍 Comprehensive wallet status:', walletStatus);
 
-      if (!walletState.isConnected || !walletState.accountId) {
+      if (!walletStatus.isConnected || !walletStatus.accountId) {
         console.log('🌟 Wallet not connected - skipping STAR token reward');
-        console.log('🔍 Wallet state details:', {
-          isConnected: walletState.isConnected,
-          accountId: walletState.accountId,
-          isLoading: walletState.isLoading,
-          error: walletState.error
-        });
+        console.log('🔍 Wallet status details:', walletStatus);
         return;
       }
 
-      // Check if STAR token is associated
-      const hasStarToken = await this.walletService.checkStarTokenAssociation();
-      if (!hasStarToken) {
+      // Check if STAR token is associated (already checked in comprehensive status)
+      if (!walletStatus.hasStarToken) {
         console.log('🌟 STAR token not associated - skipping reward');
         return;
       }
 
       // For now, just log the reward (treasury backend needed for actual sending)
-      console.log(`🌟 STAR TOKEN REWARD: ${amount} tokens earned by ${walletState.accountId}`);
+      console.log(`🌟 STAR TOKEN REWARD: ${amount} tokens earned by ${walletStatus.accountId}`);
       console.log(`💰 Total session rewards: ${this.stars} STAR tokens`);
 
       // TODO: Implement treasury-based reward system
