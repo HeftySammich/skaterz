@@ -145,6 +145,13 @@ class WalletService {
       // Initialize the connector
       await this.dAppConnector.init();
 
+      // Check for existing sessions and restore connection state
+      const existingSessions = this.dAppConnector.walletConnectClient?.session.getAll();
+      if (existingSessions && existingSessions.length > 0) {
+        console.log('🔄 Restoring existing wallet session...');
+        await this.handleConnectionSuccess(existingSessions[0]);
+      }
+
       this.isInitialized = true;
       this.setState({ isLoading: false });
     } catch (error) {
