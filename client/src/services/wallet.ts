@@ -16,6 +16,7 @@ import {
   LedgerId,
   TransferTransaction,
   TokenAssociateTransaction,
+  TransactionId,
   AccountBalanceQuery,
   AccountInfoQuery,
   TokenNftInfoQuery,
@@ -484,9 +485,13 @@ class WalletService {
       const signer = this.getSigner();
       const client = await this.getClient();
 
+      // Generate a transaction ID for the association
+      const transactionId = TransactionId.generate(signer.getAccountId());
+
       const associateTransaction = new TokenAssociateTransaction()
         .setAccountId(signer.getAccountId())
         .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)])
+        .setTransactionId(transactionId)
         .freezeWith(client);
 
       // Execute transaction with wallet signer
@@ -509,6 +514,9 @@ class WalletService {
       const signer = this.getSigner();
       const client = await this.getClient();
 
+      // Generate a transaction ID for the transfer
+      const transactionId = TransactionId.generate(signer.getAccountId());
+
       const transferTransaction = new TransferTransaction()
         .addTokenTransfer(
           TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
@@ -520,6 +528,7 @@ class WalletService {
           AccountId.fromString(receiverAccountId),
           amount
         )
+        .setTransactionId(transactionId)
         .freezeWith(client);
 
       // Execute transaction with wallet signer
