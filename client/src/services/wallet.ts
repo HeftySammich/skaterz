@@ -522,7 +522,6 @@ class WalletService {
 
       // Execute transaction directly with wallet signer (no manual freezing needed)
       const response = await transferTransaction.executeWithSigner(signer);
-      const response = await signedTransaction.execute(client);
       const receipt = await response.getReceipt(client);
 
       console.log(`✅ STAR token transfer successful: ${amount} tokens to ${receiverAccountId}`);
