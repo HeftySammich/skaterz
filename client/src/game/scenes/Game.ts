@@ -101,6 +101,9 @@ export default class Game extends Phaser.Scene {
   private starPickups!: Phaser.Physics.Arcade.Group;
   private lastStarPatternX = 0;
   private sandwichTimer!: Phaser.Time.TimerEvent;
+
+  // Pause button
+  private pauseButton!: Phaser.GameObjects.Text;
   
   // Life system
   private lives = 3; // Start with 3 lives
@@ -1018,7 +1021,34 @@ export default class Game extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 4
     }).setDepth(100).setScrollFactor(0)
-    
+
+    // Add pause button below stamina bar
+    this.pauseButton = this.add.text(50, 210, '⏸ PAUSE', {
+      fontSize: '18px',
+      fontFamily: '"Press Start 2P", monospace',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 4
+    });
+    this.pauseButton.setDepth(100);
+    this.pauseButton.setScrollFactor(0);
+    this.pauseButton.setInteractive({ useHandCursor: true });
+
+    // Pause button interactions
+    this.pauseButton.on('pointerover', () => {
+      this.pauseButton.setColor('#ffffff');
+      this.pauseButton.setScale(1.05);
+    });
+
+    this.pauseButton.on('pointerout', () => {
+      this.pauseButton.setColor('#ffff00');
+      this.pauseButton.setScale(1.0);
+    });
+
+    this.pauseButton.on('pointerdown', () => {
+      this.openPauseMenu();
+    });
+
     // Create life counter above star counter
     this.createLifeDisplay();
     
@@ -2424,5 +2454,14 @@ export default class Game extends Phaser.Scene {
     this.time.delayedCall(2000, () => {
       comboEndText.destroy();
     });
+  }
+
+  /**
+   * Open the pause menu
+   */
+  private openPauseMenu() {
+    console.log('⏸ Opening pause menu');
+    this.scene.pause('Game');
+    this.scene.launch('PauseMenu');
   }
 }

@@ -12,6 +12,8 @@ import Leaderboard from './scenes/Leaderboard';
 import CharacterSelect from './scenes/CharacterSelect';
 import Game from './scenes/Game';
 import GameOver from './scenes/GameOver';
+import { PauseMenu } from './scenes/PauseMenu';
+import { ExitConfirmation } from './scenes/ExitConfirmation';
 
 // Scaled up resolution
 const BASE_W = 640;
@@ -55,7 +57,7 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       gamepad: false,
       activePointers: 1
     },
-    scene: [Preload, Splash1, Splash2, Splash3, Splash4, Splash5, MainMenu, OptionsMenu, HowToPlay, Leaderboard, CharacterSelect, Game, GameOver],
+    scene: [Preload, Splash1, Splash2, Splash3, Splash4, Splash5, MainMenu, OptionsMenu, HowToPlay, Leaderboard, CharacterSelect, Game, GameOver, PauseMenu, ExitConfirmation],
     backgroundColor: '#2c5f2d' // GBA green background
   };
 
