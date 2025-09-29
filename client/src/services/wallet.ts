@@ -131,7 +131,7 @@ class WalletService {
         {
           name: 'Skaterz',
           description: 'Retro GBA-style endless runner with blockchain features',
-          url: 'skaterz.app',
+          url: window.location.origin,
           icons: [`${window.location.origin}/favicon.ico`]
         },
         network,
@@ -486,12 +486,10 @@ class WalletService {
 
       const associateTransaction = new TokenAssociateTransaction()
         .setAccountId(signer.getAccountId())
-        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)])
-        .freezeWith(client);
+        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)]);
 
-      // Sign and execute with wallet
-      const signedTransaction = await associateTransaction.signWithSigner(signer);
-      const response = await signedTransaction.execute(client);
+      // Execute transaction directly with wallet signer (no manual freezing needed)
+      const response = await associateTransaction.executeWithSigner(signer);
       const receipt = await response.getReceipt(client);
 
       console.log(`✅ STAR token association successful for ${signer.getAccountId()}`);
@@ -520,11 +518,10 @@ class WalletService {
           TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
           AccountId.fromString(receiverAccountId),
           amount
-        )
-        .freezeWith(client);
+        );
 
-      // Sign and execute with wallet
-      const signedTransaction = await transferTransaction.signWithSigner(signer);
+      // Execute transaction directly with wallet signer (no manual freezing needed)
+      const response = await transferTransaction.executeWithSigner(signer);
       const response = await signedTransaction.execute(client);
       const receipt = await response.getReceipt(client);
 
