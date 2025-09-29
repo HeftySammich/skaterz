@@ -155,12 +155,12 @@ export default class Game extends Phaser.Scene {
 
     // Debug wallet state when game scene starts
     const walletState = this.walletService.getState();
-    console.log('🎮 Game scene create() - wallet state:', {
+    console.log('🎮 Game scene create() - wallet state:', JSON.stringify({
       isConnected: walletState.isConnected,
       accountId: walletState.accountId,
       isLoading: walletState.isLoading,
       error: walletState.error
-    });
+    }, null, 2));
 
     // Reset all game state variables
 // console.log('[DEBUG GAME INIT] Starting game scene...');
@@ -2007,11 +2007,11 @@ export default class Game extends Phaser.Scene {
       // Get wallet status using the async method that checks everything
       console.log('🔍 Getting comprehensive wallet status...');
       const walletStatus = await this.walletService.getWalletGameStatus();
-      console.log('🔍 Comprehensive wallet status:', walletStatus);
+      console.log('🔍 Comprehensive wallet status:', JSON.stringify(walletStatus, null, 2));
 
       if (!walletStatus.isConnected || !walletStatus.accountId) {
         console.log('🌟 Wallet not connected - skipping STAR token reward');
-        console.log('🔍 Wallet status details:', walletStatus);
+        console.log('🔍 Wallet status details:', JSON.stringify(walletStatus, null, 2));
         return;
       }
 
