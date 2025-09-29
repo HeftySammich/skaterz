@@ -131,7 +131,7 @@ class WalletService {
         {
           name: 'Skaterz',
           description: 'Retro GBA-style endless runner with blockchain features',
-          url: window.location.origin,
+          url: 'skaterz.app',
           icons: [`${window.location.origin}/favicon.ico`]
         },
         network,
@@ -486,7 +486,8 @@ class WalletService {
 
       const associateTransaction = new TokenAssociateTransaction()
         .setAccountId(signer.getAccountId())
-        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)]);
+        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)])
+        .freezeWith(client);
 
       // Sign and execute with wallet
       const signedTransaction = await associateTransaction.signWithSigner(signer);
@@ -519,7 +520,8 @@ class WalletService {
           TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
           AccountId.fromString(receiverAccountId),
           amount
-        );
+        )
+        .freezeWith(client);
 
       // Sign and execute with wallet
       const signedTransaction = await transferTransaction.signWithSigner(signer);
