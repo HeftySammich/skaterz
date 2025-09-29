@@ -486,9 +486,10 @@ class WalletService {
 
       const associateTransaction = new TokenAssociateTransaction()
         .setAccountId(signer.getAccountId())
-        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)]);
+        .setTokenIds([TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID)])
+        .freezeWith(client);
 
-      // Execute transaction directly with wallet signer (no manual freezing needed)
+      // Execute transaction with wallet signer
       const response = await associateTransaction.executeWithSigner(signer);
       const receipt = await response.getReceipt(client);
 
@@ -518,9 +519,10 @@ class WalletService {
           TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
           AccountId.fromString(receiverAccountId),
           amount
-        );
+        )
+        .freezeWith(client);
 
-      // Execute transaction directly with wallet signer (no manual freezing needed)
+      // Execute transaction with wallet signer
       const response = await transferTransaction.executeWithSigner(signer);
       const receipt = await response.getReceipt(client);
 
