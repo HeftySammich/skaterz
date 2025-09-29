@@ -24,6 +24,13 @@ const ZombieSkaterGame = () => {
   const phaserGameRef = useRef<Phaser.Game | null>(null);
   const { connect, isConnected } = useWallet();
   const [currentScene, setCurrentScene] = useState<string>('MainMenu');
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Helper function to show notifications
+  const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000); // Auto-hide after 4 seconds
+  };
 
   useEffect(() => {
     if (gameRef.current) {
@@ -100,22 +107,33 @@ const ZombieSkaterGame = () => {
         const { WalletService } = await import('../services/wallet');
         const walletService = WalletService.getInstance();
 
+        // Ensure wallet service knows about the connection
+        const walletState = walletService.getState();
+        console.log('🔍 Wallet service state:', walletState);
+
+        if (!walletState.isConnected) {
+          console.log('⚠️ Wallet service not connected, forcing reconnection...');
+          await walletService.connect();
+        }
+
         // Check if already associated
+        console.log('🔍 Checking if STAR token already associated...');
         const hasStarToken = await walletService.checkStarTokenAssociation();
         if (hasStarToken) {
           console.log('✅ STAR token already associated!');
-          // Could show a toast notification here
+          showNotification('STAR token already associated!', 'info');
           return;
         }
 
         console.log('🔗 Attempting STAR token association...');
+        showNotification('Sending association request to wallet...', 'info');
         const transactionId = await walletService.associateStarToken();
         console.log('✅ STAR token association successful!', transactionId);
-        // Could show success notification here
+        showNotification('STAR token associated successfully!', 'success');
 
       } catch (error) {
         console.error('❌ Failed to associate STAR token:', error);
-        // Could show error notification here
+        showNotification('Failed to associate STAR token. Check wallet connection.', 'error');
       }
     };
 
@@ -158,6 +176,31 @@ const ZombieSkaterGame = () => {
 
       {/* Show wallet status only on menu screens */}
       {isMenuScene && <WalletStatus />}
+
+      {/* Notification toast */}
+      {notification && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: notification.type === 'success' ? '#4CAF50' :
+                           notification.type === 'error' ? '#f44336' : '#2196F3',
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontFamily: '"Press Start 2P", monospace',
+            fontSize: '12px',
+            zIndex: 10000,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            maxWidth: '80vw',
+            textAlign: 'center'
+          }}
+        >
+          {notification.message}
+        </div>
+      )}
     </div>
   );
 };
