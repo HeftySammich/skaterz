@@ -129,7 +129,7 @@ class WalletService {
       // Initialize DApp Connector with proper Hedera methods and events
       this.dAppConnector = new DAppConnector(
         {
-          name: 'Zombie Skaterz V3',
+          name: 'Skaterz',
           description: 'Retro GBA-style endless runner with blockchain features',
           url: window.location.origin,
           icons: [`${window.location.origin}/favicon.ico`]
@@ -300,8 +300,9 @@ class WalletService {
     try {
       console.log('🔐 Requesting authentication signature from wallet...');
 
-      // Create a simple message to sign for authentication
-      const message = `Authenticate Zombie Skaterz access for account ${accountId} at ${new Date().toISOString()}`;
+      // Create a centered, clean message to sign for authentication
+      const timestamp = new Date().toLocaleString();
+      const message = `Authenticate Skaterz access\n\nAccount: ${accountId}\nTime: ${timestamp}`;
       const messageBytes = new TextEncoder().encode(message);
 
       // Request signature from wallet
@@ -774,7 +775,7 @@ class WalletService {
       const transaction = new TransferTransaction()
         .addTokenTransfer(tokenId, BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID, -amount)
         .addTokenTransfer(tokenId, receiverAccountId, amount)
-        .setTransactionMemo(`Zombie Skaterz reward: ${amount} STAR tokens`)
+        .setTransactionMemo(`Skaterz reward: ${amount} STAR tokens`)
         .freezeWith(client);
 
       const result = await transaction.executeWithSigner(this.dAppConnector.getSigner(receiverAccountId));
