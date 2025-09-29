@@ -137,6 +137,7 @@ export default class Game extends Phaser.Scene {
   constructor() {
     super('Game');
     this.walletService = WalletService.getInstance();
+    console.log('🎮 Game scene constructor - wallet service initialized');
   }
 
   init(data: { selectedCharacter?: 'kev' | 'stacy' }) {
@@ -150,6 +151,10 @@ export default class Game extends Phaser.Scene {
     window.dispatchEvent(new CustomEvent('sceneChanged', {
       detail: { scene: 'Game' }
     }));
+
+    // Debug wallet state when game scene starts
+    const walletState = this.walletService.getState();
+    console.log('🎮 Game scene create() - wallet state:', walletState);
 
     // Reset all game state variables
 // console.log('[DEBUG GAME INIT] Starting game scene...');
@@ -1995,8 +2000,16 @@ export default class Game extends Phaser.Scene {
     try {
       // Check if wallet is connected and has STAR token associated
       const walletState = this.walletService.getState();
+      console.log('🔍 Game scene wallet state:', walletState);
+
       if (!walletState.isConnected || !walletState.accountId) {
         console.log('🌟 Wallet not connected - skipping STAR token reward');
+        console.log('🔍 Wallet state details:', {
+          isConnected: walletState.isConnected,
+          accountId: walletState.accountId,
+          isLoading: walletState.isLoading,
+          error: walletState.error
+        });
         return;
       }
 
