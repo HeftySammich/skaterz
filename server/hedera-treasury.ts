@@ -30,9 +30,26 @@ function getTreasuryClient(): Client {
   try {
     const client = Client.forMainnet();
 
+    // Parse private key - try ED25519 first (most common), then ECDSA
+    let privateKey;
+    try {
+      // Most Hedera accounts use ED25519 keys
+      privateKey = PrivateKey.fromStringED25519(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY);
+      console.log('✅ Private key parsed as ED25519');
+    } catch (ed25519Error) {
+      console.log('⚠️ ED25519 parsing failed, trying ECDSA...');
+      try {
+        privateKey = PrivateKey.fromStringECDSA(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY);
+        console.log('✅ Private key parsed as ECDSA');
+      } catch (ecdsaError) {
+        console.error('❌ Failed to parse private key as ED25519 or ECDSA');
+        throw new Error('Invalid private key format. Must be hex-encoded ED25519 or ECDSA key.');
+      }
+    }
+
     client.setOperator(
       AccountId.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID),
-      PrivateKey.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY)
+      privateKey
     );
 
     console.log('✅ Treasury client initialized successfully');
