@@ -30,20 +30,55 @@ function getTreasuryClient(): Client {
   try {
     const client = Client.forMainnet();
 
-    // Parse private key - try ED25519 first (most common), then ECDSA
+    // Clean the private key (remove any whitespace, newlines, 0x prefix)
+    let cleanKey = BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY.trim();
+    if (cleanKey.startsWith('0x')) {
+      cleanKey = cleanKey.substring(2);
+      console.log('   Removed 0x prefix from private key');
+    }
+    console.log('   Cleaned key length:', cleanKey.length);
+
+    // Parse private key - try multiple formats
     let privateKey;
-    try {
-      // Most Hedera accounts use ED25519 keys
-      privateKey = PrivateKey.fromStringED25519(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY);
-      console.log('✅ Private key parsed as ED25519');
-    } catch (ed25519Error) {
-      console.log('⚠️ ED25519 parsing failed, trying ECDSA...');
+
+    // Try 1: DER format (starts with 302e)
+    if (cleanKey.startsWith('302e')) {
       try {
-        privateKey = PrivateKey.fromStringECDSA(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY);
+        privateKey = PrivateKey.fromStringDer(cleanKey);
+        console.log('✅ Private key parsed as DER format');
+      } catch (derError) {
+        console.log('⚠️ DER parsing failed:', derError.message);
+      }
+    }
+
+    // Try 2: ED25519 hex format (64 chars)
+    if (!privateKey) {
+      try {
+        privateKey = PrivateKey.fromStringED25519(cleanKey);
+        console.log('✅ Private key parsed as ED25519');
+      } catch (ed25519Error) {
+        console.log('⚠️ ED25519 parsing failed:', ed25519Error.message);
+      }
+    }
+
+    // Try 3: ECDSA hex format
+    if (!privateKey) {
+      try {
+        privateKey = PrivateKey.fromStringECDSA(cleanKey);
         console.log('✅ Private key parsed as ECDSA');
       } catch (ecdsaError) {
-        console.error('❌ Failed to parse private key as ED25519 or ECDSA');
-        throw new Error('Invalid private key format. Must be hex-encoded ED25519 or ECDSA key.');
+        console.log('⚠️ ECDSA parsing failed:', ecdsaError.message);
+      }
+    }
+
+    // Try 4: Generic fromString (last resort)
+    if (!privateKey) {
+      try {
+        privateKey = PrivateKey.fromString(cleanKey);
+        console.log('✅ Private key parsed with generic fromString');
+      } catch (genericError) {
+        console.error('❌ All private key parsing methods failed');
+        throw new Error('Invalid private key format. Tried DER, ED25519, ECDSA, and generic parsing.');
       }
     }
 
