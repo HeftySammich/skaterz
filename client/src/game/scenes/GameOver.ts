@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import walletService from '../../services/wallet';
 
 export default class GameOver extends Phaser.Scene {
   private finalScore = 0;
@@ -7,8 +8,9 @@ export default class GameOver extends Phaser.Scene {
   private cansCollected = 0;
   private starsCollected = 0;
   private enemiesDefeated = 0;
-  private selectedOption = 0; // 0 = Play Again, 1 = Main Menu
+  private selectedOption = 0; // 0 = Claim STAR (if stars > 0), 1 = Play Again, 2 = Main Menu
   private isNewHighScore = false;
+  private claimStarText?: Phaser.GameObjects.Text;
   private playAgainText?: Phaser.GameObjects.Text;
   private mainMenuText?: Phaser.GameObjects.Text;
   private selector?: Phaser.GameObjects.Text;
@@ -22,6 +24,8 @@ export default class GameOver extends Phaser.Scene {
   private hasSavedScore = false;
   private namePromptText?: Phaser.GameObjects.Text;
   private instructionText?: Phaser.GameObjects.Text;
+  private isClaimingReward = false;
+  private hasClaimedReward = false;
 
   constructor() {
     super('GameOver');
@@ -330,18 +334,34 @@ export default class GameOver extends Phaser.Scene {
     if (this.playAgainText || this.mainMenuText) {
       return;
     }
-    
-    // Menu options - positioned higher since no name input
-    this.playAgainText = this.add.text(320, 760, 'PLAY AGAIN', {
+
+    let currentY = 720;
+
+    // Show "CLAIM STAR" option only if stars were collected
+    if (this.starsCollected > 0) {
+      this.claimStarText = this.add.text(320, currentY, 'CLAIM STAR', {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '20px',
+        color: '#ffff00',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+      this.claimStarText.setShadow(2, 2, '#000000', 3, true, true);
+      currentY += 40;
+    }
+
+    // Menu options
+    this.playAgainText = this.add.text(320, currentY, 'PLAY AGAIN', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
-      color: '#00ff00',
+      color: this.starsCollected > 0 ? '#ffffff' : '#00ff00',
       stroke: '#000000',
       strokeThickness: 3
     }).setOrigin(0.5);
     this.playAgainText.setShadow(2, 2, '#000000', 3, true, true);
-    
-    this.mainMenuText = this.add.text(320, 800, 'MAIN MENU', {
+    currentY += 40;
+
+    this.mainMenuText = this.add.text(320, currentY, 'MAIN MENU', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px',
       color: '#ffffff',
@@ -349,9 +369,10 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
     this.mainMenuText.setShadow(2, 2, '#000000', 3, true, true);
-    
+
     // Selection indicator
-    this.selector = this.add.text(200, 760, '>', {
+    const selectorY = this.starsCollected > 0 ? 720 : 720;
+    this.selector = this.add.text(200, selectorY, '>', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '24px',
       color: '#ffff00',
@@ -359,46 +380,86 @@ export default class GameOver extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
     this.selector.setShadow(2, 2, '#000000', 3, true, true);
-    
+
     this.updateSelector();
     this.setupMenuInteraction();
   }
   
   updateSelector() {
     if (!this.selector || !this.playAgainText || !this.mainMenuText) return;
-    
-    if (this.selectedOption === 0) {
-      this.selector.setY(760);
-      this.playAgainText.setColor('#00ff00');
-      this.mainMenuText.setColor('#ffffff');
+
+    const hasClaimOption = this.starsCollected > 0 && this.claimStarText;
+
+    if (hasClaimOption) {
+      // With CLAIM STAR option: 0 = Claim, 1 = Play Again, 2 = Main Menu
+      if (this.selectedOption === 0) {
+        this.selector.setY(720);
+        this.claimStarText!.setColor('#00ff00');
+        this.playAgainText.setColor('#ffffff');
+        this.mainMenuText.setColor('#ffffff');
+      } else if (this.selectedOption === 1) {
+        this.selector.setY(760);
+        this.claimStarText!.setColor('#ffff00');
+        this.playAgainText.setColor('#00ff00');
+        this.mainMenuText.setColor('#ffffff');
+      } else {
+        this.selector.setY(800);
+        this.claimStarText!.setColor('#ffff00');
+        this.playAgainText.setColor('#ffffff');
+        this.mainMenuText.setColor('#00ff00');
+      }
     } else {
-      this.selector.setY(800);
-      this.playAgainText.setColor('#ffffff');
-      this.mainMenuText.setColor('#00ff00');
+      // Without CLAIM STAR option: 0 = Play Again, 1 = Main Menu
+      if (this.selectedOption === 0) {
+        this.selector.setY(720);
+        this.playAgainText.setColor('#00ff00');
+        this.mainMenuText.setColor('#ffffff');
+      } else {
+        this.selector.setY(760);
+        this.playAgainText.setColor('#ffffff');
+        this.mainMenuText.setColor('#00ff00');
+      }
     }
   }
   
   setupMenuInteraction() {
+    // Touch/click handling for CLAIM STAR option
+    if (this.claimStarText) {
+      this.claimStarText.setInteractive({ useHandCursor: true });
+
+      this.claimStarText.on('pointerdown', () => {
+        this.claimStarRewards();
+      });
+
+      this.claimStarText.on('pointerover', () => {
+        this.selectedOption = 0;
+        this.updateSelector();
+      });
+    }
+
     // Touch/click handling for menu options
     if (this.playAgainText && this.mainMenuText) {
       this.playAgainText.setInteractive({ useHandCursor: true });
       this.mainMenuText.setInteractive({ useHandCursor: true });
-      
+
+      const playAgainOption = this.starsCollected > 0 ? 1 : 0;
+      const mainMenuOption = this.starsCollected > 0 ? 2 : 1;
+
       this.playAgainText.on('pointerdown', () => {
         this.scene.start('Game');
       });
-      
+
       this.playAgainText.on('pointerover', () => {
-        this.selectedOption = 0;
+        this.selectedOption = playAgainOption;
         this.updateSelector();
       });
-      
+
       this.mainMenuText.on('pointerdown', () => {
         this.scene.start('MainMenu');
       });
-      
+
       this.mainMenuText.on('pointerover', () => {
-        this.selectedOption = 1;
+        this.selectedOption = mainMenuOption;
         this.updateSelector();
       });
     }
@@ -410,27 +471,43 @@ export default class GameOver extends Phaser.Scene {
     this.downKey = this.input.keyboard?.addKey('DOWN');
     this.spaceKey = this.input.keyboard?.addKey('SPACE');
     this.enterKey = this.input.keyboard?.addKey('ENTER');
-    
+
+    const maxOption = this.starsCollected > 0 ? 2 : 1;
+
     // Handle menu navigation
     this.input.keyboard?.on('keydown', (event: any) => {
       if (event.key === 'ArrowUp') {
-        this.selectedOption = 0;
+        this.selectedOption = Math.max(0, this.selectedOption - 1);
         this.updateSelector();
       } else if (event.key === 'ArrowDown') {
-        this.selectedOption = 1;
+        this.selectedOption = Math.min(maxOption, this.selectedOption + 1);
         this.updateSelector();
       } else if (event.key === ' ' || event.key === 'Enter') {
         this.selectOption();
       }
     });
   }
-  
-  
+
+
   selectOption() {
-    if (this.selectedOption === 0) {
-      this.scene.start('Game');
+    const hasClaimOption = this.starsCollected > 0;
+
+    if (hasClaimOption) {
+      // With CLAIM STAR: 0 = Claim, 1 = Play Again, 2 = Main Menu
+      if (this.selectedOption === 0) {
+        this.claimStarRewards();
+      } else if (this.selectedOption === 1) {
+        this.scene.start('Game');
+      } else {
+        this.scene.start('MainMenu');
+      }
     } else {
-      this.scene.start('MainMenu');
+      // Without CLAIM STAR: 0 = Play Again, 1 = Main Menu
+      if (this.selectedOption === 0) {
+        this.scene.start('Game');
+      } else {
+        this.scene.start('MainMenu');
+      }
     }
   }
 
@@ -440,5 +517,116 @@ export default class GameOver extends Phaser.Scene {
 
   setHighScore(score: number): void {
     localStorage.setItem('zombieSkaterHighScore', score.toString());
+  }
+
+  /**
+   * Claim STAR token rewards
+   * Handles token association if needed, then sends tokens from treasury
+   */
+  async claimStarRewards() {
+    if (this.isClaimingReward || this.hasClaimedReward) {
+      console.log('⚠️ Already claiming or claimed rewards');
+      return;
+    }
+
+    if (this.starsCollected <= 0) {
+      console.log('⚠️ No stars to claim');
+      return;
+    }
+
+    this.isClaimingReward = true;
+
+    try {
+      // Step 1: Check wallet connection
+      const walletState = walletService.getState();
+      if (!walletState.isConnected || !walletState.accountId) {
+        this.showMessage('❌ Connect wallet in Options Menu first!', '#ff6666');
+        this.isClaimingReward = false;
+        return;
+      }
+
+      const accountId = walletState.accountId;
+
+      // Step 2: Check STAR token association
+      this.showMessage('🔍 Checking STAR token association...', '#ffff00');
+      const hasStarToken = await walletService.checkStarTokenAssociation();
+
+      if (!hasStarToken) {
+        // Step 3a: Not associated - prompt association
+        this.showMessage('🔗 Associating STAR token...', '#ffff00');
+
+        try {
+          await walletService.associateStarToken();
+          this.showMessage('✅ STAR token associated!', '#00ff00');
+
+          // Wait a moment for association to complete
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (error) {
+          console.error('❌ Failed to associate STAR token:', error);
+          this.showMessage('❌ Token association failed. Try again.', '#ff6666');
+          this.isClaimingReward = false;
+          return;
+        }
+      }
+
+      // Step 3b: Send tokens from treasury via backend API
+      this.showMessage(`💫 Sending ${this.starsCollected} STAR tokens...`, '#ffff00');
+
+      const response = await fetch('/api/rewards/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: accountId,
+          amount: this.starsCollected
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to claim rewards');
+      }
+
+      const result = await response.json();
+      console.log('✅ STAR tokens claimed!', result);
+
+      this.showMessage(`✅ ${this.starsCollected} STAR tokens claimed!`, '#00ff00');
+      this.hasClaimedReward = true;
+
+      // Hide the CLAIM STAR option after successful claim
+      if (this.claimStarText) {
+        this.claimStarText.destroy();
+        this.claimStarText = undefined;
+        this.selectedOption = 0; // Reset to Play Again
+        this.updateSelector();
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to claim STAR rewards:', error);
+      this.showMessage('❌ Failed to claim rewards. Try again.', '#ff6666');
+    } finally {
+      this.isClaimingReward = false;
+    }
+  }
+
+  /**
+   * Show a temporary message to the user
+   */
+  private showMessage(message: string, color: string) {
+    // Remove any existing message
+    const existingMessage = this.children.getByName('claimMessage') as Phaser.GameObjects.Text;
+    if (existingMessage) {
+      existingMessage.destroy();
+    }
+
+    // Create new message
+    const messageText = this.add.text(320, 680, message, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
+      color: color,
+      stroke: '#000000',
+      strokeThickness: 3,
+      align: 'center'
+    }).setOrigin(0.5).setName('claimMessage');
+    messageText.setShadow(2, 2, '#000000', 3, true, true);
   }
 }
