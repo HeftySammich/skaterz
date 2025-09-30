@@ -50,31 +50,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // STAR token rewards API endpoint
   app.post('/api/rewards/claim', async (req, res) => {
+    console.log('🎮 ========== REWARD CLAIM REQUEST ==========');
+    console.log('Request body:', req.body);
+
     try {
       const { accountId, amount } = req.body;
 
       // Validation
       if (!accountId || !amount) {
+        console.log('❌ Validation failed: Missing accountId or amount');
         return res.status(400).json({ error: 'Account ID and amount are required' });
       }
 
       if (!isValidAccountId(accountId)) {
+        console.log('❌ Validation failed: Invalid account ID format:', accountId);
         return res.status(400).json({ error: 'Invalid Hedera account ID format' });
       }
 
       if (typeof amount !== 'number' || amount <= 0) {
+        console.log('❌ Validation failed: Invalid amount:', amount);
         return res.status(400).json({ error: 'Amount must be a positive number' });
       }
 
       // Anti-cheat: Maximum reward per claim (adjust as needed)
       if (amount > 1000) {
+        console.log('❌ Validation failed: Amount too large:', amount);
         return res.status(400).json({ error: 'Amount exceeds maximum allowed per claim' });
       }
 
-      console.log(`🎮 Reward claim request: ${amount} STAR tokens to ${accountId}`);
+      console.log(`✅ Validation passed: ${amount} STAR tokens to ${accountId}`);
+      console.log('🏦 Calling treasury service...');
 
       // Send tokens from treasury
       const transactionId = await sendStarTokensFromTreasury(accountId, amount);
+
+      console.log('✅ Reward claim successful!');
+      console.log('========================================');
 
       res.json({
         success: true,
@@ -83,9 +94,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         accountId
       });
 
-    } catch (error) {
-      console.error('❌ Failed to process reward claim:', error);
-      res.status(500).json({ error: 'Failed to send reward tokens' });
+    } catch (error: any) {
+      console.error('❌ ========== REWARD CLAIM FAILED ==========');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      console.error('========================================');
+
+      res.status(500).json({
+        error: 'Failed to send reward tokens',
+        details: error?.message || 'Unknown error'
+      });
     }
   });
 

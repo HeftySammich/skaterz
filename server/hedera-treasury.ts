@@ -12,18 +12,35 @@ import { BLOCKCHAIN_CONFIG } from '../shared/environment';
  * This client has access to the treasury private key and can send tokens
  */
 function getTreasuryClient(): Client {
+  console.log('🔑 Initializing treasury client...');
+  console.log('   Treasury Account ID:', BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID);
+  console.log('   Private Key Set:', !!BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY);
+  console.log('   Private Key Length:', BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY?.length || 0);
+
   if (!BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY) {
+    console.error('❌ HEDERA_TREASURY_PRIVATE_KEY environment variable is missing!');
     throw new Error('HEDERA_TREASURY_PRIVATE_KEY environment variable is required');
   }
-  
-  const client = Client.forMainnet();
-  
-  client.setOperator(
-    AccountId.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID),
-    PrivateKey.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY)
-  );
-  
-  return client;
+
+  if (BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY.length === 0) {
+    console.error('❌ HEDERA_TREASURY_PRIVATE_KEY environment variable is empty!');
+    throw new Error('HEDERA_TREASURY_PRIVATE_KEY environment variable is empty');
+  }
+
+  try {
+    const client = Client.forMainnet();
+
+    client.setOperator(
+      AccountId.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID),
+      PrivateKey.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_PRIVATE_KEY)
+    );
+
+    console.log('✅ Treasury client initialized successfully');
+    return client;
+  } catch (error) {
+    console.error('❌ Failed to initialize treasury client:', error);
+    throw error;
+  }
 }
 
 /**
@@ -33,14 +50,19 @@ function getTreasuryClient(): Client {
  * @returns Transaction ID as string
  */
 export async function sendStarTokensFromTreasury(
-  receiverAccountId: string, 
+  receiverAccountId: string,
   amount: number
 ): Promise<string> {
   console.log(`🏦 Treasury: Sending ${amount} STAR tokens to ${receiverAccountId}`);
-  
-  const client = getTreasuryClient();
-  
+  console.log(`   STAR Token ID: ${BLOCKCHAIN_CONFIG.STAR_TOKEN_ID}`);
+  console.log(`   Treasury Account: ${BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID}`);
+
+  let client;
+
   try {
+    client = getTreasuryClient();
+
+    console.log('📝 Creating token transfer transaction...');
     const transaction = new TransferTransaction()
       .addTokenTransfer(
         TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
@@ -53,22 +75,30 @@ export async function sendStarTokensFromTreasury(
         amount
       )
       .setTransactionMemo(`Zombie Skaterz reward: ${amount} STAR`);
-    
+
+    console.log('🚀 Executing transaction...');
     const response = await transaction.execute(client);
+
+    console.log('⏳ Waiting for receipt...');
     const receipt = await response.getReceipt(client);
-    
+
     const transactionId = response.transactionId.toString();
-    
+
     console.log(`✅ Treasury: STAR tokens sent successfully!`);
     console.log(`   Transaction ID: ${transactionId}`);
     console.log(`   Status: ${receipt.status.toString()}`);
-    
+
     return transactionId;
   } catch (error) {
-    console.error('❌ Treasury: Failed to send STAR tokens:', error);
+    console.error('❌ Treasury: Failed to send STAR tokens:');
+    console.error('   Error type:', error?.constructor?.name);
+    console.error('   Error message:', error?.message);
+    console.error('   Full error:', error);
     throw error;
   } finally {
-    client.close();
+    if (client) {
+      client.close();
+    }
   }
 }
 
