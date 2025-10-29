@@ -1,4 +1,6 @@
 export class Splash4 extends Phaser.Scene {
+  private skipTimer?: Phaser.Time.TimerEvent;
+  
   constructor() {
     super({ key: 'Splash4' });
   }
@@ -15,8 +17,30 @@ export class Splash4 extends Phaser.Scene {
     slimeImage.setScale(0.5);
 
     // Auto-advance after 2 seconds
-    this.time.delayedCall(2000, () => {
+    this.skipTimer = this.time.delayedCall(2000, () => {
       this.scene.start('Splash5');
     });
+    
+    // Enable skip functionality - any key press
+    this.input.keyboard?.on('keydown', () => {
+      this.skipToNext();
+    });
+    
+    // Enable skip functionality - screen tap/click
+    this.input.on('pointerdown', () => {
+      this.skipToNext();
+    });
+  }
+  
+  skipToNext() {
+    // Cancel the auto-advance timer
+    if (this.skipTimer) {
+      this.skipTimer.destroy();
+    }
+    // Remove input listeners to prevent multiple triggers
+    this.input.keyboard?.removeAllListeners();
+    this.input.removeAllListeners();
+    // Go to next scene
+    this.scene.start('Splash5');
   }
 }

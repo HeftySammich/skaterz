@@ -7,6 +7,9 @@ export interface ComboState {
   startScore: number;
   comboScorePoints: number;
   lastEventTime: number;
+  obstaclesClearedInTrick: number;
+  starsCollectedDuringCombo: number;
+  trickObstacles: string[];
 }
 
 export interface ComboEvents {
@@ -23,7 +26,10 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
     multiplier: 0,
     startScore: 0,
     comboScorePoints: 0,
-    lastEventTime: 0
+    lastEventTime: 0,
+    obstaclesClearedInTrick: 0,
+    starsCollectedDuringCombo: 0,
+    trickObstacles: []
   };
 
   constructor(scene: Phaser.Scene) {
@@ -39,18 +45,27 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
       multiplier: 0,
       startScore: 0,
       comboScorePoints: 0,
-      lastEventTime: 0
+      lastEventTime: 0,
+      obstaclesClearedInTrick: 0,
+      starsCollectedDuringCombo: 0,
+      trickObstacles: []
     };
   }
 
-  registerTrick(currentScore: number, isGrounded: boolean): void {
+  registerTrick(currentScore: number, isGrounded: boolean, obstacleName?: string): void {
     if (isGrounded) {
       console.log('[COMBO] Trick ignored - player is grounded');
       return;
     }
 
+    // Track obstacles cleared in this trick
+    if (obstacleName) {
+      this.state.trickObstacles.push(obstacleName);
+      this.state.obstaclesClearedInTrick++;
+    }
+
     this.registerAirEvent(currentScore);
-    console.log(`[COMBO] Trick registered - airEventCount: ${this.state.airEventCount}`);
+    console.log(`[COMBO] Trick registered - airEventCount: ${this.state.airEventCount}, obstacles: ${this.state.obstaclesClearedInTrick}`);
   }
 
   registerEnemyKill(currentScore: number, isGrounded: boolean): void {
@@ -64,34 +79,52 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
   }
 
   private registerAirEvent(currentScore: number): void {
-    const currentTime = this.scene.time.now;
-    
-    if (this.state.status === 'inactive') {
-      // Start pending combo
-      this.state.status = 'pending';
-      this.state.startScore = currentScore;
-      this.state.airEventCount = 1;
-      this.state.lastEventTime = currentTime;
-      console.log('[COMBO] Started pending combo');
-    } else if (this.state.status === 'pending') {
-      this.state.airEventCount++;
-      this.state.lastEventTime = currentTime;
+    try {
+      const currentTime = this.scene.time.now;
       
-      if (this.state.airEventCount >= 3) {
-        // Activate combo - multiplier starts at 3 for the first 3 events
-        this.state.status = 'active';
-        this.state.multiplier = 3;
-        console.log('[COMBO] COMBO ACTIVATED! Multiplier: 3');
-        this.emit('comboActivated', { multiplier: this.state.multiplier });
+      if (this.state.status === 'inactive') {
+        // Start pending combo
+        this.state.status = 'pending';
+        this.state.startScore = currentScore;
+        this.state.airEventCount = 1;
+        this.state.lastEventTime = currentTime;
+        console.log('[COMBO] Started pending combo');
+      } else if (this.state.status === 'pending') {
+        this.state.airEventCount++;
+        this.state.lastEventTime = currentTime;
+        
+        if (this.state.airEventCount >= 3) {
+          // Activate combo - bonus starts at 3 for the first 3 events
+          this.state.status = 'active';
+          this.state.multiplier = 3;
+          console.log('[COMBO] COMBO ACTIVATED! Bonus: +3');
+          console.log('[DEBUG COMBO] Combo activated - state:', this.state);
+          
+          try {
+            this.emit('comboActivated', { multiplier: this.state.multiplier });
+            console.log('[DEBUG COMBO] Combo activated event emitted successfully');
+          } catch (emitError) {
+            console.error('[DEBUG COMBO] Error emitting comboActivated:', emitError);
+          }
+        }
+      } else if (this.state.status === 'active') {
+        // Add 2 bonus stars for each additional event
+        this.state.multiplier += 2;
+        this.state.lastEventTime = currentTime;
+        console.log(`[COMBO] Combo updated - bonus: +${this.state.multiplier}`);
+        
+        const scorePoints = currentScore - this.state.startScore;
+        try {
+          this.emit('comboUpdated', { multiplier: this.state.multiplier, scorePoints });
+          console.log('[DEBUG COMBO] Combo updated event emitted successfully');
+        } catch (emitError) {
+          console.error('[DEBUG COMBO] Error emitting comboUpdated:', emitError);
+        }
       }
-    } else if (this.state.status === 'active') {
-      // Increment multiplier for each additional event
-      this.state.multiplier++;
-      this.state.lastEventTime = currentTime;
-      console.log(`[COMBO] Combo updated - multiplier: ${this.state.multiplier}`);
-      
-      const scorePoints = currentScore - this.state.startScore;
-      this.emit('comboUpdated', { multiplier: this.state.multiplier, scorePoints });
+    } catch (error) {
+      console.error('[DEBUG COMBO] Critical error in registerAirEvent:', error);
+      // Reset to safe state to prevent freeze
+      this.resetCombo();
     }
   }
 
@@ -114,31 +147,45 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
   }
 
   private handleLanding(currentScore: number): number {
-    if (this.state.status === 'inactive') {
+    try {
+      if (this.state.status === 'inactive') {
+        return 0;
+      }
+
+      let starsEarned = 0;
+      
+      if (this.state.status === 'active') {
+        // Calculate stars: add bonus stars to base stars (changed from multiplication)
+        this.state.comboScorePoints = currentScore - this.state.startScore;
+        const baseStars = this.state.starsCollectedDuringCombo; // Only actual stars collected, no score conversion
+        const bonusStars = this.state.multiplier; // Now used as bonus stars instead of multiplier
+        starsEarned = baseStars + bonusStars;
+        
+        console.log(`[COMBO] COMBO COMPLETED! Score Points: ${this.state.comboScorePoints}, Stars Collected: ${this.state.starsCollectedDuringCombo}, Base Stars: ${baseStars}, Bonus Stars: +${bonusStars}, Total Stars: ${starsEarned}`);
+        console.log('[DEBUG COMBO] Combo ending - state before reset:', this.state);
+        
+        try {
+          this.emit('comboEnded', {
+            multiplier: this.state.multiplier,
+            scorePoints: this.state.comboScorePoints,
+            starsEarned
+          });
+          console.log('[DEBUG COMBO] Combo ended event emitted successfully');
+        } catch (emitError) {
+          console.error('[DEBUG COMBO] Error emitting comboEnded:', emitError);
+        }
+      } else {
+        console.log('[COMBO] Landing ended pending combo (less than 3 events)');
+      }
+
+      this.resetCombo();
+      return starsEarned;
+    } catch (error) {
+      console.error('[DEBUG COMBO] Critical error in handleLanding:', error);
+      // Reset to safe state
+      this.resetCombo();
       return 0;
     }
-
-    let starsEarned = 0;
-    
-    if (this.state.status === 'active') {
-      // Calculate stars: 1% of score points earned during combo, then apply multiplier
-      this.state.comboScorePoints = currentScore - this.state.startScore;
-      const baseStars = Math.floor(this.state.comboScorePoints * 0.01); // 1% of score points
-      starsEarned = baseStars * this.state.multiplier;
-      
-      console.log(`[COMBO] COMBO COMPLETED! Score Points: ${this.state.comboScorePoints}, Base Stars (1%): ${baseStars}, Multiplier: ${this.state.multiplier}, Total Stars: ${starsEarned}`);
-      
-      this.emit('comboEnded', {
-        multiplier: this.state.multiplier,
-        scorePoints: this.state.comboScorePoints,
-        starsEarned
-      });
-    } else {
-      console.log('[COMBO] Landing ended pending combo (less than 3 events)');
-    }
-
-    this.resetCombo();
-    return starsEarned;
   }
 
   getComboState(): Readonly<ComboState> {
@@ -155,6 +202,25 @@ export class ComboTracker extends Phaser.Events.EventEmitter {
 
   hasCombo(): boolean {
     return this.state.status !== 'inactive';
+  }
+
+  // Track stars collected during an active combo
+  addStarsToCombo(stars: number): void {
+    if (this.state.status === 'active' || this.state.status === 'pending') {
+      this.state.starsCollectedDuringCombo += stars;
+      console.log(`[COMBO] Added ${stars} stars to combo. Total: ${this.state.starsCollectedDuringCombo}`);
+    }
+  }
+
+  // Get the obstacles cleared in current trick for display
+  getTrickObstacles(): string[] {
+    return [...this.state.trickObstacles];
+  }
+
+  // Clear trick obstacles after displaying them
+  clearTrickObstacles(): void {
+    this.state.trickObstacles = [];
+    this.state.obstaclesClearedInTrick = 0;
   }
 }
 

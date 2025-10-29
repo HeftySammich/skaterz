@@ -27,6 +27,11 @@ export default class Leaderboard extends Phaser.Scene {
     const bg = this.add.image(320, 480, 'graffiti_bg');
     bg.setDisplaySize(640, 960);
     
+    // Add semi-transparent black rectangle for leaderboard area
+    const leaderboardBg = this.add.graphics();
+    leaderboardBg.fillStyle(0x000000, 0.6); // Black with 60% opacity
+    leaderboardBg.fillRoundedRect(50, 170, 540, 620, 15);
+    
     // Title
     const titleText = this.add.text(320, 120, 'LEADERBOARD', {
       fontSize: '28px',

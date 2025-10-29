@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { walletService, type WalletState } from '../services/wallet';
-import { BLOCKCHAIN_CONFIG } from '../../../shared/environment';
+import { BLOCKCHAIN_CONFIG } from '../config/blockchain';
 
 export interface UseWalletReturn extends WalletState {
   // Connection methods

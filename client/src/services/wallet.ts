@@ -22,7 +22,7 @@ import {
   TokenNftInfoQuery,
   Client
 } from '@hashgraph/sdk';
-import { BLOCKCHAIN_CONFIG } from '../../../shared/environment';
+import { BLOCKCHAIN_CONFIG } from '../config/blockchain';
 
 export interface WalletState {
   isConnected: boolean;

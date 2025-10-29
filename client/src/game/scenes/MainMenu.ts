@@ -27,11 +27,6 @@ export class MainMenu extends Phaser.Scene {
   }
 
   create() {
-    // Emit scene change event for React components
-    window.dispatchEvent(new CustomEvent('sceneChanged', {
-      detail: { scene: 'MainMenu' }
-    }));
-
     const cam = this.cameras.main;
     
     // CRITICAL: Stop ALL sounds first to prevent duplicates

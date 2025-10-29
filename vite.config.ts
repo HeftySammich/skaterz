@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 import glsl from "vite-plugin-glsl";
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,7 +15,20 @@ const isLocal = !isReplit && !isRailway;
 
 // Conditionally import Replit plugin only when needed
 const getPlugins = async () => {
-  const plugins = [react(), glsl()];
+  const plugins = [
+    react(),
+    glsl(),
+    nodePolyfills({
+      // Enable polyfills for specific globals and modules
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+      // Enable polyfills for specific modules
+      protocolImports: true,
+    })
+  ];
 
   if (isReplit) {
     try {
