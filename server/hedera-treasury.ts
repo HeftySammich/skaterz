@@ -7,6 +7,9 @@ import {
 } from '@hashgraph/sdk';
 import { BLOCKCHAIN_CONFIG } from '../shared/environment';
 
+// STAR token has 8 decimals (confirmed)
+const STAR_TOKEN_DECIMALS = 8;
+
 /**
  * Initialize Hedera client with treasury credentials (server-side only)
  * This client has access to the treasury private key and can send tokens
@@ -98,7 +101,7 @@ function getTreasuryClient(): Client {
 /**
  * Send STAR tokens from treasury to a player's account
  * @param receiverAccountId - The player's Hedera account ID (e.g., "0.0.9172674")
- * @param amount - Number of STAR tokens to send
+ * @param amount - Number of STAR tokens to send (in whole tokens, e.g., 38)
  * @returns Transaction ID as string
  */
 export async function sendStarTokensFromTreasury(
@@ -114,17 +117,23 @@ export async function sendStarTokensFromTreasury(
   try {
     client = getTreasuryClient();
 
+    // Convert whole tokens to smallest units (8 decimals)
+    // Example: 38 STAR × 10^8 = 3,800,000,000 smallest units
+    const amountInSmallestUnits = Math.floor(amount * Math.pow(10, STAR_TOKEN_DECIMALS));
+    console.log(`   Amount in whole tokens: ${amount} STAR`);
+    console.log(`   Amount in smallest units: ${amountInSmallestUnits} (with ${STAR_TOKEN_DECIMALS} decimals)`);
+
     console.log('📝 Creating token transfer transaction...');
     const transaction = new TransferTransaction()
       .addTokenTransfer(
         TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
         AccountId.fromString(BLOCKCHAIN_CONFIG.HEDERA_TREASURY_ACCOUNT_ID),
-        -amount
+        -amountInSmallestUnits
       )
       .addTokenTransfer(
         TokenId.fromString(BLOCKCHAIN_CONFIG.STAR_TOKEN_ID),
         AccountId.fromString(receiverAccountId),
-        amount
+        amountInSmallestUnits
       )
       .setTransactionMemo(`Zombie Skaterz reward: ${amount} STAR`);
 
@@ -139,6 +148,7 @@ export async function sendStarTokensFromTreasury(
     console.log(`✅ Treasury: STAR tokens sent successfully!`);
     console.log(`   Transaction ID: ${transactionId}`);
     console.log(`   Status: ${receipt.status.toString()}`);
+    console.log(`   Amount sent: ${amount} STAR (${amountInSmallestUnits} smallest units)`);
 
     return transactionId;
   } catch (error) {
@@ -162,4 +172,3 @@ export function isValidAccountId(accountId: string): boolean {
   const accountIdRegex = /^0\.0\.\d+$/;
   return accountIdRegex.test(accountId);
 }
-
