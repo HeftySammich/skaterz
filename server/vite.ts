@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { type Server } from "http";
 import viteConfig from "../vite.config";
+import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
 
@@ -28,24 +29,14 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true,
   };
 
-  // Resolve the vite config (it's an async function)
-  const resolvedConfig = await viteConfig;
-
-  // Ensure root path is correctly resolved from server directory
-  const clientRoot = path.resolve(__dirname, "..", "client");
-
   const vite = await createViteServer({
-    ...resolvedConfig,
-    root: clientRoot,  // Explicitly set root to client directory
+    ...viteConfig,
     configFile: false,
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        // Only exit on critical errors, not pre-transform warnings
-        if (!msg.includes('Pre-transform error')) {
-          process.exit(1);
-        }
+        process.exit(1);
       },
     },
     server: serverOptions,
@@ -64,8 +55,12 @@ export async function setupVite(app: Express, server: Server) {
         "index.html",
       );
 
-      // Read and transform the HTML template
+      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      template = template.replace(
+        `src="/src/main.tsx"`,
+        `src="/src/main.tsx?v=${nanoid()}"`,
+      );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {

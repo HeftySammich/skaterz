@@ -1,49 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path, { dirname } from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
 import glsl from "vite-plugin-glsl";
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Environment detection
-const isReplit = process.env.REPL_ID !== undefined;
-const isRailway = process.env.RAILWAY_ENVIRONMENT !== undefined;
-const isLocal = !isReplit && !isRailway;
-
-// Conditionally import Replit plugin only when needed
-const getPlugins = async () => {
-  const plugins = [
+export default defineConfig({
+  plugins: [
     react(),
-    glsl(),
-    nodePolyfills({
-      // Enable polyfills for specific globals and modules
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true,
-      },
-      // Enable polyfills for specific modules
-      protocolImports: true,
-    })
-  ];
-
-  if (isReplit) {
-    try {
-      const { default: runtimeErrorOverlay } = await import("@replit/vite-plugin-runtime-error-modal");
-      plugins.push(runtimeErrorOverlay());
-    } catch (error) {
-      console.warn("Replit plugin not available, continuing without it");
-    }
-  }
-
-  return plugins;
-};
-
-export default defineConfig(async () => ({
-  plugins: await getPlugins(),
+    // Only use Replit plugin on Replit
+    ...(process.env.REPL_ID ? [runtimeErrorOverlay()] : []),
+    glsl(), // Add GLSL shader support
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
@@ -57,4 +28,4 @@ export default defineConfig(async () => ({
   },
   // Add support for large models and audio files
   assetsInclude: ["**/*.gltf", "**/*.glb", "**/*.mp3", "**/*.ogg", "**/*.wav"],
-}));
+});

@@ -1,7 +1,7 @@
 export class OptionsMenu extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private menuMusic: Phaser.Sound.BaseSound | null = null;
-  private selectedOption = 0; // 0 = How to Play, 1 = Leaderboard, 2 = Back
+  private selectedOption = 0; // 0 = Connect Wallet, 1 = How to Play, 2 = Leaderboard, 3 = Back
   private menuItems: Phaser.GameObjects.Text[] = [];
 
   constructor() {
@@ -14,14 +14,14 @@ export class OptionsMenu extends Phaser.Scene {
   }
 
   create() {
+    // Emit scene change event for React components
+    window.dispatchEvent(new CustomEvent('sceneChanged', {
+      detail: { scene: 'OptionsMenu' }
+    }));
+
     // Add graffiti background
     const bg = this.add.image(320, 480, 'graffiti_bg');
     bg.setDisplaySize(640, 960);
-    
-    // Add semi-transparent black rectangle for menu options
-    const menuBg = this.add.graphics();
-    menuBg.fillStyle(0x000000, 0.6); // Black with 60% opacity
-    menuBg.fillRoundedRect(80, 270, 480, 280, 15);
     
     // Title
     const titleText = this.add.text(320, 200, 'OPTIONS', {
@@ -35,8 +35,18 @@ export class OptionsMenu extends Phaser.Scene {
     titleText.setShadow(3, 3, '#000000', 5, true, true);
 
     // Menu options
-    const howToPlayText = this.add.text(320, 320, 'HOW TO PLAY', {
-      fontSize: '24px',
+    const connectWalletText = this.add.text(320, 300, 'CONNECT TO HEDERA', {
+      fontSize: '20px',
+      color: '#ffffff',
+      fontFamily: '"Press Start 2P", monospace',
+      align: 'center',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+    connectWalletText.setShadow(2, 2, '#000000', 3, true, true);
+
+    const howToPlayText = this.add.text(320, 360, 'HOW TO PLAY', {
+      fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -46,7 +56,7 @@ export class OptionsMenu extends Phaser.Scene {
     howToPlayText.setShadow(2, 2, '#000000', 3, true, true);
 
     const leaderboardText = this.add.text(320, 420, 'LEADERBOARD', {
-      fontSize: '24px',
+      fontSize: '20px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
       align: 'center',
@@ -55,7 +65,7 @@ export class OptionsMenu extends Phaser.Scene {
     }).setOrigin(0.5);
     leaderboardText.setShadow(2, 2, '#000000', 3, true, true);
 
-    const backText = this.add.text(320, 520, 'GO BACK', {
+    const backText = this.add.text(320, 480, 'GO BACK', {
       fontSize: '22px',
       color: '#ffffff',
       fontFamily: '"Press Start 2P", monospace',
@@ -64,12 +74,12 @@ export class OptionsMenu extends Phaser.Scene {
       strokeThickness: 2
     }).setOrigin(0.5);
     backText.setShadow(2, 2, '#000000', 3, true, true);
-    
+
     // Store menu items
-    this.menuItems = [howToPlayText, leaderboardText, backText];
+    this.menuItems = [connectWalletText, howToPlayText, leaderboardText, backText];
     
     // Selection indicator
-    const selector = this.add.text(150, 320, '>', {
+    const selector = this.add.text(120, 300, '>', {
       fontSize: '24px',
       color: '#ffff00',
       fontFamily: '"Press Start 2P", monospace',
@@ -77,22 +87,26 @@ export class OptionsMenu extends Phaser.Scene {
       strokeThickness: 3
     }).setOrigin(0.5);
     selector.setShadow(2, 2, '#000000', 3, true, true);
-    
+
     // Update selector position
     const updateSelector = () => {
       // Reset all colors with font preserved
+      connectWalletText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
       howToPlayText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
       leaderboardText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
       backText.setStyle({ color: '#ffffff', fontFamily: '"Press Start 2P", monospace' });
-      
+
       if (this.selectedOption === 0) {
-        selector.setY(320);
-        howToPlayText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
+        selector.setY(300);
+        connectWalletText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       } else if (this.selectedOption === 1) {
+        selector.setY(360);
+        howToPlayText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
+      } else if (this.selectedOption === 2) {
         selector.setY(420);
         leaderboardText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
-      } else {
-        selector.setY(520);
+      } else if (this.selectedOption === 3) {
+        selector.setY(480);
         backText.setStyle({ color: '#00ff00', fontFamily: '"Press Start 2P", monospace' });
       }
     };
@@ -100,12 +114,21 @@ export class OptionsMenu extends Phaser.Scene {
     updateSelector();
     
     // Make options interactive
+    connectWalletText.setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        this.connectWallet();
+      })
+      .on('pointerover', () => {
+        this.selectedOption = 0;
+        updateSelector();
+      });
+
     howToPlayText.setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('HowToPlay', { menuMusic: this.menuMusic });
       })
       .on('pointerover', () => {
-        this.selectedOption = 0;
+        this.selectedOption = 1;
         updateSelector();
       });
 
@@ -114,16 +137,16 @@ export class OptionsMenu extends Phaser.Scene {
         this.scene.start('Leaderboard', { menuMusic: this.menuMusic });
       })
       .on('pointerover', () => {
-        this.selectedOption = 1;
+        this.selectedOption = 2;
         updateSelector();
       });
-      
+
     backText.setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
         this.scene.start('MainMenu', { menuMusic: this.menuMusic });
       })
       .on('pointerover', () => {
-        this.selectedOption = 2;
+        this.selectedOption = 3;
         updateSelector();
       });
     
@@ -145,8 +168,10 @@ export class OptionsMenu extends Phaser.Scene {
     
     const selectOption = () => {
       if (this.selectedOption === 0) {
-        this.scene.start('HowToPlay', { menuMusic: this.menuMusic });
+        this.connectWallet();
       } else if (this.selectedOption === 1) {
+        this.scene.start('HowToPlay', { menuMusic: this.menuMusic });
+      } else if (this.selectedOption === 2) {
         this.scene.start('Leaderboard', { menuMusic: this.menuMusic });
       } else {
         this.scene.start('MainMenu', { menuMusic: this.menuMusic });
@@ -165,5 +190,14 @@ export class OptionsMenu extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.input.keyboard!.addKey('ESC'))) {
       this.scene.start('MainMenu', { menuMusic: this.menuMusic });
     }
+  }
+
+  private connectWallet() {
+    // Trigger wallet connection by dispatching a custom event
+    // The React wallet component will listen for this event
+    const walletEvent = new CustomEvent('openWalletModal', {
+      detail: { source: 'options-menu' }
+    });
+    window.dispatchEvent(walletEvent);
   }
 }
