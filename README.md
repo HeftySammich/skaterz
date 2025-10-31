@@ -141,7 +141,7 @@ npm run db:push
 - **Star Bonuses**: Combos convert score points into bonus stars
 - **Leaderboard**: Automatic score submission as "Player 1"
 
-### Blockchain Integration (Ready)
+### Hedera Hashgraph Integration (Ready)
 - Hedera SDK integration points configured
 - HashPack wallet connection infrastructure
 - NFT and token integration capabilities
