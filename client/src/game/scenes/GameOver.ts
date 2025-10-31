@@ -495,15 +495,18 @@ export default class GameOver extends Phaser.Scene {
   setHighScore(score: number): void {
     localStorage.setItem('zombieSkaterHighScore', score.toString());
   }
-
   async claimStarRewards() {
     if (this.hasClaimed) {
       console.log('🌟 Already claimed rewards this session');
       return;
     }
 
+    // Set flag IMMEDIATELY to prevent double-clicks
+    this.hasClaimed = true;
+
     if (this.starsCollected <= 0) {
       console.log('🌟 No stars to claim');
+      this.hasClaimed = false; // Reset if no stars
       return;
     }
 
@@ -563,7 +566,6 @@ export default class GameOver extends Phaser.Scene {
 
       if (response.ok && result.success) {
         console.log('✅ Successfully claimed STAR tokens!', result);
-        this.hasClaimed = true;
 
         // Update button text to show claimed
         if (this.claimStarText) {
