@@ -238,6 +238,10 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
+    // Emit scene change event for React components
+    window.dispatchEvent(new CustomEvent('sceneChanged', {
+      detail: { scene: 'Game' }
+    }));
     // Reset all game state variables
 // console.log('[DEBUG GAME INIT] Starting game scene...');
     this.gameOverTriggered = false;
