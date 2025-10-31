@@ -43,23 +43,6 @@ A retro-styled 2D endless runner game featuring a skateboarding zombie character
 - **Hedera Network**: Ready for NFT integration and decentralized features
 - **HashPack Wallet**: Wallet connection capability for future features
 
-## 📁 Project Structure
-
-```
-zombie-skater/
-├── client/                 # Frontend React application
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── game/          # Phaser game scenes and logic
-│   │   └── styles/        # Tailwind CSS styles
-│   └── public/
-│       └── assets/        # Game assets (sprites, sounds)
-├── server/                # Express.js backend
-├── shared/                # Shared TypeScript types
-├── attached_assets/       # Development assets and notes
-└── dist/                  # Build output directory
-```
-
 ## 🔧 Development Setup
 
 ### Prerequisites
@@ -158,49 +141,6 @@ npm run db:push
 - **Star Bonuses**: Combos convert score points into bonus stars
 - **Leaderboard**: Automatic score submission as "Player 1"
 
-## 🚀 Deployment
-
-### Build Process
-```bash
-# Build frontend and backend
-npm run build
-
-# Files are output to:
-# - dist/public/     (frontend static files)
-# - dist/index.js    (backend server bundle)
-```
-
-### Production Environment
-- **Node.js**: 18+ required
-- **Memory**: 512MB minimum recommended
-- **Storage**: ~50MB for application files
-- **Database**: PostgreSQL (optional with fallback to memory)
-
-### Environment Variables
-```bash
-NODE_ENV=production
-PORT=5000
-DATABASE_URL=postgresql://user:pass@host:5432/db  # Optional
-```
-
-## 📦 Key Dependencies
-
-### Core Framework
-- `react@18.3.1` - UI framework
-- `phaser@3.90.0` - Game engine
-- `express@4.21.2` - Web server
-- `typescript@5.6.3` - Type safety
-
-### Game Libraries  
-- `howler@2.2.4` - Audio management
-- `matter-js@0.20.0` - Physics simulation
-- `gsap@3.12.5` - Animations
-
-### Development Tools
-- `vite@5.4.19` - Build tool and dev server
-- `tailwindcss@3.4.14` - CSS framework
-- `drizzle-orm@0.39.1` - Database ORM
-
 ### Blockchain Integration (Ready)
 - Hedera SDK integration points configured
 - HashPack wallet connection infrastructure
@@ -223,16 +163,12 @@ DATABASE_URL=postgresql://user:pass@host:5432/db  # Optional
 - ✅ Splash screen sequence
 
 ### Future Features
-- **$STAR Token Integration**: Use collected stars as currency for:
-  - New character skins and customizations
-  - Additional game modes and levels
-  - Permanent upgrades and abilities
-- **Hedera Network Integration**: NFT character ownership and trading
-- **HashPack Wallet**: Connect wallet for blockchain features
-- **Multiplayer Mode**: Compete with other players in real-time
-- **Achievement System**: Unlock rewards for gameplay milestones
-- **Expanded Enemy Types**: More enemy varieties with unique behaviors
-- **Environmental Hazards**: Additional obstacle types and patterns
+- New character skins and customizations
+- Additional game modes and levels
+- Multiplayer Mode: Compete with other players in real-time
+- Achievement System: Unlock rewards for gameplay milestones
+- Expanded Enemy Types: More enemy varieties with unique behaviors
+- Environmental Hazards: Additional obstacle types and patterns
 
 ## 🤝 Contributing
 
@@ -242,10 +178,6 @@ DATABASE_URL=postgresql://user:pass@host:5432/db  # Optional
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📄 License
-
-MIT License - See LICENSE file for details
-
 ---
 
-Built with ❤️ for the retro gaming community
+Built by SLIME + Starfall V with 💚 for the Hedera gaming community
