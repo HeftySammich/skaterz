@@ -18,6 +18,153 @@ A retro-styled 2D endless runner game featuring a skateboarding zombie character
 - **Leaderboard System**: Database-backed high score tracking with automatic submission
 - **Dynamic Soundtrack**: Alternating background music tracks with on-screen artist credits
 
+## 🎯 Game Controls
+
+### Desktop
+- **Space** or **↑ Arrow**: Jump
+- **Space/↑ Again (in air)**: Double Jump (costs stamina)
+- **Mouse Click**: Jump
+- **J Key (while airborne)**: Perform trick for combo points
+
+### Mobile
+- **Tap Screen**: Jump
+- **Tap Again (in air)**: Double Jump (costs stamina)
+- **Swipe Up (while airborne)**: Perform trick for combo points
+
+## 🎨 Game Mechanics
+
+### Core Gameplay
+- **Objective**: Dodge obstacles, crush enemies, and collect $STAR tokens
+- **Progressive Difficulty**: Game speed increases as you score more points
+- **Survival Focus**: Manage health, stamina, and lives to achieve high scores
+
+### Combat & Movement
+- **Enemy Stomping**: Jump on enemies to defeat them and score points
+- **Double Jump**: Use stamina to perform a second jump in mid-air
+- **Aerial Tricks**: J key (desktop) or swipe up (mobile) while airborne to perform tricks
+- **Combo System**: Combine tricks and enemy kills (3+ actions) for bonus stars
+
+### Resource Management
+- **Health Bar**: Take damage from obstacles and enemies, restore with sandwiches
+- **Stamina Bar**: Required for double jumps and tricks, regenerates over time
+- **Life Counter**: Start with 3 lives, earn more at star milestones
+- **Star Economy**: Collect stars to unlock features and gain extra lives
+
+### Power-Ups & Items
+- **Sandwiches**: Restore 20 health points (with warning arrow indicator)
+- **Energy Drinks**: Full stamina restore, temporary invulnerability, and speed boost
+- **Single Stars**: Worth 1 star each with collection sound effect
+- **Star Clusters**: Worth 10 stars each with special sound effect
+
+### Scoring System
+- **Base Points**: 10 points per second survived, 50 points per enemy defeated
+- **Combo Multipliers**: x3 to x10 multiplier for successful combo chains
+- **Star Bonuses**: Combos convert score points into bonus stars
+- **Leaderboard**: Automatic score submission as "Player 1"
+
+## ⚙️ Hedera Integrations
+
+### Transaction Types Used ###
+
+**Client-Side (Wallet-Signed):**
+- `TokenAssociateTransaction` - Associate STAR token with player wallet before receiving rewards
+- `TransferTransaction` - Token transfers (client-side wallet operations)
+- `AccountBalanceQuery` - Check player's token balances
+- `AccountInfoQuery` - Retrieve account information and token associations
+- `TokenNftInfoQuery` - Verify NFT ownership for character unlocks
+
+**Server-Side (Treasury-Signed):**
+- `TransferTransaction` - Distribute STAR token rewards from treasury to players
+- `TokenInfoQuery` - Query STAR token metadata (decimals) for accurate transfers
+
+**Mirror Node API:**
+- REST API calls to verify token associations and account state
+
+---
+
+### Architecture Diagram ###
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         ZOMBIE SKATERZ                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+│                  │         │                  │         │                  │
+│   FRONTEND       │         │   BACKEND        │         │   HEDERA         │
+│   (React +       │         │   (Express.js)   │         │   MAINNET        │
+│    Phaser)       │         │                  │         │                  │
+│                  │         │                  │         │                  │
+└──────────────────┘         └──────────────────┘         └──────────────────┘
+        │                            │                            │
+        │  1. Wallet Connect         │                            │
+        │  (HashPack/Blade)          │                            │
+        │◄───────────────────────────┼────────────────────────────┤
+        │  DAppConnector             │                            │
+        │                            │                            │
+        │  2. Check Token            │                            │
+        │  Association               │                            │
+        │────────────────────────────┼───────────────────────────►│
+        │                            │  Mirror Node API           │
+        │◄───────────────────────────┼────────────────────────────┤
+        │  (Association Status)      │                            │
+        │                            │                            │
+        │  3. Associate Token        │                            │
+        │  (if needed)               │                            │
+        │────────────────────────────┼───────────────────────────►│
+        │  TokenAssociateTransaction │  Wallet signs & submits    │
+        │◄───────────────────────────┼────────────────────────────┤
+        │  (Receipt)                 │                            │
+        │                            │                            │
+        │  4. Claim Rewards          │                            │
+        │  POST /api/rewards/claim   │                            │
+        ├───────────────────────────►│                            │
+        │  {accountId, amount}       │                            │
+        │                            │  5. Query Token Info       │
+        │                            ├───────────────────────────►│
+        │                            │  TokenInfoQuery            │
+        │                            │◄───────────────────────────┤
+        │                            │  (Decimals)                │
+        │                            │                            │
+        │                            │  6. Send STAR Tokens       │
+        │                            ├───────────────────────────►│
+        │                            │  TransferTransaction       │
+        │                            │  (Treasury → Player)       │
+        │                            │◄───────────────────────────┤
+        │  7. Success Response       │  (Transaction Receipt)     │
+        │◄───────────────────────────┤                            │
+        │  {transactionId}           │                            │
+        │                            │                            │
+        │  8. Check NFT Ownership    │                            │
+        │  (Character Unlocks)       │                            │
+        │────────────────────────────┼───────────────────────────►│
+        │  TokenNftInfoQuery         │                            │
+        │◄───────────────────────────┼────────────────────────────┤
+        │  (NFT Metadata)            │                            │
+        │                            │                            │
+```
+
+**Data Flow Summary:**
+- **Frontend → Hedera:** Wallet connection, token association, NFT queries (via WalletConnect)
+- **Frontend → Backend:** Reward claim requests (REST API)
+- **Backend → Hedera:** Token distribution from treasury (server-signed transactions)
+- **Hedera → Frontend/Backend:** Transaction receipts, Mirror Node data
+
+---
+
+### Deployed Hedera IDs (Mainnet)
+
+| Resource | Hedera ID | Purpose |
+|----------|-----------|---------|
+| **STAR Token (HTS)** | `0.0.9243537` | Play-to-earn reward token (1 STAR per in-game star collected) |
+| **Unlock NFT (HTS NFT)** | `0.0.9963841` | Character unlock token (Serial #2 unlocks special character) |
+| **Treasury Account** | `0.0.9972684` | Operator account that distributes STAR token rewards to players |
+
+**Network:** Hedera Mainnet  
+**Wallet Support:** HashPack (via WalletConnect)  
+**Certificate:** https://drive.google.com/file/d/19vfoTznW8sEEs9H3sg9ZZg9GnlwqeF3_/view?usp=drivesdk  
+**Pitch Deck:** https://drive.google.com/file/d/10Qvg_FiaSHE3QexXVNfLrI_lTW5GfdSZ/view?usp=drivesdk
+
 ## 🛠 Tech Stack
 
 ### Frontend
@@ -39,9 +186,6 @@ A retro-styled 2D endless runner game featuring a skateboarding zombie character
 - **Audio**: Howler.js 2.2.4 for sound effects and music
 - **Input**: Unified keyboard, mouse, and touch controls
 
-### Blockchain Ready (Configured)
-- **Hedera Network**: Ready for NFT integration and decentralized features
-- **HashPack Wallet**: Wallet connection capability for future features
 
 ## 🔧 Development Setup
 
@@ -97,86 +241,28 @@ npm run check
 npm run db:push
 ```
 
-## 🎯 Game Controls
-
-### Desktop
-- **Space** or **↑ Arrow**: Jump
-- **Space/↑ Again (in air)**: Double Jump (costs stamina)
-- **Mouse Click**: Jump
-- **J Key (while airborne)**: Perform trick for combo points
-
-### Mobile
-- **Tap Screen**: Jump
-- **Tap Again (in air)**: Double Jump (costs stamina)
-- **Swipe Up (while airborne)**: Perform trick for combo points
-
-## 🎨 Game Mechanics
-
-### Core Gameplay
-- **Objective**: Dodge obstacles, crush enemies, and collect $STAR tokens
-- **Progressive Difficulty**: Game speed increases as you score more points
-- **Survival Focus**: Manage health, stamina, and lives to achieve high scores
-
-### Combat & Movement
-- **Enemy Stomping**: Jump on enemies to defeat them and score points
-- **Double Jump**: Use stamina to perform a second jump in mid-air
-- **Aerial Tricks**: J key (desktop) or swipe up (mobile) while airborne to perform tricks
-- **Combo System**: Combine tricks and enemy kills (3+ actions) for bonus stars
-
-### Resource Management
-- **Health Bar**: Take damage from obstacles and enemies, restore with sandwiches
-- **Stamina Bar**: Required for double jumps and tricks, regenerates over time
-- **Life Counter**: Start with 3 lives, earn more at star milestones
-- **Star Economy**: Collect stars to unlock features and gain extra lives
-
-### Power-Ups & Items
-- **Sandwiches**: Restore 20 health points (with warning arrow indicator)
-- **Energy Drinks**: Full stamina restore, temporary invulnerability, and speed boost
-- **Single Stars**: Worth 1 star each with collection sound effect
-- **Star Clusters**: Worth 10 stars each with special sound effect
-
-### Scoring System
-- **Base Points**: 10 points per second survived, 50 points per enemy defeated
-- **Combo Multipliers**: x3 to x10 multiplier for successful combo chains
-- **Star Bonuses**: Combos convert score points into bonus stars
-- **Leaderboard**: Automatic score submission as "Player 1"
-
-### Hedera Hashgraph Integration (Ready)
-- Hedera SDK integration points configured
-- HashPack wallet connection infrastructure
-- NFT and token integration capabilities
-
-## 🔮 Current Features & Future Roadmap
+## 🧟 Features
 
 ### Fully Implemented
-- ✅ Dual playable characters (Kev and Stacy)
-- ✅ Complete enemy system with stomping mechanics
-- ✅ Health and stamina systems with UI
-- ✅ Power-up system (sandwiches and energy drinks)
-- ✅ Star collection and life reward system
-- ✅ Combo system with multipliers
-- ✅ Progressive difficulty scaling
-- ✅ Full sound effects and alternating music tracks
-- ✅ PostgreSQL-backed leaderboard
-- ✅ Tutorial and How to Play screens
-- ✅ Character selection screen
-- ✅ Splash screen sequence
+- Dual playable characters (Kev and Stacy)
+- Complete enemy system with stomping mechanics
+- Health and stamina systems with UI
+- Power-up system (sandwiches and energy drinks)
+- Star collection and life reward system
+- Combo system with multipliers
+- Progressive difficulty scaling
+- Full sound effects and alternating music tracks
+- PostgreSQL-backed leaderboard
+- Tutorial and How to Play screens
+- Character selection screen
+- Splash screen sequence
 
 ### Future Features
 - New character skins and customizations
 - Additional game modes and levels
-- Multiplayer Mode: Compete with other players in real-time
 - Achievement System: Unlock rewards for gameplay milestones
 - Expanded Enemy Types: More enemy varieties with unique behaviors
 - Environmental Hazards: Additional obstacle types and patterns
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
 
 ---
 
