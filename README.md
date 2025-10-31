@@ -98,7 +98,7 @@ A retro-styled 2D endless runner game featuring a skateboarding zombie character
 └──────────────────┘         └──────────────────┘         └──────────────────┘
         │                            │                            │
         │  1. Wallet Connect         │                            │
-        │  (HashPack/Blade)          │                            │
+        │  (HashPack)                │                            │
         │◄───────────────────────────┼────────────────────────────┤
         │  DAppConnector             │                            │
         │                            │                            │
