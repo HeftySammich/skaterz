@@ -1,4 +1,4 @@
-# Zombie Skater - GBA Style Endless Runner
+# Skaterz (Gaming/NFTs - Immersive Experience)
 
 A retro-styled 2D endless runner game featuring a skateboarding zombie character. Built with modern web technologies while maintaining authentic Game Boy Advance aesthetics.
 
