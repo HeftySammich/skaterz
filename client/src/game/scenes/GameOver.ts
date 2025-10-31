@@ -25,6 +25,13 @@ export default class GameOver extends Phaser.Scene {
   private hasSavedScore = false;
   private namePromptText?: Phaser.GameObjects.Text;
   private instructionText?: Phaser.GameObjects.Text;
+  private isShowingAssociationPrompt = false;
+  private associationPromptBg?: Phaser.GameObjects.Rectangle;
+  private associationPromptText?: Phaser.GameObjects.Text;
+  private associationYesText?: Phaser.GameObjects.Text;
+  private associationNoText?: Phaser.GameObjects.Text;
+  private associationSelector?: Phaser.GameObjects.Text;
+  private associationSelectedOption = 0; // 0 = Yes, 1 = No
 
   constructor() {
     super('GameOver');
@@ -495,18 +502,15 @@ export default class GameOver extends Phaser.Scene {
   setHighScore(score: number): void {
     localStorage.setItem('zombieSkaterHighScore', score.toString());
   }
+
   async claimStarRewards() {
     if (this.hasClaimed) {
       console.log('🌟 Already claimed rewards this session');
       return;
     }
 
-    // Set flag IMMEDIATELY to prevent double-clicks
-    this.hasClaimed = true;
-
     if (this.starsCollected <= 0) {
       console.log('🌟 No stars to claim');
-      this.hasClaimed = false; // Reset if no stars
       return;
     }
 
@@ -535,18 +539,8 @@ export default class GameOver extends Phaser.Scene {
       }
 
       if (!walletStatus.hasStarToken) {
-        console.log('❌ STAR token not associated - cannot claim rewards');
-        const errorText = this.add.text(320, 650, 'STAR TOKEN NOT ASSOCIATED', {
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: '14px',
-          color: '#ff0000',
-          stroke: '#000000',
-          strokeThickness: 3
-        }).setOrigin(0.5);
-
-        this.time.delayedCall(3000, () => {
-          errorText.destroy();
-        });
+        console.log('❌ STAR token not associated - showing association prompt');
+        this.showAssociationPrompt();
         return;
       }
 
@@ -566,6 +560,7 @@ export default class GameOver extends Phaser.Scene {
 
       if (response.ok && result.success) {
         console.log('✅ Successfully claimed STAR tokens!', result);
+        this.hasClaimed = true;
 
         // Update button text to show claimed
         if (this.claimStarText) {
@@ -613,5 +608,182 @@ export default class GameOver extends Phaser.Scene {
         errorText.destroy();
       });
     }
+  }
+
+  /**
+   * Show association prompt when STAR token is not associated
+   */
+  private showAssociationPrompt() {
+    this.isShowingAssociationPrompt = true;
+    this.associationSelectedOption = 0; // Default to "Yes"
+
+    // Semi-transparent background overlay
+    this.associationPromptBg = this.add.rectangle(320, 360, 500, 300, 0x000000, 0.9)
+      .setOrigin(0.5)
+      .setDepth(500);
+
+    // Main prompt text
+    this.associationPromptText = this.add.text(320, 280, 'STAR NOT ASSOCIATED\n\nASSOCIATE STAR?', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '14px',
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 3,
+      align: 'center'
+    }).setOrigin(0.5).setDepth(501);
+
+    // Yes option
+    this.associationYesText = this.add.text(320, 380, 'YES', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
+      color: '#00ff00',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5).setDepth(501).setInteractive({ useHandCursor: true });
+
+    // No option
+    this.associationNoText = this.add.text(320, 430, 'NO', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5).setDepth(501).setInteractive({ useHandCursor: true });
+
+    // Selector arrow
+    this.associationSelector = this.add.text(250, 380, '>', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '20px',
+      color: '#00ff00'
+    }).setDepth(502);
+
+    // Mouse hover handlers
+    this.associationYesText.on('pointerover', () => {
+      this.associationSelectedOption = 0;
+      this.updateAssociationSelector();
+    });
+
+    this.associationNoText.on('pointerover', () => {
+      this.associationSelectedOption = 1;
+      this.updateAssociationSelector();
+    });
+
+    // Click handlers
+    this.associationYesText.on('pointerdown', () => {
+      this.handleAssociationChoice(true);
+    });
+
+    this.associationNoText.on('pointerdown', () => {
+      this.handleAssociationChoice(false);
+    });
+
+    // Keyboard navigation
+    this.input.keyboard?.on('keydown-UP', () => {
+      if (this.isShowingAssociationPrompt) {
+        this.associationSelectedOption = 0;
+        this.updateAssociationSelector();
+      }
+    });
+
+    this.input.keyboard?.on('keydown-DOWN', () => {
+      if (this.isShowingAssociationPrompt) {
+        this.associationSelectedOption = 1;
+        this.updateAssociationSelector();
+      }
+    });
+
+    this.input.keyboard?.on('keydown-SPACE', () => {
+      if (this.isShowingAssociationPrompt) {
+        this.handleAssociationChoice(this.associationSelectedOption === 0);
+      }
+    });
+
+    this.input.keyboard?.on('keydown-ENTER', () => {
+      if (this.isShowingAssociationPrompt) {
+        this.handleAssociationChoice(this.associationSelectedOption === 0);
+      }
+    });
+  }
+
+  /**
+   * Update the selector position based on selected option
+   */
+  private updateAssociationSelector() {
+    if (!this.associationSelector || !this.associationYesText || !this.associationNoText) return;
+
+    if (this.associationSelectedOption === 0) {
+      this.associationSelector.setPosition(250, 380);
+      this.associationYesText.setColor('#00ff00');
+      this.associationNoText.setColor('#ffffff');
+    } else {
+      this.associationSelector.setPosition(250, 430);
+      this.associationYesText.setColor('#ffffff');
+      this.associationNoText.setColor('#00ff00');
+    }
+  }
+
+  /**
+   * Handle user's choice for association
+   */
+  private async handleAssociationChoice(associate: boolean) {
+    if (!associate) {
+      // User chose NO - close prompt and return
+      this.closeAssociationPrompt();
+      return;
+    }
+
+    // User chose YES - attempt association
+    try {
+      // Show loading state
+      if (this.associationPromptText) {
+        this.associationPromptText.setText('ASSOCIATING...\n\nCHECK YOUR WALLET');
+      }
+
+      // Hide Yes/No options
+      this.associationYesText?.destroy();
+      this.associationNoText?.destroy();
+      this.associationSelector?.destroy();
+
+      console.log('🔗 Attempting to associate STAR token...');
+      await walletService.associateStarToken();
+
+      // Success!
+      console.log('✅ STAR token associated successfully!');
+
+      if (this.associationPromptText) {
+        this.associationPromptText.setText('ASSOCIATION SUCCESSFUL!\n\nCLAIMING REWARDS...');
+      }
+
+      // Wait a moment then close prompt and retry claim
+      this.time.delayedCall(2000, () => {
+        this.closeAssociationPrompt();
+        // Retry the claim now that token is associated
+        this.claimStarRewards();
+      });
+
+    } catch (error) {
+      console.error('❌ Failed to associate STAR token:', error);
+
+      if (this.associationPromptText) {
+        this.associationPromptText.setText('ASSOCIATION FAILED\n\nTRY AGAIN LATER');
+        this.associationPromptText.setColor('#ff0000');
+      }
+
+      this.time.delayedCall(3000, () => {
+        this.closeAssociationPrompt();
+      });
+    }
+  }
+
+  /**
+   * Close the association prompt
+   */
+  private closeAssociationPrompt() {
+    this.isShowingAssociationPrompt = false;
+    this.associationPromptBg?.destroy();
+    this.associationPromptText?.destroy();
+    this.associationYesText?.destroy();
+    this.associationNoText?.destroy();
+    this.associationSelector?.destroy();
   }
 }
