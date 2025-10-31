@@ -241,6 +241,9 @@ npm run check
 npm run db:push
 ```
 
+## 🧟 Economic Justification
+Zombie Skaterz was developed by Silent Architect (Starfall V), who built the core game mechanics, UI, sprites, and primary codebase, and HeftySammich (SLIME), who handled DevOps, deployment infrastructure, and all Hedera integrations including wallet connectivity, token association flows, and treasury-based reward distribution.
+
 ## 🧟 Features
 
 ### Fully Implemented
